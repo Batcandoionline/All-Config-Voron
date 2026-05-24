@@ -1,0 +1,22 @@
+# Local backups and generated archives
+_backups/
+Nhat-ky-chinh-sua/
+*.zip
+*backup*
+*.bak
+*.bkp
+
+# Machine-local Moonraker configuration
+moonraker.conf
+
+# Logs, prints, and temporary files
+*.log
+*.gcode
+*.tmp
+*.swp
+*.swo
+
+# OS/editor metadata
+.DS_Store
+Thumbs.db
+desktop.ini
