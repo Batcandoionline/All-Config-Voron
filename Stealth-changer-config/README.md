@@ -41,9 +41,7 @@ This repository is designed to be cloned directly into:
 ~/printer_data/config
 ```
 
-The root contains `printer.cfg`, `mainsail.cfg`, and the included config folders used by Klipper.
-
-`moonraker.conf` is intentionally machine-local and is not tracked by this repository. This keeps Mainsail's web editor usable and avoids replacing printer-specific Moonraker settings during updates.
+The root contains `printer.cfg`, `moonraker.conf`, `mainsail.cfg`, and the included config folders used by Klipper.
 
 ## First-Time Install On The Printer
 
@@ -56,7 +54,7 @@ cd Stealth-changer-config
 bash scripts/install.sh
 ```
 
-The installer backs up the existing `~/printer_data/config` directory before replacing it with this repository. If an existing `moonraker.conf` is present, it is restored after the clone because that file is machine-local.
+The installer backs up the existing `~/printer_data/config` directory before replacing it with this repository.
 
 After install:
 
@@ -85,10 +83,24 @@ Or manually:
 ```bash
 cd ~/printer_data/config
 git pull
+sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-Use `bash scripts/update.sh` instead of a manual `git pull` when updating an existing machine that still has an older tracked `moonraker.conf`; the script preserves the local Moonraker config while moving the repository to the newer layout.
+## Moonraker Update Manager
+
+To make the config visible in Mainsail Update Manager, keep this section in `moonraker.conf`:
+
+```ini
+[update_manager stealth-changer-config]
+type: git_repo
+path: ~/printer_data/config
+origin: https://github.com/Batcandoionline/Stealth-changer-config.git
+primary_branch: main
+managed_services: klipper
+```
+
+Moonraker can pull the repository from Update Manager. If `moonraker.conf` itself changes, restart Moonraker manually after the update.
 
 ## Safety Notes
 
