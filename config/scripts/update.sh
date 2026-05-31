@@ -19,7 +19,7 @@ mkdir -p "${BACKUP_DIR}"
 rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
 
 echo "Copying latest config files."
-rsync -a "${REPO_DIR}/config/" "${CONFIG_DIR}/"
+rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" "${REPO_DIR}/config/" "${CONFIG_DIR}/"
 
 echo "Update complete."
 echo "Backup: ${BACKUP_DIR}"
