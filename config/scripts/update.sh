@@ -22,4 +22,3 @@ echo "Backup: ${BACKUP_DIR}"
 echo "Next:"
 echo "  sudo systemctl restart moonraker"
 echo "  sudo systemctl restart klipper"
-
