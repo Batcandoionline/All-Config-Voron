@@ -6,7 +6,7 @@ To install on the printer, clone this repository and run:
 
 ```bash
 cd /tmp
-git clone https://github.com/Batcandoionline/All-Config-Voron.git
+git clone git@github.com:Batcandoionline/All-Config-Voron.git
 cd All-Config-Voron
 bash config/scripts/install.sh
 ```
