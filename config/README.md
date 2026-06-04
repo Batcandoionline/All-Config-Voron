@@ -8,7 +8,7 @@ This directory is the machine config payload. Its contents should be copied to:
 ~/printer_data/config
 ```
 
-The parent repository also contains backups, logs, G-code, and helper projects, so do not copy the repository root directly into `~/printer_data/config`.
+The parent repository also contains `extras/` reference files, so do not copy the repository root directly into `~/printer_data/config`.
 
 ## First-Time Install
 
