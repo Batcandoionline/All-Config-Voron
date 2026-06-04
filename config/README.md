@@ -47,7 +47,32 @@ sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-The update script keeps a full backup at `~/printer_data/config.update-backup-YYYYMMDD-HHMMSS`, updates/clones the source repository at `~/All-Config-Voron`, then copies `~/All-Config-Voron/config/` into `~/printer_data/config`.
+The update script keeps a full backup under `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS`, updates/clones the source repository at `~/All-Config-Voron`, then copies only `~/All-Config-Voron/config/` into `~/printer_data/config`.
+
+By default it keeps the newest 10 update backups. Override that when needed:
+
+```bash
+BACKUP_KEEP=20 bash scripts/update.sh
+```
+
+Restore a backup manually:
+
+```bash
+rsync -a --delete ~/printer_data/config_backups/config-YYYYMMDD-HHMMSS/ ~/printer_data/config/
+sudo systemctl restart klipper
+```
+
+Dry-run cleanup for old scattered backup folders:
+
+```bash
+bash scripts/cleanup-voron.sh
+```
+
+Apply cleanup after checking the listed paths:
+
+```bash
+bash scripts/cleanup-voron.sh --apply
+```
 
 ## Current Machine
 
