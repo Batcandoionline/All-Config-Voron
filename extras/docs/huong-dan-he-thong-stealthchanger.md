@@ -182,7 +182,7 @@ Mục tiêu:
 
 Thông số hiện tại:
 
-- `variable_line_length: 52.0`
+- `variable_line_length: 40.0`
 - `variable_line_passes: 3`
 - `variable_prime_amount: 13.33`
 - `variable_prime_z: 0.28`
@@ -346,30 +346,31 @@ sudo systemctl restart klipper
 
 Mức nguy hiểm: Trung bình.
 
-Hiện `input-shaper.cfg` ghi chú không dùng global `[input_shaper]`, nhưng `after_change_gcode` chỉ gọi `SET_INPUT_SHAPER` khi `input_shaper` tồn tại trong `printer.configfile.config`.
+Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
+
+Trước đó `input-shaper.cfg` ghi chú không dùng global `[input_shaper]`, nhưng `after_change_gcode` chỉ gọi `SET_INPUT_SHAPER` khi `input_shaper` tồn tại trong `printer.configfile.config`.
 
 Rủi ro:
 
 - Nếu không có `[input_shaper]`, dynamic input shaper trong `T0.cfg` đến `T4.cfg` có thể không được apply.
 - In vẫn chạy, nhưng ringing/ghosting có thể không đúng theo từng tool.
 
-Đề xuất:
+Sửa đã áp dụng:
 
-- Kiểm tra trên Mainsail console sau toolchange xem có dòng `SET_INPUT_SHAPER` hoặc giá trị input shaper thay đổi không.
-- Nếu không thay đổi, thêm một section `[input_shaper]` mặc định để Klipper bật module input shaper, sau đó để `after_change_gcode` set lại theo tool.
-- Giữ thông số mặc định theo T0 hoặc thông số an toàn, ví dụ:
+- Thêm section `[input_shaper]` mặc định dùng thông số T0 để Klipper tải module input shaper.
+- Toolchange vẫn override bằng `params_input_shaper_*` của tool đang active.
 
 ```ini
 [input_shaper]
-shaper_type_x: mzv
+shaper_type_x: 3hump_ei
 shaper_freq_x: 88.4
 damping_ratio_x: 0.078
-shaper_type_y: mzv
+shaper_type_y: 2hump_ei
 shaper_freq_y: 58.4
 damping_ratio_y: 0.164
 ```
 
-Sau đó restart Klipper và test toolchange.
+Cần kiểm chứng sau restart Klipper: đổi tool và xem input shaper có thay đổi theo từng tool không.
 
 ### R2 - RESUME có nhiều nguồn khai báo
 
@@ -397,15 +398,17 @@ Rủi ro:
 
 Mức nguy hiểm: Thấp đến trung bình.
 
+Trạng thái: Đã sửa comment trong cấu hình ngày 2026-06-05.
+
 Comment trong file vẫn mô tả kiểu bật detection trước G28/QGL/mesh rồi tắt sau đó. Macro thật hiện dừng detection trong chuẩn bị, chỉ bật lại sau prime.
 
 Rủi ro:
 
 - Người sửa sau có thể bật crash detection quá sớm trong homing/QGL/prime và gây false positive.
 
-Đề xuất:
+Sửa đã áp dụng:
 
-- Cập nhật comment trong `tool_crash_cartographer.cfg` theo logic hiện tại:
+- Comment trong `tool_crash_cartographer.cfg` đã được cập nhật theo logic hiện tại:
   - Stop trong homing/clean/QGL/mesh/prime.
   - Start sau `PRIME_LINES`.
   - Stop khi dropoff/cancel/end.
@@ -415,7 +418,9 @@ Rủi ro:
 
 Mức nguy hiểm: Thấp.
 
-`prime-lines.cfg` hiện:
+Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
+
+Trước đó `prime-lines.cfg` là:
 
 ```ini
 variable_line_length: 52.0
@@ -423,18 +428,15 @@ variable_line_passes: 3
 variable_prime_amount: 13.33
 ```
 
-Với filament 1.75 mm, mức đùn trên mỗi pass xấp xỉ sát nhưng dưới giới hạn `max_extrude_cross_section` mặc định. Nếu mục tiêu thực tế là 40 mm, hiện tại prime sẽ dài hơn và tốn nhựa hơn.
+Sửa đã áp dụng:
 
-Đề xuất:
-
-- Nếu muốn đúng 40 mm mỗi pass, đổi:
+- Đổi chiều dài mỗi pass về 40 mm.
 
 ```ini
 variable_line_length: 40.0
 ```
 
-- Không nhất thiết đổi `variable_prime_amount` vì macro đang tự scale prime amount theo line length.
-- Sau khi đổi, test riêng `PRIME_LINES` với một tool ở nhiệt in để xem có ra nhựa đủ chưa.
+Macro tự scale `prime_amount` theo line length, nên không cần đổi `variable_prime_amount`. Cần test `PRIME_LINES` thực tế để xác nhận lượng nhựa ra đủ.
 
 ### R5 - T2 có offset Z rất lớn và từng có dấu hiệu cơ khí/nhiệt
 
@@ -497,7 +499,9 @@ Sau đó tăng lại từng bước.
 
 Mức nguy hiểm: Thấp đến trung bình.
 
-Trong `fans-leds.cfg`:
+Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
+
+Trước đó trong `fans-leds.cfg`:
 
 ```ini
 [controller_fan tmc_fan]
@@ -512,10 +516,12 @@ Rủi ro:
 - Nếu hiểu sai, quạt TMC có thể không chạy sau khi stepper idle.
 - Điện tử nóng khi máy chờ lâu trong chamber nóng.
 
-Đề xuất:
+Sửa đã áp dụng:
 
-- Nếu muốn quạt luôn chạy, cân nhắc đổi sang `[fan_generic]` và bật bằng delayed_gcode, hoặc đặt `idle_timeout` đủ lớn.
-- Kiểm tra thực tế: sau khi stepper idle, quạt TMC còn chạy không.
+- Làm rõ comment: fan chạy khi stepper active và giữ chạy thêm trong thời gian cooldown.
+- Đổi `idle_timeout` thành 3600 giây để quạt tiếp tục làm mát driver 1 giờ sau khi stepper idle.
+
+Cần kiểm tra thực tế: sau khi stepper idle, quạt TMC còn chạy trong thời gian cooldown không.
 
 ### R8 - Nozzle clean dùng tọa độ ngoài vùng bàn
 
