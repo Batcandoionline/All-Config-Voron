@@ -394,6 +394,7 @@ Rủi ro:
 Sửa đã áp dụng:
 
 - Thêm final `[gcode_macro RESUME]` trong `Printer-Setup/fans-leds.cfg`, tức phần override do repo này quản lý, không sửa `readonly-configs`.
+- Final override khai báo rõ `rename_existing: RESUME_BASE`, giống pattern KTC-Easy/Mainsail, để `RESUME_BASE` luôn còn tồn tại và không phụ thuộc vào việc option này được merge từ section trước đó.
 - Macro mới chạy `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED` trước khi resume.
 - Sau đó chạy lại đầy đủ logic Mainsail: idle timeout restore, temperature restore, runout check, `user_resume_macro`, `_CLIENT_EXTRUDE`, `RESUME_BASE`.
 
