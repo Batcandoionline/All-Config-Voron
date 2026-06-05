@@ -228,9 +228,11 @@ Luồng mỗi tool:
 
 `PAUSE` và `RESUME`:
 
-- Dùng logic Mainsail chuẩn, không override trực tiếp trong `fans-leds.cfg`.
-- Hook pause/resume chỉ xử lý LED và `_PRINT_STATE`.
-- Cần kiểm chứng thực tế vì KTC readonly cũng có macro `RESUME` riêng để `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED`.
+- `PAUSE` và `CANCEL_PRINT` vẫn dùng logic Mainsail chuẩn qua hook trong `_CLIENT_VARIABLE`.
+- `RESUME` được override ở cuối trong `fans-leds.cfg` để kết hợp hai yêu cầu:
+  - KTC-Easy: `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED`.
+  - Mainsail: khôi phục nhiệt/idle timeout, kiểm tra runout, hook LED, `_CLIENT_EXTRUDE`, rồi `RESUME_BASE`.
+- Cách này tránh mất logic Mainsail do KTC readonly cũng khai báo macro `RESUME`.
 
 ## 9. Crash detection
 
@@ -376,6 +378,8 @@ Cần kiểm chứng sau restart Klipper: đổi tool và xem input shaper có t
 
 Mức nguy hiểm: Trung bình đến cao nếu merge sai.
 
+Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05 bằng final `RESUME` override trong `fans-leds.cfg`.
+
 Có `RESUME` trong:
 
 - `mainsail.cfg`
@@ -384,15 +388,22 @@ Có `RESUME` trong:
 
 Rủi ro:
 
-- Nếu macro RESUME cuối cùng không phải logic Mainsail, có thể mất hook LED/pause/runout.
-- Nếu macro RESUME cuối cùng không có phần KTC verify, có thể resume khi tool state chưa chắc chắn.
+- Nếu macro `RESUME` cuối cùng chỉ là logic Mainsail, có thể thiếu `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED`.
+- Nếu macro `RESUME` cuối cùng chỉ là wrapper KTC readonly, có thể mất logic Mainsail như khôi phục nhiệt, runout check, hook LED và `_CLIENT_EXTRUDE`.
 
-Đề xuất:
+Sửa đã áp dụng:
 
-- Trên máy thật, kiểm tra bằng `HELP RESUME` và test pause/resume ngắn.
-- Khi resume, console nên thể hiện logic Mainsail, không bỏ qua kiểm tra nhiệt/runout.
-- Không thêm macro `RESUME` mới nếu chưa xác định rõ `rename_existing`.
-- Nếu cần sửa lâu dài, nên tạo wrapper riêng thay vì ghi đè toàn bộ `RESUME`.
+- Thêm final `[gcode_macro RESUME]` trong `Printer-Setup/fans-leds.cfg`, tức phần override do repo này quản lý, không sửa `readonly-configs`.
+- Macro mới chạy `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED` trước khi resume.
+- Sau đó chạy lại đầy đủ logic Mainsail: idle timeout restore, temperature restore, runout check, `user_resume_macro`, `_CLIENT_EXTRUDE`, `RESUME_BASE`.
+
+Cần kiểm chứng sau khi máy rảnh:
+
+- Pause một print nhỏ.
+- Resume từ Mainsail.
+- Console không được báo mất tool.
+- LED phải về trạng thái printing.
+- Nếu nozzle chưa đủ nóng, resume phải bị chặn như logic Mainsail.
 
 ### R3 - Tài liệu crash detection trong `tool_crash_cartographer.cfg` đang lệch với logic thật
 
