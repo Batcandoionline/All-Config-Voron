@@ -182,7 +182,7 @@ Mục tiêu:
 
 Thông số hiện tại:
 
-- `variable_line_length: 40.0`
+- `variable_line_length: 52.0`
 - `variable_line_passes: 3`
 - `variable_prime_amount: 13.33`
 - `variable_prime_z: 0.28`
@@ -414,13 +414,13 @@ Sửa đã áp dụng:
   - Stop khi dropoff/cancel/end.
   - Start lại trong `after_change_gcode` nếu `_PRINT_STATE == printing`.
 
-### R4 - Prime line hiện là 52 mm mỗi pass, không phải 40 mm như mục tiêu từng nhắc
+### R4 - Prime line dài 52 mm mỗi pass
 
 Mức nguy hiểm: Thấp.
 
-Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
+Trạng thái: Đã giữ lại theo bản thực tế cho đường prime đẹp và ra nhựa ổn.
 
-Trước đó `prime-lines.cfg` là:
+`prime-lines.cfg` hiện là:
 
 ```ini
 variable_line_length: 52.0
@@ -428,15 +428,7 @@ variable_line_passes: 3
 variable_prime_amount: 13.33
 ```
 
-Sửa đã áp dụng:
-
-- Đổi chiều dài mỗi pass về 40 mm.
-
-```ini
-variable_line_length: 40.0
-```
-
-Macro tự scale `prime_amount` theo line length, nên không cần đổi `variable_prime_amount`. Cần test `PRIME_LINES` thực tế để xác nhận lượng nhựa ra đủ.
+Với 3 pass song song, chiều dài này đang cho đường prime đẹp hơn bản 40 mm và có đủ thời gian ra nhựa. Macro vẫn tự co lại nếu số tool nhiều làm vùng X không đủ chỗ.
 
 ### R5 - T2 có offset Z rất lớn và từng có dấu hiệu cơ khí/nhiệt
 
