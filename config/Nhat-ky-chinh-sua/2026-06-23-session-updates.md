@@ -51,7 +51,17 @@ Tổng hợp các chỉnh sửa lớn đã áp dụng trong phiên làm việc n
 
 ---
 
-## 6. Chỉ dẫn AI và Quản lý Repo
+## 6. Khắc phục lỗi dừng QGL đột ngột (Probed points range is increasing)
+*   **Hiện tượng:** Khi chạy Quad Gantry Leveling (QGL), hệ thống báo lỗi `Retries aborting: Probed points range is increasing. Possibly Z motor numbering is wrong` ở các lượt đo cuối.
+*   **Chẩn đoán:** Lỗi xảy ra do dung sai hội tụ (`retry_tolerance`) được đặt quá nhỏ ở mức **5 microns (0.005mm)**, vượt quá giới hạn sai số lặp lại vật lý của cảm biến Cartographer khi bàn in đang nóng ở 106°C (do nhiễu từ trường EMI từ dòng điện xoay chiều chạy qua cuộn sấy bàn in). Do động cơ Z hoạt động chính xác (sai lệch ban đầu giảm từ 84 micron xuống 11 micron), sự biến động ngẫu nhiên này làm Klipper hiểu nhầm là đấu sai động cơ Z.
+*   **Thay đổi cấu hình:** 
+    *   Sao lưu tệp gốc sang [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-qgl-tolerance-20260623-213400/print-macros.cfg).
+    *   Tăng dung sai hội tụ `retry_tolerance` trong `[quad_gantry_level]` của [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/Printer-Setup/print-macros.cfg#L94) lên **`0.0075` (7.5 microns)**. Đây là ngưỡng chính xác cực cao nhưng thực tế, giúp QGL dễ dàng hoàn tất mà không gặp cảnh báo lỗi giả.
+
+---
+
+## 7. Chỉ dẫn AI và Quản lý Repo
 *   **Bổ sung tệp `.cursorrules`:** Lưu trữ các nguyên tắc vận hành bắt buộc dành cho AI Assistant khi làm việc trên kho cấu hình này (quy tắc tạo file backup trong `extras/backups/`, đối chiếu thực tế và quản lý ngôn ngữ).
 *   **Bổ sung tệp `.gitignore`:** Loại trừ thư mục tải về `extras/Config download/` chứa các tệp nén lớn để giữ sạch kho lưu trữ Git.
 *   **Dịch `README.md`:** Cập nhật và dịch toàn bộ nội dung tệp hướng dẫn chính sang tiếng Anh hoàn chỉnh để đồng nhất hiển thị trên GitHub.
+
