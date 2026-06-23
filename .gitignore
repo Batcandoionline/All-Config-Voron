@@ -1,0 +1,6 @@
+# Local config downloads and zips
+extras/Config download/
+extras/backups/
+*.zip
+*.gcode
+*.log

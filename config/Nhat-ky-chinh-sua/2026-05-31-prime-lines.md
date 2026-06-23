@@ -1,21 +1,21 @@
-# 2026-05-31 - Multi-tool prime lines
+# 2026-05-31 - Prime line nhiều tool
 
-## Summary
+## Tóm tắt
 
-- Added `Printer-Setup/prime-lines.cfg`.
-- Included it from `printer.cfg`.
-- Updated `PRINT_START` to call `PRIME_LINES` instead of the single-tool `_PRIME_LINE`.
+- Thêm `Printer-Setup/prime-lines.cfg`.
+- Include file này từ `printer.cfg`.
+- Cập nhật `PRINT_START` để gọi `PRIME_LINES` thay cho `_PRIME_LINE` một tool.
 
-## Behavior
+## Cách hoạt động
 
-- Only tools with slicer-provided `Tn_TEMP` values are primed.
-- Non-initial tools are primed first.
-- The initial printing tool is primed last and remains mounted for layer 1.
-- Prime-line X length clamps to the current bed limits.
-- Prime-line Y spacing shrinks automatically if the configured tool count would exceed the bed depth.
+- Chỉ prime các tool có giá trị `Tn_TEMP` do slicer truyền vào.
+- Các tool không phải tool in ban đầu sẽ được prime trước.
+- Tool in ban đầu được prime sau cùng và giữ nguyên trên carriage để bắt đầu layer 1.
+- Chiều dài đường prime theo trục X được giới hạn theo kích thước bàn hiện tại.
+- Khoảng cách theo Y tự co lại nếu số lượng tool cấu hình có nguy cơ vượt chiều sâu bàn.
 
-## Thermal flow
+## Luồng nhiệt
 
-- T0 stays limited to `PROBE_TEMP` until Cartographer touch-home is complete.
-- Non-T0 tools used by the slicer are warmed to up to 170 C during startup.
-- `PRIME_LINES` waits each used tool to its slicer first-layer temperature immediately before purging that tool.
+- T0 được giữ ở `PROBE_TEMP` cho đến khi Cartographer touch-home hoàn tất.
+- Các tool không phải T0 nhưng có dùng trong file in được làm nóng sớm đến tối đa khoảng 170 độ C trong giai đoạn khởi động.
+- `PRIME_LINES` chờ từng tool đạt nhiệt độ first-layer của slicer ngay trước khi purge tool đó.

@@ -1,87 +1,89 @@
-# Change Log - 2026-05-16
+# Nhật ký chỉnh sửa - 2026-05-16
 
-## Current Goal
+## Mục tiêu tại thời điểm đó
 
-Pause the Axiscope Cartographer direction and return to the official StealthChanger/KTC-Easy workflow using the SexBolt/SexBall probe and `tools_calibrate`.
+Tạm dừng hướng dùng Axiscope Cartographer và quay lại workflow chính thức của StealthChanger/KTC-Easy với SexBolt/SexBall probe và `tools_calibrate`.
 
-## Backups Created
+## Backup đã tạo
 
-Backup before switching back to the official SexBolt workflow:
+Backup trước khi quay lại workflow SexBolt chính thức:
 
-`config/_backups/sexbolt-official-20260516-210825/`
+```text
+config/_backups/sexbolt-official-20260516-210825/
+```
 
-Backup for the later M1-STOP/PF4 wiring change:
+Backup cho thay đổi dây M1-STOP/PF4:
 
-`config/_backups/sexbolt-m1-stop-20260517-155108/`
+```text
+config/_backups/sexbolt-m1-stop-20260517-155108/
+```
 
-Backup before converting comments and guide text to English:
+Backup trước khi chuyển comment/hướng dẫn sang tiếng Anh:
 
-`config/_backups/english-comments-20260517-155728/`
+```text
+config/_backups/english-comments-20260517-155728/
+```
 
-Backed up files:
+Các file được backup:
 
 - `Printer-Setup/probe-mesh.cfg`
 - `toolchanger/toolchanger-config.cfg`
 - `Printer-Setup/calibration.cfg`
 
-## Current Configuration Changes
+## Thay đổi cấu hình chính
 
-- Commented out the whole `[axiscope]` block in `Printer-Setup/probe-mesh.cfg`.
-- Re-enabled `[tools_calibrate]` in `toolchanger/toolchanger-config.cfg`.
-- Kept the active SexBolt/SexBall probe settings:
-  - `pin: ^PF4` on M1-STOP of the Manta M8P V2.0
-  - `trigger_to_bottom_z: 0.9`
-  - `samples: 5`
-  - `samples_result: median`
-  - `probe: probe`
-- Updated the SexBolt/SexBall coordinates:
-  - `_CALIBRATION_SWITCH.variable_x: 257`
-  - `_CALIBRATION_SWITCH.variable_y: 327`
-  - `_CALIBRATION_SWITCH.variable_z: 60`
-  - `Z55` is the estimated contact/top-of-ball height and must not be used as the safe approach Z.
-- Updated `Printer-Setup/calibration.cfg` to document the `CALIBRATE_ALL_OFFSETS` XYZ-offset workflow.
-- Added public macro `CHECK_OFFSETS`, which calls `_CHECK_OFFSETS`, so the guide command exists.
-- Converted comments, descriptions, and guide text in the touched config files to English/ASCII where practical.
+- Comment toàn bộ block `[axiscope]` trong `Printer-Setup/probe-mesh.cfg`.
+- Bật lại `[tools_calibrate]` trong `toolchanger/toolchanger-config.cfg`.
+- Giữ cấu hình SexBolt/SexBall đang hoạt động:
+  - `pin: ^PF4` trên M1-STOP của Manta M8P V2.0.
+  - `trigger_to_bottom_z: 0.9`.
+  - `samples: 5`.
+  - `samples_result: median`.
+  - `probe: probe`.
+- Cập nhật tọa độ SexBolt/SexBall:
+  - `_CALIBRATION_SWITCH.variable_x: 257`.
+  - `_CALIBRATION_SWITCH.variable_y: 327`.
+  - `_CALIBRATION_SWITCH.variable_z: 60`.
+  - `Z55` chỉ là chiều cao tiếp xúc/top-of-ball ước lượng, không dùng làm Z tiếp cận an toàn.
+- Cập nhật `Printer-Setup/calibration.cfg` để ghi rõ workflow `CALIBRATE_ALL_OFFSETS` cho XYZ offset.
+- Thêm macro public `CHECK_OFFSETS`, gọi `_CHECK_OFFSETS`, để lệnh trong hướng dẫn có tồn tại.
 
-## Earlier Work Summary
+## Tóm tắt việc đã làm trước đó với Axiscope
 
-- Read and analyzed `Axiscope-cartographer-main/klippy/extras/axiscope.py`.
-- Found that the original Axiscope Cartographer path read the wrong touch-probe result and returned `2.000` instead of `cartographer.touch.last_z_result`.
-- Updated `axiscope.py` to read `cartographer.touch.last_z_result` and removed the incorrect fallback to current toolhead Z.
-- Tested with printer logs: Axiscope returned real contact Z values such as T1/T2/T3/T4 near `0.022`, `-0.114`, `-0.314`, and `-0.324`.
-- Compared those values with Ellis3DP first-layer offsets and concluded that Cartographer touch values do not directly match the offsets that produce a good printed first layer.
-- Created GitHub repo `https://github.com/Batcandoionline/Axiscope-cartographer` for the Axiscope Cartographer fork, including `README.md`, `FORK_INFO.md`, installer/uninstaller scripts, and Moonraker Update Manager configuration.
-- Then paused Axiscope work and returned to the official StealthChanger SexBolt/SexBall workflow.
+- Đọc và phân tích `Axiscope-cartographer-main/klippy/extras/axiscope.py`.
+- Phát hiện hướng Axiscope Cartographer ban đầu đọc sai kết quả touch probe và trả về `2.000` thay vì `cartographer.touch.last_z_result`.
+- Sửa `axiscope.py` để đọc `cartographer.touch.last_z_result` và bỏ fallback sai về Z hiện tại của toolhead.
+- Kiểm tra log máy in: Axiscope đã trả về giá trị contact Z thật, ví dụ T1/T2/T3/T4 quanh `0.022`, `-0.114`, `-0.314`, `-0.324`.
+- So sánh với offset first-layer kiểu Ellis3DP và kết luận giá trị touch của Cartographer không khớp trực tiếp với offset cho first layer đẹp.
+- Tạo repo fork Axiscope Cartographer: `https://github.com/Batcandoionline/Axiscope-cartographer`, gồm `README.md`, `FORK_INFO.md`, script install/uninstall và cấu hình Moonraker Update Manager.
+- Sau đó tạm dừng Axiscope và quay lại workflow SexBolt/SexBall chính thức.
 
-## Recommended Workflow After Loading This Config
+## Workflow khuyến nghị sau khi nạp cấu hình này
 
-1. Restart Klipper.
-2. Run:
+```gcode
+G28
+QUAD_GANTRY_LEVEL
+G28 Z
+CALIBRATE_ALL_OFFSETS
+```
 
-   ```gcode
-   G28
-   QUAD_GANTRY_LEVEL
-   G28 Z
-   CALIBRATE_ALL_OFFSETS
-   ```
+Sau khi macro lưu offset bằng `SAVE_TOOL_PARAMETER`, chạy:
 
-3. After the macro saves offsets with `SAVE_TOOL_PARAMETER`, run `FIRMWARE_RESTART`.
-4. Check results:
+```gcode
+FIRMWARE_RESTART
+CHECK_OFFSETS
+```
 
-   ```gcode
-   CHECK_OFFSETS
-   ```
+## Lưu ý
 
-## Notes
+- Không bật `[axiscope]` và `[tools_calibrate]` cùng lúc, vì cả hai dùng helper `probe_multi_axis`.
+- Nếu trạng thái SexBolt/SexBall sai, kiểm tra `^PF4` bằng `QUERY_ENDSTOPS`; nếu logic bị đảo thì đổi thành `^!PF4`.
+- Nếu Z offset từ SexBolt khác kết quả first-layer thực tế, dùng test first layer/Ellis làm xác nhận chất lượng in cuối cùng.
 
-- Do not enable `[axiscope]` and `[tools_calibrate]` at the same time because both use the `probe_multi_axis` helper.
-- If the SexBolt/SexBall state is wrong, check `^PF4` with `QUERY_ENDSTOPS`; if the logic is inverted, change it to `^!PF4`.
-- If SexBolt Z offsets differ from Ellis/first-layer results, use Ellis/first-layer testing as the final print-quality confirmation.
+## Cập nhật 2026-05-17 - chuyển dây SexBolt sang M1-STOP/PF4
 
-## 2026-05-17 Update - SexBolt Wiring Moved to M1-STOP/PF4
-
-- According to the Manta M8P V2.0 pinout: `M1-STOP = PF4`, `M3-STOP = PF2`, and `M5-STOP = PF0`.
-- Kept `stepper_x.endstop_pin: PF0` because that is M5-STOP and does not conflict with M1-STOP.
-- Changed `[tools_calibrate] pin` from `^PF2` to `^PF4`.
-- Changed the `CALIBRATE_MOVE_OVER_PROBE` / `_CALIBRATION_SWITCH` ball center to `X257 Y327`.
-- Kept safe approach Z at `60`; `Z55` is only the estimated ball contact/top height used when re-measuring `trigger_to_bottom_z`.
+- Theo pinout Manta M8P V2.0: `M1-STOP = PF4`, `M3-STOP = PF2`, `M5-STOP = PF0`.
+- Giữ `stepper_x.endstop_pin: PF0` vì đây là M5-STOP và không xung đột với M1-STOP.
+- Đổi `[tools_calibrate] pin` từ `^PF2` sang `^PF4`.
+- Đổi tâm bi của `CALIBRATE_MOVE_OVER_PROBE` / `_CALIBRATION_SWITCH` thành `X257 Y327`.
+- Giữ Z tiếp cận an toàn ở `60`; `Z55` chỉ là chiều cao tiếp xúc ước lượng khi đo lại `trigger_to_bottom_z`.

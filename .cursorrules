@@ -1,0 +1,17 @@
+# Nguyên tắc phát triển và vận hành cho AI Assistant
+
+Mỗi khi bắt đầu một phiên làm việc hoặc thực hiện bất kỳ chỉnh sửa nào trong kho lưu trữ cấu hình máy in Voron này, bạn phải tuân thủ nghiêm ngặt các quy tắc dưới đây:
+
+## 1. Quy tắc sao lưu bắt buộc (Backup Rule)
+- **Trước khi chỉnh sửa bất kỳ tệp cấu hình nào:** Bạn bắt buộc phải tạo một bản sao lưu trạng thái của file/thư mục đó trước khi sửa.
+- **Nơi lưu trữ:** Lưu vào thư mục `extras/backups/pre-[tên_chức_năng]-[năm_tháng_ngày]-[giờ_phút_giây]/`.
+- **Mục đích:** Đảm bảo hệ thống có thể hoàn tác (undo) ngay lập tức nếu có bất kỳ vấn đề gì phát sinh sau khi tải lên máy in.
+
+## 2. Đối chiếu thực tế và suy nghĩ kỹ (Validation & Safety Rule)
+- Không được vội vàng sửa đổi code.
+- Trước khi chỉnh sửa, hãy nghiên cứu kỹ lưỡng cách hệ thống StealthChanger/KTC-Easy/Cartographer hoạt động và đối chiếu trực tiếp với các tệp cấu hình hiện tại trong dự án để hiểu rõ tác động.
+- Tránh thay đổi các tham số cơ khí quan trọng (tọa độ dock, tốc độ giới hạn cơ học) trừ khi có yêu cầu cụ thể từ người dùng.
+
+## 3. Quản lý thư mục sạch sẽ (Clean Repository Rule)
+- Chỉ giữ các tệp cấu hình thực tế hoạt động (`.cfg`, `.conf`) trong thư mục `config/`.
+- Không đưa các tệp log, ảnh ShakeTune (`ShakeTune_results`), hoặc các tệp cấu hình backup tạm thời (ví dụ: `printer-*.cfg`) vào thư mục `config/` chính để tránh làm rác kho lưu trữ GitHub. Các kết quả đo đạc chỉ lưu ở thư mục `extras/`.
