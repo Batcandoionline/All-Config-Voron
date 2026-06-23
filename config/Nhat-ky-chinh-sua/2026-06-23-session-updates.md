@@ -30,13 +30,13 @@ Tổng hợp các chỉnh sửa lớn đã áp dụng trong phiên làm việc n
 
 ---
 
-## 4. Tối ưu chất lượng và FPS của Webcam (Chuyển sang camera-streamer)
-*   **Chẩn đoán lỗi:** Cờ `v4l2ctl` trước đó thiết lập định dạng video không đúng cú pháp Crowsnest, khiến hệ thống bỏ qua và fallback về định dạng raw YUYV. Điều này làm quá tải băng thông USB 2.0 (chỉ đạt ~2-5 FPS) và tốn tài nguyên CPU CM4 để encode. Ngoài ra, MJPEG stream qua ustreamer tiêu tốn quá nhiều băng thông mạng (15-30 Mbps) gây nghẽn và rớt khung hình trên trình duyệt.
+## 4. Tối ưu chất lượng và FPS của Webcam (Chuyển sang camera-streamer & Ép MJPEG)
+*   **Chẩn đoán lỗi:** Dựa trên thông số nhà sản xuất cung cấp tại tệp [1782223994046_temp.jpg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/pictures/1782223994046_temp.jpg), camera MF-500 chỉ hỗ trợ tối đa 1 FPS (ở 2K) hoặc 5 FPS (ở 1080p) khi chạy định dạng thô YUY2 do băng thông USB 2.0. Để đạt được **30 FPS**, camera bắt buộc phải truyền tín hiệu ở định dạng **MJPEG**.
 *   **Thay đổi cấu hình:** 
-    *   Sao lưu cấu hình sang [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-webcam-streamer-20260623-205200/crowsnest.conf).
-    *   Chuyển cấu hình `mode` trong [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/crowsnest.conf) từ `ustreamer` sang `camera-streamer`.
-    *   Tận dụng giao thức **WebRTC (nén H.264)** bằng phần cứng của Raspberry Pi CM4 để giảm băng thông mạng xuống chỉ còn 1-2 Mbps, đem lại FPS tối đa mượt mà và độ trễ dưới 100ms.
-    *   Vô hiệu hóa dòng `v4l2ctl` lỗi cú pháp vì `camera-streamer` tự động thương lượng định dạng/độ phân giải phù hợp nhất với camera.
+    *   Sao lưu cấu hình sang [crowsnest.conf (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-webcam-mjpg-30fps-20260623-211500/crowsnest.conf).
+    *   Thiết lập độ phân giải lên **`1920x1080` (Full HD)** trong [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/crowsnest.conf) để nâng cao chất lượng ảnh.
+    *   Sử dụng cờ cấu hình `custom_flags: --camera-format=MJPEG` trong chế độ `camera-streamer` nhằm ép phần cứng camera xuất ảnh chuẩn MJPEG 30 FPS trước khi truyền tải qua luồng nén WebRTC tốc độ cao.
+
 
 
 ---
