@@ -30,12 +30,14 @@ Tổng hợp các chỉnh sửa lớn đã áp dụng trong phiên làm việc n
 
 ---
 
-## 4. Tối ưu chất lượng và FPS của Webcam (Chuyển sang camera-streamer & Ép MJPEG)
-*   **Chẩn đoán lỗi:** Dựa trên thông số nhà sản xuất cung cấp tại tệp [1782223994046_temp.jpg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/pictures/1782223994046_temp.jpg), camera MF-500 chỉ hỗ trợ tối đa 1 FPS (ở 2K) hoặc 5 FPS (ở 1080p) khi chạy định dạng thô YUY2 do băng thông USB 2.0. Để đạt được **30 FPS**, camera bắt buộc phải truyền tín hiệu ở định dạng **MJPEG**.
+## 4. Tối ưu chất lượng và FPS của Webcam (Chuyển sang camera-streamer & Cấu hình 2K MJPEG)
+*   **Chẩn đoán lỗi:** Dựa trên thông số nhà sản xuất cung cấp tại tệp [1782223994046_temp.jpg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/pictures/1782223994046_temp.jpg) và tệp [1782224117773_temp.jpg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/pictures/1782224117773_temp.jpg), camera MF-500 chỉ hỗ trợ tối đa 1 FPS (ở 2K) khi chạy định dạng YUY2 do băng thông USB 2.0. Để đạt được **30 FPS**, camera bắt buộc phải truyền tín hiệu ở định dạng **MJPEG**. Đồng thời, camera hỗ trợ tính năng khử nhấp nháy đèn (anti-flicker) ở tần số 50Hz/60Hz.
 *   **Thay đổi cấu hình:** 
-    *   Sao lưu cấu hình sang [crowsnest.conf (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-webcam-mjpg-30fps-20260623-211500/crowsnest.conf).
-    *   Thiết lập độ phân giải lên **`1920x1080` (Full HD)** trong [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/crowsnest.conf) để nâng cao chất lượng ảnh.
-    *   Sử dụng cờ cấu hình `custom_flags: --camera-format=MJPEG` trong chế độ `camera-streamer` nhằm ép phần cứng camera xuất ảnh chuẩn MJPEG 30 FPS trước khi truyền tải qua luồng nén WebRTC tốc độ cao.
+    *   Sao lưu cấu hình sang [crowsnest.conf (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-webcam-exact-2k-20260623-211700/crowsnest.conf).
+    *   Thiết lập độ phân giải gốc của nhà sản xuất lên **`2560x1400` (độ phân giải 2K thực tế)** trong [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/crowsnest.conf).
+    *   Sử dụng cờ cấu hình `custom_flags: --camera-format=MJPEG` trong chế độ `camera-streamer` nhằm ép phần cứng camera xuất ảnh chuẩn MJPEG 30 FPS.
+    *   Cấu hình `v4l2ctl: power_line_frequency=1` (thiết lập tần số khử nháy là 50Hz cho phù hợp với điện lưới Việt Nam).
+
 
 
 
