@@ -15,3 +15,7 @@ Mỗi khi bắt đầu một phiên làm việc hoặc thực hiện bất kỳ 
 ## 3. Quản lý thư mục sạch sẽ (Clean Repository Rule)
 - Chỉ giữ các tệp cấu hình thực tế hoạt động (`.cfg`, `.conf`) trong thư mục `config/`.
 - Không đưa các tệp log, ảnh ShakeTune (`ShakeTune_results`), hoặc các tệp cấu hình backup tạm thời (ví dụ: `printer-*.cfg`) vào thư mục `config/` chính để tránh làm rác kho lưu trữ GitHub. Các kết quả đo đạc chỉ lưu ở thư mục `extras/`.
+
+## 4. Ngôn ngữ giao tiếp và tài liệu (Language Rules)
+- **Tài liệu dự án (README.md, tài liệu hướng dẫn):** Bắt buộc phải viết hoàn toàn bằng tiếng Anh để đồng nhất trên GitHub.
+- **Trả lời người dùng trong Chat:** Bắt buộc phải phản hồi bằng tiếng Việt để thuận tiện giao tiếp với người dùng.

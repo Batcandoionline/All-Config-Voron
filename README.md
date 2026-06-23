@@ -1,61 +1,61 @@
-# Cấu hình Voron 2.4 StealthChanger 5-Tool
+# Voron 2.4 StealthChanger 5-Tool Configuration
 
-Bộ cấu hình Klipper/Moonraker tối ưu cho hệ thống máy in **Voron 2.4 StealthChanger** trang bị 5 đầu phun độc lập.
+Optimized Klipper/Moonraker configuration payload for a **Voron 2.4 StealthChanger** printer equipped with 5 independent toolheads.
 
-## 🛠️ Phần cứng hệ thống
-*   **Bo mạch chính:** BTT Manta M8P V2.0 + CM4.
-*   **Mạch đầu phun:** 5x EBB36 V1.2 (CAN bus).
-*   **Cảm biến bàn in (Probe):** Cartographer V3 CAN bus.
-*   **Cân chỉnh lệch đầu in:** Cảm biến cơ khí SexBolt/SexBall (chân `PF4`/M1-STOP).
-*   **Đầu phun & đùn:** Hotend TZ V6 2.0 + WW BMG Extruder.
-
----
-
-## 📂 Cấu trúc Repository
-*   `config/`: Thư mục cấu hình hoạt động chính. Sẽ được đồng bộ về `~/printer_data/config` trên máy in.
-*   `extras/`: Các tài liệu hướng dẫn, hình ảnh, file G-code mẫu và file backup (không copy lên máy in).
+## 🛠️ System Hardware
+*   **Main Controller:** BTT Manta M8P V2.0 + Raspberry Pi CM4
+*   **Toolhead Controllers:** 5x EBB36 V1.2 (CAN bus)
+*   **Bed Probe:** Cartographer V3 CAN bus
+*   **Toolhead Calibration:** SexBolt/SexBall mechanical probe (pin `PF4`/M1-STOP)
+*   **Hotend & Extruder:** TZ V6 2.0 hotends + WW BMG extruders
 
 ---
 
-## 🚀 Hướng dẫn Cài đặt & Cập nhật
+## 📂 Repository Layout
+*   `config/`: Main active configuration payload. This is synchronized to `~/printer_data/config` on the printer.
+*   `extras/`: Reference manuals, images, sample G-codes, and local backups (not copied to the printer).
+
+---
+
+## 🚀 Installation & Update Instructions
 
 > [!WARNING]
-> Không sao chép trực tiếp thư mục gốc của repository vào `~/printer_data/config`. Hãy sử dụng các script cài đặt/cập nhật dưới đây để đảm bảo an toàn.
+> Do not copy the repository root directly into `~/printer_data/config`. Use the scripts below to safely install or update configurations.
 
-### 1. Cài đặt lần đầu (SSH vào máy in)
+### 1. First-Time Installation (SSH to the printer)
 ```bash
 cd /tmp
 git clone git@github.com:Batcandoionline/All-Config-Voron.git
 cd All-Config-Voron
 bash config/scripts/install.sh
 ```
-*(Sau khi chạy xong, mở giao diện Mainsail/Fluidd và thực hiện `FIRMWARE_RESTART`)*
+*(After the script completes, open the Mainsail/Fluidd web interface and run `FIRMWARE_RESTART`)*
 
-### 2. Cập nhật cấu hình (Sau khi sửa đổi trên GitHub)
+### 2. Updating Configurations (After pushing changes to GitHub)
 ```bash
 cd ~/printer_data/config
 bash scripts/update.sh
 ```
-*(Script sẽ tự động tạo bản sao lưu tại `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS` trước khi kéo mã nguồn mới về)*
+*(The update script automatically creates a full backup under `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS` before pulling and applying the new configuration)*
 
 ---
 
-## 📐 Quy trình Cân chỉnh nhanh (SexBolt / SexBall)
+## 📐 Quick Calibration Workflow (SexBolt / SexBall)
 
-Để thiết lập lại sai số XYZ (offsets) giữa các đầu phun khi có thay đổi cơ khí:
+To calibrate XYZ offsets for all tools relative to T0 after any mechanical adjustment:
 
-1.  **Làm sạch đầu phun:** Lau sạch đầu in T0 và các đầu phun khác (tránh để bám nhựa thừa làm lệch cảm biến).
-2.  **Homing & Cân bằng Gantry:**
+1.  **Clean the Nozzles:** Thoroughly clean T0 and all other tool nozzles (plastic residue will corrupt the measurements).
+2.  **Home & Level the Gantry:**
     ```gcode
     G28
     QUAD_GANTRY_LEVEL
     ```
-3.  **Chạy đo offset tự động:**
+3.  **Run Auto Calibration:**
     ```gcode
     CALIBRATE_ALL_OFFSETS
     ```
-    *(Hệ thống sẽ lần lượt đo T0, T1, T2, T3, T4 và tự động lưu kết quả)*
-4.  **Khởi động lại & Kiểm tra:**
+    *(The macro will probe T0 through T4 sequentially and automatically save the offsets)*
+4.  **Restart & Verify:**
     ```gcode
     FIRMWARE_RESTART
     CHECK_OFFSETS
@@ -63,6 +63,6 @@ bash scripts/update.sh
 
 ---
 
-## 🛡️ Nguyên tắc Vận hành & Phát triển (Dành cho AI/Người sửa code)
-*   **Bắt buộc sao lưu:** Luôn tạo bản backup trong `extras/backups/pre-...` trước khi thay đổi bất kỳ tệp cấu hình nào.
-*   **Giữ sạch Git:** Không đẩy file log, dữ liệu quét rung `ShakeTune_results`, hay file cấu hình tạm `printer-*.cfg` lên GitHub.
+## 🛡️ Operational & Development Guidelines (For AI & Developers)
+*   **Mandatory Backups:** Always create a backup directory under `extras/backups/pre-...` before modifying any configuration files.
+*   **Keep Git Clean:** Do not commit logs, ShakeTune graphs (`ShakeTune_results`), or temporary Klipper backups (`printer-*.cfg`) to the main `config/` directory on GitHub.
