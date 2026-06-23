@@ -30,11 +30,14 @@ Tổng hợp các chỉnh sửa lớn đã áp dụng trong phiên làm việc n
 
 ---
 
-## 4. Tối ưu chất lượng và FPS của Webcam
-*   **Thay đổi cấu hình:** Cập nhật tệp `crowsnest.conf` để tăng chất lượng hình ảnh và độ mượt của camera:
-    *   Nâng độ phân giải từ `800x600` lên **`1280x720`** (HD 720p 16:9).
-    *   Nâng tốc độ khung hình tối đa từ `20` lên **`30` FPS**.
-    *   Cập nhật cờ `v4l2ctl` tương ứng để ép camera truyền trực tiếp định dạng nén MJPEG từ phần cứng, giảm tối đa độ trễ và tải CPU của Raspberry Pi CM4.
+## 4. Tối ưu chất lượng và FPS của Webcam (Chuyển sang camera-streamer)
+*   **Chẩn đoán lỗi:** Cờ `v4l2ctl` trước đó thiết lập định dạng video không đúng cú pháp Crowsnest, khiến hệ thống bỏ qua và fallback về định dạng raw YUYV. Điều này làm quá tải băng thông USB 2.0 (chỉ đạt ~2-5 FPS) và tốn tài nguyên CPU CM4 để encode. Ngoài ra, MJPEG stream qua ustreamer tiêu tốn quá nhiều băng thông mạng (15-30 Mbps) gây nghẽn và rớt khung hình trên trình duyệt.
+*   **Thay đổi cấu hình:** 
+    *   Sao lưu cấu hình sang [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-webcam-streamer-20260623-205200/crowsnest.conf).
+    *   Chuyển cấu hình `mode` trong [crowsnest.conf](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/crowsnest.conf) từ `ustreamer` sang `camera-streamer`.
+    *   Tận dụng giao thức **WebRTC (nén H.264)** bằng phần cứng của Raspberry Pi CM4 để giảm băng thông mạng xuống chỉ còn 1-2 Mbps, đem lại FPS tối đa mượt mà và độ trễ dưới 100ms.
+    *   Vô hiệu hóa dòng `v4l2ctl` lỗi cú pháp vì `camera-streamer` tự động thương lượng định dạng/độ phân giải phù hợp nhất với camera.
+
 
 ---
 
