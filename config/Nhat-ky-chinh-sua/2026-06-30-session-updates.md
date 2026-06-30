@@ -4,6 +4,7 @@
 * Cập nhật gcode_z_offset cho các đầu in T1, T2, T3, T4 và ngưỡng Cartographer touch model threshold theo thông số cấu hình mới từ người dùng.
 * Cập nhật lại các thông số hiệu chuẩn (coefficients, mesh points, touch threshold) mới của Cartographer sau khi thực hiện chạy lại lệnh hiệu chuẩn `CARTOGRAPHER_TOUCH_CALIBRATE`.
 * Nâng cao tính bảo mật khi mở public kho lưu trữ lên GitHub.
+* Tối ưu hóa tọa độ tham chiếu Bed Mesh (`zero_reference_position`) để khớp với vị trí đo Z homing.
 
 ---
 
@@ -30,3 +31,8 @@
     *   Cập nhật file [.gitignore ở thư mục gốc](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/.gitignore) và [config/.gitignore](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/.gitignore).
     *   Thêm các mẫu chặn tự động bao gồm: `*.secrets`, `moonraker.secrets`, và `wpa_supplicant.conf` để ngăn chặn các dữ liệu nhạy cảm cá nhân bị push lên GitHub trong tương lai.
 
+## 4. Tối ưu hóa tọa độ zero_reference_position cho Bed Mesh (Phiên 3)
+*   **Chi tiết thay đổi:**
+    *   Sao lưu cấu hình trước khi chỉnh sửa sang [probe-mesh.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-cartographer-zero-ref-20260630-182216/probe-mesh.cfg).
+    *   Điều chỉnh `zero_reference_position` trong [probe-mesh.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/Printer-Setup/probe-mesh.cfg) từ `170, 203` thành **`174, 168`**.
+    *   **Lý do:** Klipper quy định `zero_reference_position` là tọa độ của *nozzle*, không phải của *probe*. Bàn in Voron 350x350 có tâm vật lý là X=174, Y=168. Khi nozzle ở `174, 168` (vị trí đo Z homing), probe Cartographer (có Y offset = 35) thực tế đo Z0 tại điểm Y vật lý là `168 + 35 = 203`. Việc cấu hình lại này giúp điểm đo Z0 của Bed Mesh trùng khớp hoàn toàn với điểm homing Z, triệt tiêu sai số Z-offset do mặt bàn in không phẳng tuyệt đối gây ra.
