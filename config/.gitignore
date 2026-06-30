@@ -16,3 +16,9 @@ _backups/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Bảo mật thông tin nhạy cảm
+*.secrets
+moonraker.secrets
+wpa_supplicant.conf
+

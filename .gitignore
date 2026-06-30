@@ -4,3 +4,8 @@ extras/backups/
 *.zip
 *.gcode
 *.log
+
+# Bảo mật thông tin nhạy cảm
+*.secrets
+moonraker.secrets
+wpa_supplicant.conf
