@@ -5,6 +5,7 @@
 * Cập nhật lại các thông số hiệu chuẩn (coefficients, mesh points, touch threshold) mới của Cartographer sau khi thực hiện chạy lại lệnh hiệu chuẩn `CARTOGRAPHER_TOUCH_CALIBRATE`.
 * Nâng cao tính bảo mật khi mở public kho lưu trữ lên GitHub.
 * Tối ưu hóa tọa độ tham chiếu Bed Mesh (`zero_reference_position`) để khớp với vị trí đo Z homing.
+* Tinh chỉnh Z-offset cho đầu in T3 (`[tool T3]`) dựa trên kết quả in thực tế (hạ thêm 0.08mm).
 
 ---
 
@@ -36,3 +37,10 @@
     *   Sao lưu cấu hình trước khi chỉnh sửa sang [probe-mesh.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-cartographer-zero-ref-20260630-182216/probe-mesh.cfg).
     *   Điều chỉnh `zero_reference_position` trong [probe-mesh.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/Printer-Setup/probe-mesh.cfg) từ `170, 203` thành **`174, 168`**.
     *   **Lý do:** Klipper quy định `zero_reference_position` là tọa độ của *nozzle*, không phải của *probe*. Bàn in Voron 350x350 có tâm vật lý là X=174, Y=168. Khi nozzle ở `174, 168` (vị trí đo Z homing), probe Cartographer (có Y offset = 35) thực tế đo Z0 tại điểm Y vật lý là `168 + 35 = 203`. Việc cấu hình lại này giúp điểm đo Z0 của Bed Mesh trùng khớp hoàn toàn với điểm homing Z, triệt tiêu sai số Z-offset do mặt bàn in không phẳng tuyệt đối gây ra.
+
+## 5. Tinh chỉnh Z-offset cho đầu in T3 dựa trên thực tế (Phiên 4)
+*   **Chi tiết thay đổi:**
+    *   Sao lưu cấu hình trước khi sửa sang [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/extras/backups/pre-t3-z-offset-tune-20260630-183036/printer.cfg).
+    *   Cập nhật `gcode_z_offset` của `[tool T3]` trong [printer.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/All-Config-Voron-work/config/printer.cfg) từ `-0.1780000000428268` thành **`-0.2580000000428268`** (trừ thêm `0.08mm`).
+    *   **Lý do:** Khi thử nghiệm in thực tế, đầu phun T3 bị hơi cao so với giường in, cần phải hạ thêm `0.08mm` (thao tác trực tiếp từ màn hình HDMI) để lớp in đầu tiên bám dính đẹp.
+
