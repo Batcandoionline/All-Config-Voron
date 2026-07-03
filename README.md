@@ -1,73 +1,101 @@
 # Voron 2.4 StealthChanger (5-Tool)
 
-A production-ready Klipper/Moonraker configuration for a **Voron 2.4 350mm** printer equipped with a **5-Tool StealthChanger** system.
+Production-ready Klipper/Moonraker configuration for a **Voron 2.4 350mm** running a **5-head StealthChanger** system.
 
 ---
 
 ## 🛠️ Hardware Stack
 
-| Component | Specification | MCU / Pin |
+| Component | Specification | Interface |
 | :--- | :--- | :--- |
-| **Mainboard** | BTT Manta M8P V2.0 + CB1/CM4 | `mcu` (CAN Bridge) |
-| **Toolheads** | 5x StealthChanger Toolheads (T0–T4) | 5x EBB36 V1.2 via CAN |
-| **Bed Probe & Z Homing** | Cartographer V3 (Touch/Scan mode) | `cartographer` via CAN |
-| **Z-Offset Calibrator** | SexBolt/SexBall (Temporary mount during calibration) | Pin `PF4` (M1-STOP) |
-| **Extruders** | WW BMG Extruders | EBB Steppers |
-| **Hotends** | TZ V6 2.0 Hotends | EBB Heaters |
+| **Printer** | Voron 2.4 350mm — CoreXY | — |
+| **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` |
+| **Toolheads** | 5× StealthChanger Toolhead (T0–T4) | EBB36 V1.2 via CAN bus |
+| **Hotends** | TZ V6 2.0 (×5) | EBB36 Heater |
+| **Extruders** | WW BMG (×5) | EBB36 TMC2209 |
+| **Bed Probe / Z Homing** | Cartographer V3 (Touch + Scan mode) | CAN bus `cartographer` |
+| **Z-Offset Calibrator** | SexBolt / SexBall — **Temporary mount only during `CALIBRATE_ALL_OFFSETS`** | Manta M8P `PF4` (M1-STOP) |
+| **Accelerometer** | ADXL345 on each EBB36 + on Cartographer V3 | SPI |
+| **Chamber Sensor** | Generic 3950 NTC | Manta M8P `PB1` (THB) |
+| **Screen** | KlipperScreen (language: vi) | — |
+| **Slicer** | OrcaSlicer (Multi-Color / Multi-Tool) | — |
+
+> [!NOTE]
+> **Cartographer V3** handles all Z homing and bed leveling during printing (Touch/Scan).
+> **SexBolt/SexBall** is a *calibration-only* reference probe — inserted temporarily into the M1-STOP port when running `CALIBRATE_ALL_OFFSETS` to measure XYZ offsets between tools. It is **not present during normal printing**.
 
 ---
 
 ## 📂 Repository Layout
 
-*   [`config/`](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config) — Active Klipper config (synced to printer's `~/printer_data/config`).
-*   [`extras/`](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras) — Calibration logs, local backups, and helper scripts.
+```
+Voron 5 Tool/
+├── config/                   ← Active Klipper config (synced to ~/printer_data/config)
+│   ├── printer.cfg           ← Main config (includes, printer kinematics, SAVE_CONFIG block)
+│   ├── Printer-Setup/        ← Hardware, probe, fans, input shaper, macros
+│   ├── toolchanger/          ← StealthChanger KTC-Easy config & tool definitions (T0–T4)
+│   │   ├── tools/            ← T0.cfg … T4.cfg (EBB36 extruder, fans, offsets per tool)
+│   │   └── readonly-configs/ ← Auto-managed by klipper-toolchanger-easy (DO NOT EDIT)
+│   └── scripts/              ← install.sh, update.sh, cleanup scripts
+└── extras/
+    ├── backups/              ← Local config backups (gitignored)
+    ├── Nhat-ky-chinh-sua/    ← Daily change logs (Vietnamese)
+    └── logs/                 ← klippy.log / moonraker.log (manual copy for analysis)
+```
 
 ---
 
 ## 🚀 Setup & Updates
 
 > [!WARNING]
-> Do not copy files directly. Use the scripts below to prevent configuration loss.
+> Do not copy files directly into `~/printer_data/config`. Use the scripts below.
 
-### 1. Fresh Install (SSH to Printer)
+### First Install (SSH to Printer)
 ```bash
 cd /tmp && git clone git@github.com:Batcandoionline/All-Config-Voron.git
 cd All-Config-Voron && bash config/scripts/install.sh
 ```
 *Run `FIRMWARE_RESTART` in Mainsail after installation.*
 
-### 2. Update Configuration (Pull changes from GitHub)
+### Pull Updates (After GitHub Push)
 ```bash
 cd ~/printer_data/config && bash scripts/update.sh
 ```
-*Creates an automatic backup under `~/printer_data/config_backups/` before pulling.*
+*Creates a timestamped backup under `~/printer_data/config_backups/` before applying.*
 
 ---
 
-## 📐 Quick SexBolt Calibration Workflow
+## 📐 Calibration Workflows
 
-Follow this to calibrate XYZ offsets for all tools relative to T0:
+### A. Z-Offset for All Tools (SexBolt / SexBall)
+Run after any mechanical change (hotend swap, dock adjustment):
 
-1. **Prep:** Ensure all tool nozzles are perfectly clean (plastic residue corrupts offsets).
-2. **Home & Align:**
-   ```gcode
-   G28
-   QUAD_GANTRY_LEVEL
-   ```
-3. **Calibrate:**
-   ```gcode
-   CALIBRATE_ALL_OFFSETS
-   ```
-   *(Macro probes T0–T4 sequentially and automatically saves offsets to `printer.cfg`)*
-4. **Apply & Verify:**
-   ```gcode
-   FIRMWARE_RESTART
-   CHECK_OFFSETS
-   ```
+> [!IMPORTANT]
+> **Insert the SexBolt/SexBall into the M1-STOP port** before starting. Remove it after calibration completes.
+
+```gcode
+G28
+QUAD_GANTRY_LEVEL
+CALIBRATE_ALL_OFFSETS    ; probes T0–T4 sequentially, saves XYZ offsets to printer.cfg
+FIRMWARE_RESTART
+CHECK_OFFSETS            ; verify saved values
+```
+
+### B. First-Layer Fine-Tuning (Per Tool)
+Adjust `gcode_z_offset` for any individual tool directly from KlipperScreen (Live Adjust Z) during a first-layer test print. The value is persisted to the `#*# [tool Tn]` block in `printer.cfg` by `SAVE_CONFIG`.
+
+### C. Bed Mesh
+```gcode
+G28
+QUAD_GANTRY_LEVEL
+BED_MESH_CALIBRATE       ; runs adaptive mesh (55×55 probe points, adaptive margin 10mm)
+```
 
 ---
 
-## 🛡️ Dev Guidelines (For AI & Maintainers)
-- **Always Backup:** Run a local backup to `extras/backups/pre-[task]-[date]/` before modifying configurations.
-- **Git Hygiene:** Do not commit logs, ShakeTune results, or temporary Klipper backups.
-- **Rules Entry:** See [`.agents/AGENTS.md`](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/.agents/AGENTS.md) for full assistant rules.
+## 🛡️ Dev & AI Guidelines
+
+- **Backup first:** Always create `extras/backups/pre-[task]-[YYYYMMDD]-[HHmmss]/` before modifying any `.cfg` file.
+- **Do not touch `readonly-configs/`:** Files there are auto-managed by the KTC-Easy plugin.
+- **Git hygiene:** Do not commit `extras/logs/`, `extras/backups/`, or `printer-*.cfg` temp files.
+- **Rules entry:** See [`.agents/AGENTS.md`](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/.agents/AGENTS.md) for full AI assistant rules.

@@ -55,3 +55,30 @@ Tài liệu README cũ trình bày dài dòng, chưa tối ưu định dạng v�
 ### Kết quả
 Tài liệu README mới ngắn gọn và súc tích hơn, hiển thị đẹp mắt trên giao diện GitHub.
 
+---
+
+## 3. Viết lại README.md hoàn chỉnh dựa trên cấu hình thực tế
+
+### Mục tiêu
+Viết lại README.md bằng cách đọc toàn bộ file cấu hình thực tế (`hardware.cfg`, `probe-mesh.cfg`, `toolchanger-config.cfg`, `T0.cfg`–`T4.cfg`, `printer.cfg`, `calibration.cfg`, `print-macros.cfg`) để đảm bảo mọi chi tiết phần cứng, quy trình hiệu chuẩn và cấu trúc thư mục là hoàn toàn chính xác.
+
+### File đã sửa đổi
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Viết lại toàn bộ dựa trên cấu hình thực tế
+
+### Chi tiết thay đổi
+- Cập nhật bảng phần cứng: thêm đầy đủ tất cả thành phần thực tế (5× EBB36, 5× TZ V6 2.0, 5× WW BMG, ADXL345 trên từng EBB36 và Cartographer, chamber sensor PB1, KlipperScreen tiếng Việt).
+- Làm rõ vai trò Cartographer V3 (Z homing + bed mesh khi in) và SexBolt/SexBall (probe tạm chỉ dùng khi calib CALIBRATE_ALL_OFFSETS, gắn vào M1-STOP PF4).
+- Bổ sung cảnh báo nổi bật (NOTE alert) về vai trò Cartographer vs SexBolt.
+- Cập nhật cấu trúc thư mục chính xác phản ánh layout thực tế của repository.
+- Chia nhỏ phần calibration thành 3 workflow riêng: A. Z-Offset (SexBolt), B. First-Layer Fine-Tuning (KlipperScreen), C. Bed Mesh.
+- Cập nhật quy tắc Dev/AI bổ sung cảnh báo về `readonly-configs/`.
+
+### Lý do
+README trước đó vẫn còn một số thông tin không chính xác hoặc thiếu (như mô tả vai trò SexBolt) và chưa phản ánh đầy đủ các thành phần phần cứng thực tế được cấu hình trong file.
+
+### Kiểm tra
+- Định dạng Markdown: Đạt chuẩn GFM với bảng, code block và alert box.
+
+### Kết quả
+README phản ánh chính xác 100% cấu hình phần cứng và quy trình vận hành thực tế của máy in.
+
