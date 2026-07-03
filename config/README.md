@@ -1,18 +1,55 @@
-# Voron Printer Config
+# Config — Voron 2.4 StealthChanger (5-Tool)
 
-Klipper configuration for a Voron 2.4 StealthChanger 5-tool setup.
+This directory is the **active Klipper configuration payload**. Contents are synced to `~/printer_data/config` on the printer via the install/update scripts.
 
-This directory is the machine config payload. Its contents should be copied to:
+> [!WARNING]
+> Do not copy the repository root directly into `~/printer_data/config`. Use the scripts in `scripts/` below.
 
-```bash
-~/printer_data/config
+---
+
+## 📂 Directory Layout
+
+```
+config/
+├── printer.cfg                   ← Main entry point (includes all sub-configs, SAVE_CONFIG block)
+├── KlipperScreen.conf            ← KlipperScreen settings (language: vi, screen blanking)
+├── moonraker.conf                ← Moonraker API server config
+├── crowsnest.conf                ← Camera streaming config
+├── mainsail.cfg                  ← Mainsail web interface macros
+│
+├── Printer-Setup/
+│   ├── hardware.cfg              ← MCU, steppers X/Y/Z×4, bed heater, chamber sensor
+│   ├── probe-mesh.cfg            ← Cartographer V3 config, bed mesh (55×55), ADXL345
+│   ├── calibration.cfg           ← Calibration temperatures, SexBolt workflow helpers
+│   ├── fans-leds.cfg             ← Controller/CM4/enclosure fans, toolhead NeoPixels, LED states
+│   ├── input-shaper.cfg          ← Input shaper defaults (per-tool overrides in T0–T4.cfg)
+│   ├── nozzle-clean.cfg          ← Nozzle cleaning macros
+│   ├── prime-lines.cfg           ← Prime line macros per tool
+│   ├── print-macros.cfg          ← PRINT_START / PRINT_END, G32, idle timeout, exclude object
+│   ├── crash_detection_override.cfg  ← Tool crash detection (Cartographer + SexBall)
+│   └── tool_crash_cartographer.cfg   ← Cartographer-specific crash detection integration
+│
+├── toolchanger/
+│   ├── toolchanger-config.cfg    ← StealthChanger motion paths, SexBolt position, [tools_calibrate]
+│   ├── tools/
+│   │   ├── T0.cfg                ← EBB36 V1.2 (EBB0), extruder, fans, dock coords, input shaper
+│   │   ├── T1.cfg                ← EBB36 V1.2 (EBB1)
+│   │   ├── T2.cfg                ← EBB36 V1.2 (EBB2)
+│   │   ├── T3.cfg                ← EBB36 V1.2 (EBB3)
+│   │   └── T4.cfg                ← EBB36 V1.2 (EBB4)
+│   └── readonly-configs/         ← Auto-managed by klipper-toolchanger-easy. DO NOT EDIT.
+│
+└── scripts/
+    ├── install.sh                ← First-time install
+    ├── update.sh                 ← Pull & apply updates (auto-backup before applying)
+    └── cleanup-voron.sh          ← Clean up old scattered backup directories
 ```
 
-The parent repository also contains `extras/` reference files, so do not copy the repository root directly into `~/printer_data/config`.
+---
 
-## First-Time Install
+## 🚀 First-Time Install
 
-SSH into the printer and run:
+SSH into the printer, then:
 
 ```bash
 cd /tmp
@@ -21,24 +58,20 @@ cd All-Config-Voron
 bash config/scripts/install.sh
 ```
 
-The installer backs up the existing `~/printer_data/config` directory before copying this `config/` directory into place.
+The installer backs up the existing `~/printer_data/config` before copying this `config/` into place.
 
-After install:
+After install, restart services:
 
 ```bash
 sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-Then open Mainsail and run:
+Then open Mainsail and run `FIRMWARE_RESTART`.
 
-```gcode
-FIRMWARE_RESTART
-```
+---
 
-## Updating Later
-
-From the printer:
+## 🔄 Updating Configuration
 
 ```bash
 cd ~/printer_data/config
@@ -47,47 +80,48 @@ sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-The update script keeps a full backup under `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS`, updates/clones the source repository at `~/All-Config-Voron`, then copies only `~/All-Config-Voron/config/` into `~/printer_data/config`.
+- Creates a timestamped backup under `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS/` before pulling.
+- Retains the 10 newest backups by default. Override: `BACKUP_KEEP=20 bash scripts/update.sh`
 
-By default it keeps the newest 10 update backups. Override that when needed:
-
-```bash
-BACKUP_KEEP=20 bash scripts/update.sh
-```
-
-Restore a backup manually:
-
+**Manual restore:**
 ```bash
 rsync -a --delete ~/printer_data/config_backups/config-YYYYMMDD-HHMMSS/ ~/printer_data/config/
 sudo systemctl restart klipper
 ```
 
-Dry-run cleanup for old scattered backup folders:
-
+**Cleanup old backup folders:**
 ```bash
-bash scripts/cleanup-voron.sh
+bash scripts/cleanup-voron.sh          # dry-run
+bash scripts/cleanup-voron.sh --apply  # apply
 ```
 
-Apply cleanup after checking the listed paths:
+---
 
-```bash
-bash scripts/cleanup-voron.sh --apply
-```
+## 🛠️ Hardware Reference
 
-## Current Machine
+| Component | Specification | Interface |
+| :--- | :--- | :--- |
+| **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge — `canbus_uuid: 19b203d75137` |
+| **Toolheads** | 5× StealthChanger (T0–T4) | 5× EBB36 V1.2 via CAN bus |
+| **Hotends** | TZ V6 2.0 ×5 | EBB36 heater pin `PB13` |
+| **Extruders** | WW BMG ×5 | EBB36 TMC2209 |
+| **Bed Probe / Z Homing** | Cartographer V3 — Touch + Scan | CAN — `canbus_uuid: da13d909ce34` |
+| **Z-Offset Calibrator** | SexBolt / SexBall (temporary, calibration only) | Manta M8P `PF4` (M1-STOP) |
+| **Accelerometers** | ADXL345 on each EBB36 + built-in on Cartographer | SPI |
+| **Bed Heater** | NTC 100K MGB18-104F39050L32 | Manta M8P `PB0` / `PA1` |
+| **Chamber Sensor** | Generic 3950 NTC | Manta M8P `PB1` (THB) |
+| **Kinematics** | CoreXY, max 300 mm/s, max 4000 mm/s² | — |
+| **Build Volume** | 348×336×347 mm (usable) | — |
 
-- Printer: Voron 2.4 StealthChanger
-- Toolchanger: StealthChanger, 5 independent toolheads
-- Frame: Voron 2.4 350 mm base frame with a StealthChanger top extension adding 250 mm of height
-- Motion system: CoreXY
-- Main controller: BIGTREETECH Manta M8P V2.0 with Raspberry Pi CM4
-- Toolhead controllers: 5x BIGTREETECH EBB36 V1.2
-- CAN devices: Manta M8P, Cartographer V3, and all five EBB toolhead boards
-- Probe: Cartographer V3 mounted on the shuttle
-- Toolhead hardware: TZ V6 2.0 hotends with WW BMG extruders
+> [!NOTE]
+> **Cartographer V3** is the Z virtual endstop (`endstop_pin: probe:z_virtual_endstop`) and runs bed mesh during printing.
+> **SexBolt/SexBall** plugs into `PF4` only during `CALIBRATE_ALL_OFFSETS` to measure XYZ offsets between tools. **Not present during normal printing.**
 
-## Safety Notes
+---
 
-- Always keep a backup before replacing a live printer config.
-- Do not run this configuration on a different printer without checking pins, CAN UUIDs, tool dock coordinates, bed size, and probe settings.
+## ⚠️ Safety Notes
+
+- Always create a backup before modifying any live config (see `../extras/backups/`).
+- Do not use this config on a different printer without verifying CAN UUIDs, pin assignments, dock coordinates, and probe settings.
 - After any update, test tool pickup/dropoff manually before starting a print.
+- Do **not** edit files inside `toolchanger/readonly-configs/` — they are auto-managed by the KTC-Easy plugin.

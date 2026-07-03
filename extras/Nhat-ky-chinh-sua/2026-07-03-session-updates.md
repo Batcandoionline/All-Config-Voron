@@ -82,3 +82,23 @@ README trước đó vẫn còn một số thông tin không chính xác hoặc 
 ### Kết quả
 README phản ánh chính xác 100% cấu hình phần cứng và quy trình vận hành thực tế của máy in.
 
+---
+
+## 4. Cập nhật README.md trong thư mục config/
+
+### Mục tiêu
+Viết lại file [config/README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/README.md) — tài liệu tham chiếu trực tiếp cho thư mục cấu hình được đồng bộ lên máy in.
+
+### File đã sửa đổi
+- [config/README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/README.md) — Viết lại toàn bộ
+
+### Chi tiết thay đổi
+- Thêm sơ đồ cây thư mục đầy đủ với chú thích cho từng file.
+- Bổ sung bảng Hardware Reference với thông tin thực tế (CAN UUID, pin số, build volume).
+- Làm rõ Cartographer V3 là Z virtual endstop, SexBolt chỉ dùng khi calib.
+- Giữ nguyên hướng dẫn cài đặt/cập nhật/restore đầy đủ.
+- Thêm lưu ý an toàn về `readonly-configs/`.
+
+### Kết quả
+config/README.md trở thành tài liệu tham chiếu đầy đủ và chính xác cho bất kỳ ai tiếp cận thư mục config.
+
