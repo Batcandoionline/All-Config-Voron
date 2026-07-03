@@ -10,8 +10,8 @@ A production-ready Klipper/Moonraker configuration for a **Voron 2.4 350mm** pri
 | :--- | :--- | :--- |
 | **Mainboard** | BTT Manta M8P V2.0 + CB1/CM4 | `mcu` (CAN Bridge) |
 | **Toolheads** | 5x StealthChanger Toolheads (T0–T4) | 5x EBB36 V1.2 via CAN |
-| **Bed Probe** | Cartographer V3 | `cartographer` via CAN |
-| **Z-Calibration** | SexBolt mechanical endstop | Pin `PF4` (M1-STOP) |
+| **Bed Probe & Z Homing** | Cartographer V3 (Touch/Scan mode) | `cartographer` via CAN |
+| **Z-Offset Calibrator** | SexBolt/SexBall (Temporary mount during calibration) | Pin `PF4` (M1-STOP) |
 | **Extruders** | WW BMG Extruders | EBB Steppers |
 | **Hotends** | TZ V6 2.0 Hotends | EBB Heaters |
 

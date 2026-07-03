@@ -40,6 +40,7 @@ Cập nhật file `README.md` chính của dự án để đảm bảo thông ti
 
 ### Chi tiết thay đổi
 - Chuyển danh sách phần cứng thành dạng bảng biểu rõ ràng.
+- Làm rõ vai trò của Cartographer V3 (đo bàn & homing Z chính) và SexBolt/SexBall (thiết bị hiệu chuẩn Z-offset, chỉ gắn tạm khi calib).
 - Rút gọn mô tả thư mục.
 - Làm sạch các lệnh SSH để cài đặt và cập nhật.
 - Định dạng lại quy trình hiệu chuẩn SexBolt bằng mã G-code trực quan.
