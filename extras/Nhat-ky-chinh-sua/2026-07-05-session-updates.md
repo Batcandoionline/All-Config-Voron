@@ -73,3 +73,25 @@ Từ bảng datasheet MF-500, các resolution native là: 320x240, 640x360, 640x
 
 ### Vấn đề còn lại
 - Nếu muốn chất lượng cao hơn: thử 1280x720 (vẫn 30fps MJPEG native)
+
+---
+
+## 3. Đổi mode camera từ camera-streamer sang ustreamer
+
+### Mục tiêu
+Cả 640x480 và 1280x720 đều chỉ đạt 15-20fps → vấn đề không phải resolution mà là overhead CPU/GPU từ camera-streamer (WebRTC encoding).
+
+### File đã sửa đổi
+- `config/crowsnest.conf` — thay đổi `mode` từ `camera-streamer` → `ustreamer`
+
+### Chi tiết thay đổi
+- `mode: camera-streamer` → `mode: ustreamer`
+- ustreamer chỉ xử lý MJPG + snapshot, không encode WebRTC → nhẹ hơn đáng kể
+- MJPG stream vẫn xem được từ xa qua Mainsail bình thường
+
+### Lý do
+Raspberry Pi đang chạy đồng thời nhiều dịch vụ: Klipper, Moonraker, Mainsail, 5 EBBCan (CAN bus), Cartographer. Camera-streamer encode WebRTC trên GPU chiếm tài nguyên, khiến FPS bị giới hạn 15-20fps bất kể resolution.
+
+### Kiểm tra
+- Kiểm tra cú pháp: ✅ đạt
+- Khởi động lại Crowsnest: ⏳ người dùng cần restart trên máy in
