@@ -49,3 +49,27 @@ File đã được sửa đổi thành công. Cần khởi động lại Crowsne
 - Nếu 800x600 vẫn không load: thử 640x480 hoặc 1280x720
 - Có thể thử `mode: ustreamer` thay vì `camera-streamer` nếu vẫn gặp lỗi
 - Cân nhắc nâng lên 1280x720 nếu 800x600 hoạt động tốt (vẫn 30fps MJPEG theo datasheet)
+
+---
+
+## 2. Sửa resolution camera từ 800x600 sang 640x480 (native)
+
+### Mục tiêu
+Sau khi hạ resolution xuống 800x600, camera chỉ đạt 15-20fps thay vì 30fps. Nguyên nhân: 800x600 không phải resolution native của MF-500 → driver phải software scale → mất FPS.
+
+### File đã sửa đổi
+- `config/crowsnest.conf` — thay đổi `resolution` từ `800x600` → `640x480`
+
+### Chi tiết thay đổi
+- `resolution: 800x600` → `resolution: 640x480`
+- 640x480 là resolution native của MF-500, đạt 30fps MJPEG theo datasheet nhà sản xuất
+
+### Lý do
+Từ bảng datasheet MF-500, các resolution native là: 320x240, 640x360, 640x480, 1280x720, 1280x960, 1920x1080, 2560x1400. Resolution 800x600 chỉ có trong MF-100 (720P), không phải MF-500.
+
+### Kiểm tra
+- Kiểm tra cú pháp: ✅ đạt
+- Khởi động lại Crowsnest: ⏳ người dùng cần restart trên máy in
+
+### Vấn đề còn lại
+- Nếu muốn chất lượng cao hơn: thử 1280x720 (vẫn 30fps MJPEG native)
