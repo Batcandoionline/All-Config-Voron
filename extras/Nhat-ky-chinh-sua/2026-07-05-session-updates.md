@@ -125,3 +125,13 @@ ustreamer không khởi động được do flag `--camera-format=MJPEG` không 
 ### Bài học rút ra
 - ustreamer và camera-streamer dùng flag khác nhau — không thể chuyển mode mà giữ nguyên custom_flags
 - 15-20fps là giới hạn thực tế của USB 2.0 camera trên RPi với tải nặng
+
+---
+
+## 5. Đổi resolution từ 640x480 lên 1280x720
+
+### File đã sửa đổi
+- `config/crowsnest.conf` — thay đổi `resolution` từ `640x480` → `1280x720`
+
+### Lý do
+Người dùng muốn chất lượng HD. 1280x720 là resolution native MF-500, hỗ trợ 30fps MJPEG theo datasheet.
