@@ -135,3 +135,44 @@ ustreamer không khởi động được do flag `--camera-format=MJPEG` không 
 
 ### Lý do
 Người dùng muốn chất lượng HD. 1280x720 là resolution native MF-500, hỗ trợ 30fps MJPEG theo datasheet.
+
+---
+
+## 6. Giải quyết FPS thấp — WebRTC + Cấu hình tối ưu cuối cùng
+
+### Mục tiêu
+Đạt streaming mượt mà ở 1280x720 cho camera MF-500.
+
+### Giải pháp thành công
+Đổi Mainsail webcam service sang **WebRTC (camera-streamer)** với URL Stream `/webcam/webrtc`:
+- WebRTC dùng H.264 hardware encoding trên GPU Pi → hiệu quả hơn MJPG stream rất nhiều
+- Kết quả: streaming **mượt mà** ở 1280x720
+
+### Chẩn đoán v4l2-ctl
+Camera MF-500 báo hỗ trợ 30fps MJPEG ở TẤT CẢ resolution (320x240 → 2560x1440).
+Resolution thực tế là 2560x1440 (không phải 2560x1400 như datasheet).
+
+### Kiểm tra resolution cao hơn
+| Resolution | WebRTC | Kết quả |
+|---|---|---|
+| 1280x720 | ✅ | Mượt mà |
+| 1920x1080 | ❌ | Màn hình đen — USB bandwidth + GPU encode quá tải |
+| 2560x1440 | ❌ | Màn hình đen — vượt giới hạn H.264 HW encoder Pi |
+
+### Cấu hình tối ưu cuối cùng
+
+**crowsnest.conf:**
+```
+mode: camera-streamer
+resolution: 1280x720
+max_fps: 30
+custom_flags: --camera-format=MJPEG
+```
+
+**Mainsail webcam settings:**
+- Service: WebRTC (camera-streamer)
+- URL Stream: /webcam/webrtc
+- URL Snapshot: /webcam/?action=snapshot
+
+### Kết quả
+✅ **Thành công** — Camera MF-500 streaming mượt mà ở 1280x720 qua WebRTC.
