@@ -94,4 +94,34 @@ Raspberry Pi đang chạy đồng thời nhiều dịch vụ: Klipper, Moonraker
 
 ### Kiểm tra
 - Kiểm tra cú pháp: ✅ đạt
-- Khởi động lại Crowsnest: ⏳ người dùng cần restart trên máy in
+- Khởi động lại Crowsnest: ❌ ustreamer không khởi động được — Mainsail hiển thị "Error while connecting to http://192.168.1.43/webcam/?action=snapshot"
+
+### Kết quả
+❌ Thất bại — ustreamer không tương thích với `custom_flags: --camera-format=MJPEG` (flag dành riêng cho camera-streamer). Cần revert.
+
+---
+
+## 4. Revert: Quay lại camera-streamer (từ ustreamer)
+
+### Mục tiêu
+ustreamer không khởi động được do flag `--camera-format=MJPEG` không tương thích → camera không hiển thị ảnh. Quay lại camera-streamer.
+
+### File đã sửa đổi
+- `config/crowsnest.conf` — revert `mode` từ `ustreamer` → `camera-streamer`
+
+### Chi tiết thay đổi
+- `mode: ustreamer` → `mode: camera-streamer`
+- Giữ nguyên resolution 640x480 (native)
+
+### Lý do
+- `--camera-format=MJPEG` là flag chỉ dành cho camera-streamer, ustreamer không nhận → crash
+- 15-20fps với camera-streamer là mức bình thường cho USB camera trên Pi đang chạy nặng (Klipper + 5 CAN tools + Cartographer)
+- 15-20fps đủ tốt cho giám sát in 3D
+
+### Kiểm tra
+- Kiểm tra cú pháp: ✅ đạt
+- Khởi động lại Crowsnest: ⏳ người dùng cần restart
+
+### Bài học rút ra
+- ustreamer và camera-streamer dùng flag khác nhau — không thể chuyển mode mà giữ nguyên custom_flags
+- 15-20fps là giới hạn thực tế của USB 2.0 camera trên RPi với tải nặng
