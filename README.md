@@ -68,7 +68,7 @@ Install these first on a fresh Klipper machine:
 | Component | Install / Docs |
 | :--- | :--- |
 | `klipper-toolchanger-easy` | [GitHub install docs](https://github.com/jwellman80/klipper-toolchanger-easy) |
-| Cartographer / Cartographer plugin | [Cartographer3D org](https://github.com/Cartographer3D) and [Cartographer plugin repo](https://github.com/Cartographer3D/cartographer3d-plugin) |
+| Cartographer / Cartographer plugin | [Cartographer3D docs](https://docs.cartographer3d.com/cartographer-probe/installation-and-setup/software-configuration/klipper-setup) and [plugin repo](https://github.com/Cartographer3D/cartographer3d-plugin) |
 | `Klippain-ShakeTune` | [GitHub install docs](https://github.com/Frix-x/klippain-shaketune) |
 
 If you prefer SSH install commands, use the vendor docs above. The important part is to have these dependencies working **before** applying this repo's `config/`.
@@ -84,6 +84,14 @@ cd ~/klipper-toolchanger-easy
 
 # Klippain-ShakeTune
 wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+
+# Cartographer plugin (new plugin workflow)
+curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper ~/klipper --klippy-env ~/klippy-env
+
+# Cartographer legacy/classic module
+cd ~
+git clone https://github.com/Cartographer3D/cartographer-klipper.git
+./cartographer-klipper/install.sh
 ```
 
 ### First Install (SSH to Printer)

@@ -44,3 +44,28 @@ Trên máy mới chỉ cài Klipper, repo này sẽ chưa hoạt động nếu c
 
 ### Kết quả
 README giờ có cả đường dẫn tài liệu lẫn lệnh cài nhanh để người dùng đi theo ngay từ đầu.
+
+## 3. Bổ sung lệnh SSH cài Cartographer từ docs chính thức
+
+### Mục tiêu
+Thêm lệnh cài Cartographer đúng theo tài liệu chính thức của Cartographer3D để người dùng có thể nạp trực tiếp qua SSH mà không phải tìm lại.
+
+### File đã sửa đổi
+- `Voron 5 Tool/README.md` - bổ sung lệnh cài Cartographer plugin và legacy module
+
+### Chi tiết thay đổi
+- Cập nhật dòng Cartographer trong bảng `Required Dependencies` để trỏ tới docs chính thức.
+- Thêm lệnh SSH cho workflow Cartographer plugin mới:
+  - `curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper ~/klipper --klippy-env ~/klippy-env`
+- Thêm lệnh SSH cho workflow legacy/classic:
+  - `git clone https://github.com/Cartographer3D/cartographer-klipper.git`
+  - `./cartographer-klipper/install.sh`
+
+### Lý do
+Các máy mới thường chỉ có Klipper cơ bản. Việc đưa sẵn lệnh chính thức vào README giúp cài phụ thuộc nhanh hơn và giảm nguy cơ dùng nhầm hướng dẫn cũ hoặc không đúng nhánh plugin.
+
+### Kiểm tra
+- Đọc lại README sau khi sửa: đạt
+
+### Kết quả
+README đã có đường dẫn chính thức của Cartographer3D và command SSH để cài trực tiếp từ docs.
