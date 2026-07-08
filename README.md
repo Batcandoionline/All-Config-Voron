@@ -49,19 +49,37 @@ Voron 5 Tool/
 
 > [!WARNING]
 > Do not copy files directly into `~/printer_data/config`. Use the scripts below.
+>
+> This repository is a **full production config bundle**, not a standalone Klipper starter pack.
+> On a fresh printer that only has Klipper installed, this repo will **not** work until the required
+> dependencies are installed first, including:
+> - `klipper-toolchanger-easy`
+> - Cartographer / Cartographer plugin support
+> - `Klippain-ShakeTune`
+> - any printer-specific CAN / toolhead / webcam dependencies required by your hardware
+>
+> The install/update scripts in this repo only copy configuration files. They do **not** install plugins.
+> Install those platform dependencies first, then deploy this repo's `config/` files.
 
 ### First Install (SSH to Printer)
 ```bash
 cd /tmp && git clone git@github.com:Batcandoionline/All-Config-Voron.git
 cd All-Config-Voron && bash config/scripts/install.sh
 ```
-*Run `FIRMWARE_RESTART` in Mainsail after installation.*
+Recommended order on a new machine:
+1. Install Klipper and the printer base OS image.
+2. Install external dependencies used by this config, especially the toolchanger and probe plugins.
+3. Copy this repository's `config/` into `~/printer_data/config` with `install.sh`.
+4. Restart `moonraker` and `klipper`.
+5. Run `FIRMWARE_RESTART` in Mainsail and verify all macros, toolheads, and probes load cleanly.
+
+*If any dependency is missing, Klipper may fail to load sections from this repo and the printer will not become ready.*
 
 ### Pull Updates (After GitHub Push)
 ```bash
 cd ~/printer_data/config && bash scripts/update.sh
 ```
-*Creates a timestamped backup under `~/printer_data/config_backups/` before applying.*
+*Creates a timestamped backup under `~/printer_data/config_backups/` before applying. Use this only after the same dependencies are already present on the machine.*
 
 ---
 
