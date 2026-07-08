@@ -61,6 +61,31 @@ Voron 5 Tool/
 > The install/update scripts in this repo only copy configuration files. They do **not** install plugins.
 > Install those platform dependencies first, then deploy this repo's `config/` files.
 
+### Required Dependencies
+
+Install these first on a fresh Klipper machine:
+
+| Component | Install / Docs |
+| :--- | :--- |
+| `klipper-toolchanger-easy` | [GitHub install docs](https://github.com/jwellman80/klipper-toolchanger-easy) |
+| Cartographer / Cartographer plugin | [Cartographer3D org](https://github.com/Cartographer3D) and [Cartographer plugin repo](https://github.com/Cartographer3D/cartographer3d-plugin) |
+| `Klippain-ShakeTune` | [GitHub install docs](https://github.com/Frix-x/klippain-shaketune) |
+
+If you prefer SSH install commands, use the vendor docs above. The important part is to have these dependencies working **before** applying this repo's `config/`.
+
+Quick SSH references:
+
+```bash
+# klipper-toolchanger-easy
+cd ~
+git clone https://github.com/jwellman80/klipper-toolchanger-easy.git
+cd ~/klipper-toolchanger-easy
+./install.sh
+
+# Klippain-ShakeTune
+wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+```
+
 ### First Install (SSH to Printer)
 ```bash
 cd /tmp && git clone git@github.com:Batcandoionline/All-Config-Voron.git

@@ -22,3 +22,25 @@ Tránh hiểu nhầm rằng clone repo này là có thể chạy ngay trên mộ
 
 ### Kết quả
 Phần Setup & Updates đã phản ánh đúng hơn điều kiện tiên quyết của hệ thống thực tế.
+
+## 2. Thêm link và lệnh SSH cài phụ thuộc cho README
+
+### Mục tiêu
+Giúp người dùng cài nhanh các phụ thuộc cần có trước khi áp dụng repo config, thay vì phải tự đi tìm tài liệu cho từng plugin.
+
+### File đã sửa đổi
+- `Voron 5 Tool/README.md` - thêm bảng links và lệnh SSH tham khảo
+
+### Chi tiết thay đổi
+- Thêm mục `Required Dependencies`.
+- Gắn link chính thức tới `klipper-toolchanger-easy`, Cartographer và `Klippain-ShakeTune`.
+- Bổ sung snippet SSH mẫu để cài `klipper-toolchanger-easy` và `Klippain-ShakeTune`.
+
+### Lý do
+Trên máy mới chỉ cài Klipper, repo này sẽ chưa hoạt động nếu các plugin phụ trợ chưa được cài. Đặt sẵn link và lệnh SSH giúp giảm ma sát cho bước khởi tạo.
+
+### Kiểm tra
+- Đọc lại README sau khi sửa: đạt
+
+### Kết quả
+README giờ có cả đường dẫn tài liệu lẫn lệnh cài nhanh để người dùng đi theo ngay từ đầu.
