@@ -6,16 +6,17 @@
 Trong quá trình in file `LionDance_3dprint_PETG_6h29m.gcode`, tại thời điểm 17:17 - 17:18, máy in thực hiện đổi đầu phun từ T4 về T3. Sau khi kết thúc quá trình chờ gia nhiệt (M109), hệ thống báo lỗi liên tiếp `Expected tool tool T3 but active is tool T4` và dừng/hủy lệnh in đột ngột (`[CANCEL] Toolchanger has no active tool`).
 
 ### Phân tích nhật ký
-- File nhật ký liên quan: [klippy.log](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/logs/klippy.log)
+- File nhật ký liên quan: [klippy.log11-07-2026.log](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/logs/klippy.log11-07-2026.log) và [moonraker.log11-07-2026.log](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/logs/moonraker.log11-07-2026.log)
+- File G-code: [LionDance_3dprint_PETG_6h29m.gcode](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/gcode/LionDance_3dprint_PETG_6h29m.gcode)
 - Dòng thời gian sự kiện trích xuất từ log:
-  1. **17:10**: Khởi chạy file in, tuần tự chuẩn bị và đổi đầu từ T0 -> T1 -> T2 -> T3 -> T4.
-  2. **17:14**: Tool T4 được chọn hoạt động và in các lớp nhựa đầu tiên.
-  3. **17:17**: Hệ thống gọi lệnh đổi sang T3:
-     - Thực hiện thả T4 (`Dropping off tool T4`), tạm tắt `tool_crash`.
-     - Kích hoạt extruder3 (`Activating extruder extruder3`).
+  1. **17:10:11**: Moonraker gửi lệnh bắt đầu in file `LionDance_3dprint_PETG_6h29m.gcode`. Chu trình khởi động in tuần tự chuẩn bị và đổi đầu từ T0 -> T1 -> T2 -> T3 -> T4.
+  2. **17:14**: Máy in hoàn thành chu trình khởi động `PRINT_START`, chọn đầu in **T4** (tại dòng 843 trong file G-code) và bắt đầu in các lớp nhựa đầu tiên.
+  3. **17:17**: G-code chạy đến dòng **3899** (yêu cầu đổi sang **T3** - đây là lần chuyển đổi đầu phun thực tế đầu tiên của bản in):
+     - Thực hiện thả T4 (`Dropping off tool T4`), tạm tắt `tool_crash` (dòng 90357 trong `klippy.log11-07-2026.log`).
+     - Kích hoạt extruder3 (`Activating extruder extruder3` - dòng 90358).
      - Di chuyển tới khu vực chuẩn bị lấy T3 (`Picking up tool T3`).
-     - Chờ nhiệt độ extruder3 đạt yêu cầu (`Waiting For Extruder with Deadband: 4.0`).
-  4. **17:18**: Ngay sau khi đủ nhiệt độ, hệ thống thực hiện chạy đường dẫn nhận đầu in T3 (`params_pickup_path`). Tại điểm kiểm tra `verify: 1`, lệnh `VERIFY_TOOL_DETECTED T=3` được kích hoạt và phát hiện xung đột trạng thái: KTC-Easy mong muốn T3 đang được gắn (active) nhưng cảm biến báo T4 vẫn đang được kết nối.
+     - Chờ nhiệt độ extruder3 đạt yêu cầu 230 C (`Heater extruder3 within range of 230.000` - dòng 90364).
+  4. **17:18**: Ngay sau khi đủ nhiệt độ, hệ thống thực hiện chạy đường dẫn nhận đầu in T3 (`params_pickup_path`). Tại điểm kiểm tra `verify: 1`, lệnh `VERIFY_TOOL_DETECTED T=3` được kích hoạt và phát hiện xung đột trạng thái: KTC-Easy mong muốn T3 đang được gắn (active) nhưng cảm biến báo T4 vẫn đang được kết nối (dòng 90368 trong `klippy.log11-07-2026.log`). Lệnh in lập tức bị hủy.
 
 ### Nguyên nhân gốc
 Lỗi xảy ra do cảm biến hành trình phát hiện đầu phun của T4 (`detection_pin: ^!EBB4:PB6`) vẫn báo trạng thái đầu phun đang được gắn trên carriage (mức thấp 0V do cấu hình đảo ngược `!`), mặc dù gcode đã thực hiện xong chu trình nhả T4.
