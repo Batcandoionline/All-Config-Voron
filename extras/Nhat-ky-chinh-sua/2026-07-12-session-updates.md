@@ -29,3 +29,25 @@ Chờ người dùng khởi động lại Klipper và chạy thử macro kết t
 
 ### Vấn đề còn lại
 Không có.
+
+## 2. Đồng bộ các file cấu hình OrcaSlicer (.json) & Hướng dẫn
+
+### Mục tiêu
+Sao chép các file cấu hình custom (profile máy in, filament, và process) của OrcaSlicer từ máy tính vào Git và tạo tài liệu hướng dẫn cách đồng bộ.
+
+### File đã sửa đổi
+- `Orca Config/` — Sao chép toàn bộ các file `.json` profile người dùng từ thư mục AppData.
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Orca%20Config/README.md) — [NEW] Tạo tài liệu hướng dẫn quy trình đồng bộ thủ công & tự động bằng PowerShell.
+
+### Sao lưu
+- [pre-sync-orca-configs-20260712-161900](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-sync-orca-configs-20260712-161900/) — Bản lưu trữ của thư mục `Orca Config` cũ trước khi ghi đè đồng bộ.
+
+### Lý do
+Lưu trữ phiên bản các profile in (process, filament, machine) của OrcaSlicer phục vụ cho máy in Voron StealthChanger lên GitHub để tránh mất mát cấu hình và dễ dàng chia sẻ hoặc phục hồi lại khi cài lại máy tính.
+
+### Kiểm tra
+- Đã kiểm tra số lượng file sau khi copy: tăng từ 9 file lên 20 file cấu hình `.json` thành công.
+
+### Kết quả
+Hoàn tất việc lưu trữ và lập hướng dẫn rõ ràng cho người dùng.
+

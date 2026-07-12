@@ -37,6 +37,7 @@ Voron 5 Tool/
 │   │   ├── tools/            ← T0.cfg … T4.cfg (EBB36 extruder, fans, offsets per tool)
 │   │   └── readonly-configs/ ← Auto-managed by klipper-toolchanger-easy (DO NOT EDIT)
 │   └── scripts/              ← install.sh, update.sh, cleanup scripts
+├── Orca Config/              ← Custom OrcaSlicer profiles (machine, filament, process)
 └── extras/
     ├── backups/              ← Local config backups (gitignored)
     ├── Nhat-ky-chinh-sua/    ← Daily change logs (Vietnamese)
