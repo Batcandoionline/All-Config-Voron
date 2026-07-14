@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="git@github.com:Batcandoionline/All-Config-Voron.git"
+REPO_URL="git@github.com:IDcrazy123/All-Config-Voron.git"
 CONFIG_DIR="${HOME}/printer_data/config"
 BACKUP_ROOT="${HOME}/printer_data/config_backups"
 BACKUP_DIR="${BACKUP_ROOT}/config-install-$(date +%Y%m%d-%H%M%S)"

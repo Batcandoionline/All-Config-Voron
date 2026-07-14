@@ -97,7 +97,7 @@ git clone https://github.com/Cartographer3D/cartographer-klipper.git
 
 ### First Install (SSH to Printer)
 ```bash
-cd /tmp && git clone git@github.com:Batcandoionline/All-Config-Voron.git
+cd /tmp && git clone git@github.com:IDcrazy123/All-Config-Voron.git
 cd All-Config-Voron && bash config/scripts/install.sh
 ```
 Recommended order on a new machine:

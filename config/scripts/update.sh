@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONFIG_DIR="${HOME}/printer_data/config"
-REPO_URL="git@github.com:Batcandoionline/All-Config-Voron.git"
+REPO_URL="git@github.com:IDcrazy123/All-Config-Voron.git"
 REPO_DIR="${HOME}/All-Config-Voron"
 BACKUP_ROOT="${HOME}/printer_data/config_backups"
 BACKUP_KEEP="${BACKUP_KEEP:-10}"

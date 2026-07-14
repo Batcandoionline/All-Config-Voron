@@ -53,7 +53,7 @@ SSH into the printer, then:
 
 ```bash
 cd /tmp
-git clone git@github.com:Batcandoionline/All-Config-Voron.git
+git clone git@github.com:IDcrazy123/All-Config-Voron.git
 cd All-Config-Voron
 bash config/scripts/install.sh
 ```

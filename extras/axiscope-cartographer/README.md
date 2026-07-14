@@ -10,7 +10,7 @@ Run on the printer over SSH:
 
 ```bash
 cd ~
-git clone https://github.com/Batcandoionline/Axiscope-cartographer.git axiscope
+git clone https://github.com/IDcrazy123/Axiscope-cartographer.git axiscope
 cd ~/axiscope
 bash install.sh
 ```
@@ -25,7 +25,7 @@ If you need to add the entry manually, put this in `~/printer_data/config/moonra
 [update_manager axiscope]
 type: git_repo
 path: /home/voron/axiscope
-origin: https://github.com/Batcandoionline/Axiscope-cartographer.git
+origin: https://github.com/IDcrazy123/Axiscope-cartographer.git
 primary_branch: main
 is_system_service: True
 managed_services: axiscope

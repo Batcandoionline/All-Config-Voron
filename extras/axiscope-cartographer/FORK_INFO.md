@@ -5,7 +5,7 @@ This repository is a maintained fork of Axiscope Cartographer for a StealthChang
 ## Source
 
 - Upstream project: https://github.com/buddasticks/Axiscope-cartographer
-- Maintained fork: https://github.com/Batcandoionline/Axiscope-cartographer
+- Maintained fork: https://github.com/IDcrazy123/Axiscope-cartographer
 - Original license: MIT, preserved in `LICENSE`
 
 ## Current printer stack
