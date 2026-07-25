@@ -64,4 +64,26 @@ Khôi phục mặc định chế độ căn chỉnh SexBolt (`[tools_calibrate]`
 ### Kết quả
 Klipper hoạt động bình thường với SexBolt, sẵn sàng chuyển đổi sang Axiscope bất kỳ lúc nào chỉ bằng thao tác đổi dấu `#`.
 
+## 4. Khôi phục bảng offset SexBolt ban đầu trong printer.cfg
+
+### Mục tiêu
+Khôi phục chính xác các giá trị `gcode_x_offset` và `gcode_y_offset` ban đầu được đo bằng SexBolt vào khối `SAVE_CONFIG` của `printer.cfg`. Lưu giữ bảng giá trị đo bằng Camera Axiscope trong `calibration.cfg` làm tài liệu tham chiếu.
+
+### File đã sửa đổi
+- `config/printer.cfg` — Khôi phục offset gốc SexBolt cho T1-T4.
+- `config/Printer-Setup/calibration.cfg` — Lưu comment các giá trị đo Camera Axiscope để tham khảo.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-sexbolt-offsets-20260725-202200/printer.cfg)
+
+### Chi tiết thay đổi
+- `[tool T1]`: `gcode_x_offset: -0.253`, `gcode_y_offset: -0.222`
+- `[tool T2]`: `gcode_x_offset: 0.716`, `gcode_y_offset: 0.066`
+- `[tool T3]`: `gcode_x_offset: 0.334`, `gcode_y_offset: 0.109`
+- `[tool T4]`: `gcode_x_offset: 0.081`, `gcode_y_offset: 0.272`
+
+### Kết quả
+`printer.cfg` đã được khôi phục 100% về trạng thái chuẩn của SexBolt và đẩy lên GitHub thành công.
+
+
 
