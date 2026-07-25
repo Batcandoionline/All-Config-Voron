@@ -85,5 +85,27 @@ Khôi phục chính xác các giá trị `gcode_x_offset` và `gcode_y_offset` b
 ### Kết quả
 `printer.cfg` đã được khôi phục 100% về trạng thái chuẩn của SexBolt và đẩy lên GitHub thành công.
 
+## 5. Áp dụng bảng offset mới đo từ Camera Axiscope vào printer.cfg
+
+### Mục tiêu
+Đưa các giá trị đo đạc XY offset trực quan chính xác bằng Camera Axiscope vào `printer.cfg` làm cấu hình hoạt động chính thức trên GitHub, đồng thời lưu giữ đầy đủ lịch sử offset SexBolt cũ trong `calibration.cfg` để tham chiếu.
+
+### File đã sửa đổi
+- `config/printer.cfg` — Áp dụng offset chuẩn đo từ Camera Axiscope cho T1-T4.
+- `config/Printer-Setup/calibration.cfg` — Lưu dữ liệu tham chiếu cho cả SexBolt (Cũ) và Camera (Mới).
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-apply-camera-offsets-20260725-202500/printer.cfg)
+
+### Chi tiết thay đổi
+- `[tool T1]`: `gcode_x_offset: -0.243`, `gcode_y_offset: -0.252`
+- `[tool T2]`: `gcode_x_offset: 0.746`, `gcode_y_offset: 0.086`
+- `[tool T3]`: `gcode_x_offset: 0.304`, `gcode_y_offset: 0.449`
+- `[tool T4]`: `gcode_x_offset: 0.041`, `gcode_y_offset: 0.352`
+
+### Kết quả
+Đã áp dụng kết quả đo mới nhất từ Camera lên GitHub repository.
+
+
 
 
