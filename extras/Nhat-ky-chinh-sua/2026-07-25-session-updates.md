@@ -49,3 +49,19 @@ Do SexBolt bị sai số Y cho T3 (+0.340mm), làm cho T3 bị in thấp hơn v�
 ### Kết quả
 Đã áp dụng các giá trị tối ưu mới nhất vào `printer.cfg`.
 
+## 3. Cấu hình song song & Khôi phục chế độ calib SexBolt
+
+### Mục tiêu
+Khôi phục mặc định chế độ căn chỉnh SexBolt (`[tools_calibrate]`), đồng thời lưu sẵn cấu hình Axiscope dạng comment để người dùng có thể dễ dàng bật/tắt luân phiên giữa 2 phương pháp.
+
+### File đã sửa đổi
+- `config/toolchanger/toolchanger-config.cfg` — Mở lại section `[tools_calibrate]` cho SexBolt.
+- `config/Printer-Setup/calibration.cfg` — Đưa section `[axiscope]` về dạng comment sẵn sàng.
+
+### Sao lưu
+- [toolchanger-config.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-sexbolt-20260725-201500/toolchanger-config.cfg)
+
+### Kết quả
+Klipper hoạt động bình thường với SexBolt, sẵn sàng chuyển đổi sang Axiscope bất kỳ lúc nào chỉ bằng thao tác đổi dấu `#`.
+
+
