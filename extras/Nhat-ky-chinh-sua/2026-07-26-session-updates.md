@@ -56,7 +56,7 @@ Hai giá trị điều khiển thời gian vẫn chưa thay đổi:
 ### Bằng chứng preheat gây rỉ nhựa
 Tại toolchange #182, G-code vừa phát `M104 S150 T0` để cooldown T0 thì ngay sau đó phát `M104 S220 T0 ; preheat T0 time: 40s`, trước khi đổi sang T1. T0 vì vậy được dock ở 220°C, tiếp tục nằm nóng trong lúc T1 rồi T4 hoạt động và chỉ được lấy lại ở toolchange #184. Chuỗi này khớp với quan sát thực tế rằng nozzle PETG rỉ một đoạn nhựa khi đi dock và với blob/stringing tích lũy trên ảnh tower.
 
-Log đo được một hotend tăng từ khoảng 150°C lên vùng 220°C trong khoảng 16 giây. Chu kỳ toolchange thực tế mất khoảng 15 giây từ khi bắt đầu đổi tới khi tool mới hoàn tất hành trình về tower. Vì `machine_tool_change_time` đang là 0, Orca cũng bỏ qua khoảng 46 phút cơ khí cho 184 lần đổi đã thực hiện và khoảng 2 giờ 02 phút cho toàn bộ 489 lần đổi dự kiến.
+Log đo được một hotend tăng từ khoảng 150°C lên vùng 220°C trong khoảng 16 giây. Chu kỳ toolchange thực tế mất khoảng 14 giây từ lúc crash detection bị tắt để đổi tool tới khi tool mới được xác nhận selected. Ở lần đổi cuối, lệnh preheat T0 được xử lý khoảng `Stats 18518.0`, lệnh T0 được đọc khoảng `Stats 18598.1`, T0 được xác nhận selected tại `Stats 18618.1`, và purge tower đã bắt đầu trước `Stats 18619.1`. Như vậy T0 bị giữ nóng khoảng 100 giây từ preheat tới selected và khoảng 101 giây tới khi bắt đầu đùn, mặc dù G-code ghi `preheat T0 time: 40s`. Vì `machine_tool_change_time` đang là 0, Orca cũng bỏ qua khoảng 46 phút cơ khí cho 184 lần đổi đã thực hiện và khoảng 2 giờ 02 phút cho toàn bộ 489 lần đổi dự kiến.
 
 ### Kết luận
 Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện khi T0 đang active; plugin `tool_crash` shutdown ngay trên cạnh này và không debounce. Nguyên nhân vật lý có xác suất cao nhất là T0 được giữ ở 220°C quá sớm/quá lâu trong dock, rỉ PETG và mang nhựa trở lại tower. Blob tích lũy bị T0 quệt ở layer 62, làm TAP/detection đổi trạng thái hoặc làm tool dịch chuyển đủ để tạo cạnh. T0 có preload/cảm biến biên vẫn là yếu tố phụ cần kiểm tra vì cả ba lần crash đều xảy ra khi T0 active.
@@ -64,7 +64,7 @@ Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện k
 ### Khuyến nghị
 1. Đặt `Tool change time` thành 15 s.
 2. Giữ `Ooze prevention` bật và `standby_temperature_delta = -80` (idle khoảng 150°C).
-3. Để xác nhận nguyên nhân, đặt `Preheat time = 0 s` cho một bài thử ngắn. Sau khi hết ooze/blob, tối ưu lên khoảng `1 s` vì log đo hotend cần khoảng 16 s để tăng từ 150°C lên 220°C, trong khi macro T tự mất khoảng 15 s để cất/lấy tool. Mã nguồn Orca cho thấy `Preheat time` được tính lùi trước chính lệnh T và không trừ thời gian macro Klipper; đặt 15–16 s sẽ tạo tổng thời gian nung thực tế khoảng 30–31 s trước khi tool bắt đầu in. Sau khi slice phải kiểm tra không còn cặp cooldown 150°C rồi reheat 220°C liền nhau cho cùng tool.
+3. Để xác nhận nguyên nhân, có thể đặt `Preheat time = 0 s` cho một bài thử ngắn. Giá trị vận hành ban đầu phù hợp nhất là `2 s` vì log đo hotend cần khoảng 16 s để tăng từ 150°C lên 220°C, trong khi macro đổi tool thực tế mất khoảng 14 s. Mã nguồn Orca cho thấy `Preheat time` được tính lùi trước chính lệnh T và không trừ thời gian macro Klipper; đặt 15–16 s sẽ làm tool nóng sớm không cần thiết. Sau khi slice phải kiểm tra không còn cặp cooldown 150°C rồi reheat 220°C liền nhau cho cùng tool.
 4. Giữ framework/rib, infill gap 100%, bridge 5 mm; giảm tạm maximum wipe tower speed từ 60 xuống 40–45 mm/s.
 5. Giữ retraction khi đổi material ở 5 mm trong lần thử đầu; không tăng mạnh để tránh heat creep hoặc kẹt filament.
 6. Không vô hiệu hóa tool-crash detection. Kiểm tra riêng preload hai vít T0, magnet, PB6/connector và umbilical; nếu dry toolchange không đùn nhựa vẫn tạo lỗi thì ưu tiên xử lý tín hiệu/cơ khí T0.
@@ -73,7 +73,7 @@ Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện k
 Không có. Chỉ phân tích log, G-code, ảnh và tài liệu nguồn chính thức.
 
 ### Vấn đề còn lại
-Cần slice lại bài kiểm tra với `machine_tool_change_time = 15` và `preheat_time = 0`; nếu tower sạch thì tăng `preheat_time` lên khoảng 1 s để tối ưu mà vẫn giữ tổng thời gian nung gần 16 s. Kiểm tra G-code nhiệt trước khi chạy bài thử toolchange/tower rút gọn.
+Cần slice lại với `machine_tool_change_time = 15` và `preheat_time = 2`; nếu vẫn còn ooze/blob thì chạy bài kiểm tra tách biệt với `preheat_time = 0`. Kiểm tra G-code nhiệt trước khi chạy bài thử toolchange/tower rút gọn.
 
 ---
 
