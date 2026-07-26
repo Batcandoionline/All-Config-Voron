@@ -30,6 +30,33 @@ Không có.
 
 ---
 
+## 7. Đo thời gian chờ nhiệt thực tế với `preheat_time = 2`
+
+### Dữ liệu
+- G-code mới được tạo lúc 16:46:01, dùng nhiệt độ in 215°C, `preheat_time = 2` và vẫn giữ `machine_tool_change_time = 0`.
+- Phân tích 82 chu kỳ đổi tool trong phiên in mới: T0 28 lần, T1 27 lần, T2 14 lần và T4 13 lần.
+- `pickup_gcode` gọi `M109` khi carriage đã tới dock nhưng trước khi thực sự nhấc tool khỏi pad. Vì vậy khoảng từ `Activating extruder` tới `Heater ... within range` là thời gian máy đứng chờ nhiệt thực tế.
+
+### Kết quả
+- T0: chờ 6–7 s; thời gian nung 150→215°C là 16–17 s.
+- T1: chờ 6–8 s; thời gian nung là 16–18 s.
+- T2: chờ 4–5 s; thời gian nung là 13–14 s.
+- T4: chờ 11–13 s; thời gian nung là 21–23 s.
+- Với setting 2 s, lệnh M104 thực tế bắt đầu khoảng 9–10 s trước khi `M109` tại pickup pad được gọi.
+- Tất cả heater đều đạt nhiệt trước sự kiện `Selected tool`. Sau khi đạt nhiệt, macro vẫn cần thêm khoảng 10–12 s để nhấc tool, xác minh detection, rời dock và trở lại vị trí in; đây là thời gian chuyển động cơ khí, không phải chờ nhiệt.
+
+### Giá trị đề xuất
+Vì Orca dùng một `Preheat time` chung cho mọi tool, T4 là trường hợp giới hạn. Để loại bỏ thời gian chờ nhiệt quan sát được trong cấu hình hiện tại:
+
+`preheat_time = 2 s + 13 s = 15 s`
+
+Đặt `Preheat time = 15 s` và giữ `machine_tool_change_time = 0` trong lần kiểm tra kế tiếp để chỉ thay đổi một biến. Nếu T4 thỉnh thoảng còn chờ khoảng 1 s do dao động nhiệt, tăng lên 16 s; không tăng cao hơn trước khi kiểm tra ooze. Sau khi slice phải xác nhận M104 preheat không bị đẩy về sát ngay sau lệnh cooldown của cùng tool.
+
+### Thay đổi cấu hình
+Không có. Chỉ phân tích log và cập nhật nhật ký.
+
+---
+
 ## 6. Điều tra lần Tool Crash T0 thứ ba với G-code 2h27m
 
 ### Triệu chứng
