@@ -30,6 +30,39 @@ Không có.
 
 ---
 
+## 4. Điều tra hai lần Tool Crash T0 tại prime tower
+
+### Triệu chứng
+Hai lần in file `voron_design_cube_v8-v1_PETG_2h1m.gcode` đều bị Klipper shutdown với thông báo `tool_crash detected tool T0` ngay sau khi đổi sang T0 và bắt đầu purge trên prime tower.
+
+### Phân tích nhật ký
+- File nhật ký liên quan: [klippy.log](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/logs/klippy.log)
+- File Moonraker liên quan: [moonraker.log](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/logs/moonraker.log)
+- Lần 1, khoảng 08:55:10: `sd_pos=200733`; T0 vừa đổi từ T4, tower layer #4, Z=0.84 mm, sau đó báo `tool_crash detected tool T0`.
+- Lần 2, khoảng 09:46:57: `sd_pos=237140`; T0 vừa đổi từ T2, tower layer #5, Z=1.04 mm, sau đó báo cùng lỗi.
+- Trước cả hai lần shutdown, EBB0 và toàn bộ CAN bus vẫn `active`, `rx_error=0`, `tx_error=0`, `tx_retries=0`; nhiệt độ T0 ổn định khoảng 220°C.
+- Plugin `[tool_crash]` giám sát `detection_pin: ^!EBB0:PB6`, không dùng Cartographer để phát hiện crash. Với `watchdog_interval: 0.5` và `watchdog_threshold: 2`, lỗi nghĩa là tín hiệu hiện diện T0 mất trong hai lần kiểm tra liên tiếp.
+- Ảnh prime tower cho thấy các đường purge bị nhô, kéo sợi và dồn cục, đặc biệt ở đầu các đường quét ngang. G-code cho T0 chạy purge trực tiếp qua vùng X≈153.5–193.0 mm; đây là vùng có khả năng tạo lực quệt làm T0 lỏng/bung khỏi carriage hoặc làm tiếp điểm PB6 chập chờn.
+
+### Nguyên nhân gốc
+Nguyên nhân trực tiếp đã xác nhận là tín hiệu hiện diện T0 trên `EBB0:PB6` bị mất khi T0 đang purge tại prime tower. Nguyên nhân vật lý có xác suất cao là nozzle T0 quệt vào các gờ/cục PETG nhô trên tower, làm cơ cấu khóa T0 dịch chuyển; khả năng thứ hai cần loại trừ là microswitch/đầu nối/dây PB6 của riêng T0 bị chập chờn dưới rung động. Không có bằng chứng về lỗi CAN, Moonraker, nhiệt độ hoặc Cartographer gây ra sự cố.
+
+### Hướng khắc phục đã thực hiện
+Chưa sửa cấu hình. Chỉ phân tích log, G-code, ảnh tower và các setting OrcaSlicer hiện tại.
+
+### Kết quả
+Hai lần crash tái hiện cùng chuỗi sự kiện: đổi sang T0, bật lại crash detection, purge trên tower, sau đó mất tín hiệu detection T0.
+
+### Phòng ngừa
+- Kiểm tra lực khóa/magnet/latch của T0 và thử rung nhẹ T0 khi chạy `QUERY_ENDSTOPS` để phát hiện tín hiệu PB6 chập chờn.
+- Kiểm tra microswitch, giắc và dây tín hiệu `EBB0:PB6`.
+- Trước lần in tiếp theo, cải thiện độ ổn định prime tower và giảm nguy cơ dồn cục; không vô hiệu hóa crash detection để che lỗi.
+
+### Vấn đề còn lại
+Cần thử riêng T0 và in tower ngắn sau khi kiểm tra cơ khí/cảm biến để phân biệt chắc chắn giữa T0 bị bung do va vào tower và tín hiệu PB6 chập chờn.
+
+---
+
 ## 2. Tinh chỉnh Z-Offset chuẩn cho Cartographer Scan Model (-0.360mm)
 
 ### Mục tiêu
@@ -89,5 +122,4 @@ Quy trình Touch Home chạy mượt mà, chạm nhẹ ngắt ngay không làm t
 
 ### Vấn đề còn lại
 Không có.
-
 
