@@ -27,3 +27,33 @@ Quá trình `PRINT_START` sẽ chạy QGL + Eddy Scan Homing nhanh chóng, khôn
 
 ### Vấn đề còn lại
 Không có.
+
+---
+
+## 2. Tinh chỉnh Z-Offset chuẩn cho Cartographer Scan Model (-0.360mm)
+
+### Mục tiêu
+Cập nhật Z-offset cố định cho Cartographer Scan Model dựa trên kết quả tinh chỉnh thực tế của người dùng qua Babystepping trên Mainsail (-0.35mm đến -0.37mm).
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — cập nhật `z_offset` trong section `[cartographer scan_model default]` từ `0` thành `-0.360`.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-cartographer-z-offset-tune-20260726-092200/printer.cfg)
+
+### Chi tiết thay đổi
+- `[cartographer scan_model default]` `z_offset`: `0` → `-0.360`
+
+### Lý do
+Sau khi chuyển sang Cartographer Scan Homing (không chạm), người dùng đã hạ Z trên Mainsail khoảng -0.35mm đến -0.37mm thu được lớp in đầu tiên (first layer) phẳng bám bàn hoàn hảo. Việc lưu baseline -0.360mm giúp tất cả các lệnh in về sau tự động dùng mốc Z chuẩn mà không cần hạ thủ công.
+
+### Kiểm tra
+- Kiểm tra cú pháp: Đạt.
+- Khởi động lại Klipper: Sẵn sàng áp dụng sau lệnh `RESTART`.
+
+### Kết quả
+Tất cả các bản in mới sẽ tự động áp dụng Z-offset -0.360mm, đường nhựa lớp 1 bám bàn đẹp đúng như người dùng đã tinh chỉnh.
+
+### Vấn đề còn lại
+Không có.
+
