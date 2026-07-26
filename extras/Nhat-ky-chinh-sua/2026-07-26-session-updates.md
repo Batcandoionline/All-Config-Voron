@@ -64,7 +64,7 @@ Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện k
 ### Khuyến nghị
 1. Đặt `Tool change time` thành 15 s.
 2. Giữ `Ooze prevention` bật và `standby_temperature_delta = -80` (idle khoảng 150°C).
-3. Giảm `Preheat time` từ 40 s xuống 15–16 s; sau khi slice phải kiểm tra không còn cặp cooldown 150°C rồi reheat 220°C liền nhau cho cùng tool.
+3. Để xác nhận nguyên nhân, đặt `Preheat time = 0 s` cho một bài thử ngắn. Sau khi hết ooze/blob, tối ưu lên khoảng `1 s` vì log đo hotend cần khoảng 16 s để tăng từ 150°C lên 220°C, trong khi macro T tự mất khoảng 15 s để cất/lấy tool. Mã nguồn Orca cho thấy `Preheat time` được tính lùi trước chính lệnh T và không trừ thời gian macro Klipper; đặt 15–16 s sẽ tạo tổng thời gian nung thực tế khoảng 30–31 s trước khi tool bắt đầu in. Sau khi slice phải kiểm tra không còn cặp cooldown 150°C rồi reheat 220°C liền nhau cho cùng tool.
 4. Giữ framework/rib, infill gap 100%, bridge 5 mm; giảm tạm maximum wipe tower speed từ 60 xuống 40–45 mm/s.
 5. Giữ retraction khi đổi material ở 5 mm trong lần thử đầu; không tăng mạnh để tránh heat creep hoặc kẹt filament.
 6. Không vô hiệu hóa tool-crash detection. Kiểm tra riêng preload hai vít T0, magnet, PB6/connector và umbilical; nếu dry toolchange không đùn nhựa vẫn tạo lỗi thì ưu tiên xử lý tín hiệu/cơ khí T0.
@@ -73,7 +73,7 @@ Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện k
 Không có. Chỉ phân tích log, G-code, ảnh và tài liệu nguồn chính thức.
 
 ### Vấn đề còn lại
-Cần slice lại với `machine_tool_change_time = 15` và `preheat_time = 15–16`, sau đó kiểm tra G-code nhiệt trước khi chạy bài thử toolchange/tower rút gọn.
+Cần slice lại bài kiểm tra với `machine_tool_change_time = 15` và `preheat_time = 0`; nếu tower sạch thì tăng `preheat_time` lên khoảng 1 s để tối ưu mà vẫn giữ tổng thời gian nung gần 16 s. Kiểm tra G-code nhiệt trước khi chạy bài thử toolchange/tower rút gọn.
 
 ---
 
