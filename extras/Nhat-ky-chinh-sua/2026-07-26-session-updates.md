@@ -30,6 +30,34 @@ Không có.
 
 ---
 
+## 5. Bổ sung phân tích mã nguồn Tool Crash và thời gian di chuyển dock
+
+### Triệu chứng
+Người dùng xác nhận mỗi chặng di chuyển giữa vùng in và dock mất khoảng 5 giây do kích thước khung Voron và vị trí dock cố định.
+
+### Phân tích bổ sung
+- Mã nguồn `cekim-git/tool_crash` xác nhận thông báo `tool_crash detected tool T0` xuất phát từ bộ bắt cạnh detection pin và gây shutdown ngay. Nếu lỗi do watchdog, thông báo phải có dạng `tool_crash: watchdog detected crash of tool T0`.
+- Bộ bắt cạnh dùng chung cho tất cả detection pin và nội dung thông báo lấy tên tool đang active. Do đó, tên T0 trong thông báo không xác định tuyệt đối pin nào tạo cạnh, nhưng T0 vẫn là yếu tố chung có xác suất cao nhất vì hai tool trước đó khác nhau (T4 và T2).
+- Plugin bỏ qua cạnh detection trong khi trạng thái toolchanger là `CHANGING` hoặc `INITIALIZING`; thời gian đi dock 5 giây không phải timeout của plugin.
+- Hai log cho thấy khoảng 5.2–5.5 giây chuyển động được xếp hàng giữa lúc crash detection bật lại và lúc toolchange hoàn tất, phù hợp với thời gian đi từ dock về tower mà người dùng đo được.
+- Sau khi T0 được chọn, lỗi xuất hiện khoảng 6–7 giây sau trong lúc G-code đang xử lý chuỗi purge tower. Đây không phải lỗi phát sinh chỉ vì dock ở xa.
+- Tài liệu OrcaSlicer cảnh báo tốc độ wipe tower cao làm tăng lực nozzle va vào các blob trên tower. Ảnh tower thực tế có nhiều điểm PETG dồn cục và đường purge nhô.
+
+### Điều chỉnh kết luận trước
+Không áp dụng diễn giải `watchdog_interval × watchdog_threshold ≈ 1 giây` cho hai sự kiện này, vì chuỗi thông báo trong log chứng minh nhánh detection-edge trực tiếp đã kích hoạt.
+
+### Nguyên nhân có xác suất cao
+Một cạnh detection pin xuất hiện sau khi T0 rời dock và trở lại tower. Thứ tự nghi ngờ:
+1. T0 hoặc tiếp điểm `EBB0:PB6` chập chờn khi umbilical thay đổi tư thế trên hành trình dài.
+2. Preload/latch/magnet của T0 ở trạng thái biên, sau hành trình 5 giây hoặc khi purge bị dịch chuyển đủ để switch đổi trạng thái.
+3. Nozzle T0 quệt blob/gờ PETG trên tower và làm T0 dịch chuyển.
+4. Ít khả năng hơn: detection pin của tool không active tạo cạnh muộn; plugin vẫn gắn nhãn lỗi theo active tool T0.
+
+### Vấn đề còn lại
+Cần chạy thử tách biệt: lặp toolchange T0 không in tower, sau đó lặp hành trình T0 tới tower không đùn nhựa. Hai phép thử sẽ phân biệt lỗi hành trình/cáp với lỗi va chạm tower.
+
+---
+
 ## 4. Điều tra hai lần Tool Crash T0 tại prime tower
 
 ### Triệu chứng
@@ -122,4 +150,3 @@ Quy trình Touch Home chạy mượt mà, chạm nhẹ ngắt ngay không làm t
 
 ### Vấn đề còn lại
 Không có.
-
