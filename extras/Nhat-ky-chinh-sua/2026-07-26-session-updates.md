@@ -30,6 +30,53 @@ Không có.
 
 ---
 
+## 6. Điều tra lần Tool Crash T0 thứ ba với G-code 2h27m
+
+### Triệu chứng
+Bản in `voron_design_cube_v8-v1_PETG_2h27m.gcode`, tạo bằng OrcaSlicer 2.4.2, tiếp tục bị Klipper shutdown với thông báo trực tiếp `tool_crash detected tool T0`. Người dùng cung cấp ảnh tower thực tế sau lỗi; tower đứng vững hơn lần trước nhưng có búi PETG lớn ở mép phải, nhiều sợi kéo chéo và blob nhô trên mặt tower.
+
+### Vị trí lỗi
+- Moonraker ghi nhận job bắt đầu lúc 09:58:54 và Klipper shutdown lúc 12:03:08.
+- Klipper ghi `tool_crash detected tool T0` tại dòng 65301; toàn bộ CAN node vẫn active, không có `rx_error`, `tx_error` hoặc `tx_retries`.
+- G-code đang ở `toolchange #184`, đổi từ T4 sang T0 tại Z=12.44 mm, ngay trước `layer #62`.
+- Sau khi T0 được chọn, T0 purge tại Y khoảng 83–84 mm rồi in framework/rib của tower. `sd_pos=2788826` trỏ tới đường tower ở Y=103.2 mm, đang chạy từ vùng X khoảng 184.7 về X khoảng 161.9.
+- Trước sự cố, file đã thực hiện 184 toolchange và có 62 lệnh chọn T0. Việc T0 hoạt động thành công nhiều lần làm giảm khả năng đường dock hoặc dây T0 tự phát lỗi ở mọi chu kỳ; sự cố tích lũy nhựa/va chạm tower có trọng số cao hơn.
+
+### So sánh với G-code trước
+Các thay đổi tower đã được áp dụng đúng:
+- `prime_tower_enable_framework`: 0 → 1
+- `prime_tower_infill_gap`: 150% → 100%
+- `wipe_tower_bridging`: 10 → 5 mm
+- `wipe_tower_max_purge_speed`: 90 → 60 mm/s
+
+Hai giá trị điều khiển thời gian vẫn chưa thay đổi:
+- `machine_tool_change_time = 0`
+- `preheat_time = 40`
+
+### Bằng chứng preheat gây rỉ nhựa
+Tại toolchange #182, G-code vừa phát `M104 S150 T0` để cooldown T0 thì ngay sau đó phát `M104 S220 T0 ; preheat T0 time: 40s`, trước khi đổi sang T1. T0 vì vậy được dock ở 220°C, tiếp tục nằm nóng trong lúc T1 rồi T4 hoạt động và chỉ được lấy lại ở toolchange #184. Chuỗi này khớp với quan sát thực tế rằng nozzle PETG rỉ một đoạn nhựa khi đi dock và với blob/stringing tích lũy trên ảnh tower.
+
+Log đo được một hotend tăng từ khoảng 150°C lên vùng 220°C trong khoảng 16 giây. Chu kỳ toolchange thực tế mất khoảng 15 giây từ khi bắt đầu đổi tới khi tool mới hoàn tất hành trình về tower. Vì `machine_tool_change_time` đang là 0, Orca cũng bỏ qua khoảng 46 phút cơ khí cho 184 lần đổi đã thực hiện và khoảng 2 giờ 02 phút cho toàn bộ 489 lần đổi dự kiến.
+
+### Kết luận
+Nguyên nhân trực tiếp vẫn là một cạnh detection-pin xuất hiện khi T0 đang active; plugin `tool_crash` shutdown ngay trên cạnh này và không debounce. Nguyên nhân vật lý có xác suất cao nhất là T0 được giữ ở 220°C quá sớm/quá lâu trong dock, rỉ PETG và mang nhựa trở lại tower. Blob tích lũy bị T0 quệt ở layer 62, làm TAP/detection đổi trạng thái hoặc làm tool dịch chuyển đủ để tạo cạnh. T0 có preload/cảm biến biên vẫn là yếu tố phụ cần kiểm tra vì cả ba lần crash đều xảy ra khi T0 active.
+
+### Khuyến nghị
+1. Đặt `Tool change time` thành 15 s.
+2. Giữ `Ooze prevention` bật và `standby_temperature_delta = -80` (idle khoảng 150°C).
+3. Giảm `Preheat time` từ 40 s xuống 15–16 s; sau khi slice phải kiểm tra không còn cặp cooldown 150°C rồi reheat 220°C liền nhau cho cùng tool.
+4. Giữ framework/rib, infill gap 100%, bridge 5 mm; giảm tạm maximum wipe tower speed từ 60 xuống 40–45 mm/s.
+5. Giữ retraction khi đổi material ở 5 mm trong lần thử đầu; không tăng mạnh để tránh heat creep hoặc kẹt filament.
+6. Không vô hiệu hóa tool-crash detection. Kiểm tra riêng preload hai vít T0, magnet, PB6/connector và umbilical; nếu dry toolchange không đùn nhựa vẫn tạo lỗi thì ưu tiên xử lý tín hiệu/cơ khí T0.
+
+### Thay đổi cấu hình
+Không có. Chỉ phân tích log, G-code, ảnh và tài liệu nguồn chính thức.
+
+### Vấn đề còn lại
+Cần slice lại với `machine_tool_change_time = 15` và `preheat_time = 15–16`, sau đó kiểm tra G-code nhiệt trước khi chạy bài thử toolchange/tower rút gọn.
+
+---
+
 ## 5. Bổ sung phân tích mã nguồn Tool Crash và thời gian di chuyển dock
 
 ### Triệu chứng
