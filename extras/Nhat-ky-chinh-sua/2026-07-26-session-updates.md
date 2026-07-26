@@ -34,6 +34,7 @@ Không có.
 
 ### Triệu chứng
 Người dùng xác nhận mỗi chặng di chuyển giữa vùng in và dock mất khoảng 5 giây do kích thước khung Voron và vị trí dock cố định.
+Quan sát trực tiếp cho thấy các nozzle nóng rỉ một đoạn PETG dài khoảng 5 mm trong lúc đi về/xuống dock; phần nhựa này được mang trở lại prime tower và có thể tạo blob ở đầu đường purge.
 
 ### Phân tích bổ sung
 - Mã nguồn `cekim-git/tool_crash` xác nhận thông báo `tool_crash detected tool T0` xuất phát từ bộ bắt cạnh detection pin và gây shutdown ngay. Nếu lỗi do watchdog, thông báo phải có dạng `tool_crash: watchdog detected crash of tool T0`.
@@ -50,7 +51,7 @@ Không áp dụng diễn giải `watchdog_interval × watchdog_threshold ≈ 1 g
 Một cạnh detection pin xuất hiện sau khi T0 rời dock và trở lại tower. Thứ tự nghi ngờ:
 1. T0 hoặc tiếp điểm `EBB0:PB6` chập chờn khi umbilical thay đổi tư thế trên hành trình dài.
 2. Preload/latch/magnet của T0 ở trạng thái biên, sau hành trình 5 giây hoặc khi purge bị dịch chuyển đủ để switch đổi trạng thái.
-3. Nozzle T0 quệt blob/gờ PETG trên tower và làm T0 dịch chuyển.
+3. Nozzle T0 quệt blob/gờ PETG hình thành từ nhựa rỉ trong hành trình dock và làm T0 dịch chuyển.
 4. Ít khả năng hơn: detection pin của tool không active tạo cạnh muộn; plugin vẫn gắn nhãn lỗi theo active tool T0.
 
 ### Vấn đề còn lại
