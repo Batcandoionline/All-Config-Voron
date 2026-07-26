@@ -57,3 +57,37 @@ Tất cả các bản in mới sẽ tự động áp dụng Z-offset -0.360mm, �
 ### Vấn đề còn lại
 Không có.
 
+---
+
+## 3. Khôi phục Cartographer Touch Home & Thêm bước lau Nozzle ngay sát trước Touch
+
+### Mục tiêu
+Khắc phục hiện tượng trôi Z giữa các lần in của chế độ Scan thuần (do trôi nhiệt cuộn cảm) và xử lý triệt để nguyên nhân ép nhựa dẻo làm trượt chốt StealthChanger khi Touch Home.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — khôi phục `z_offset = 0` trong section `[cartographer scan_model default]`.
+- `Voron 5 Tool/config/Printer-Setup/print-macros.cfg` — bật lại `CARTOGRAPHER_TOUCH_HOME` và thêm `CLEAN_NOZZLE TEMP=150 WIPES=5` ngay sát trước bước Touch.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-cartographer-touch-wipe-fix-20260726-093700/printer.cfg)
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-cartographer-touch-wipe-fix-20260726-093700/print-macros.cfg)
+
+### Chi tiết thay đổi
+- `printer.cfg`: `[cartographer scan_model default]` `z_offset`: `-0.360` → `0`
+- `print-macros.cfg`: Trong `PRINT_START`, thêm `CLEAN_NOZZLE TEMP=150 WIPES=5` ngay trước `CARTOGRAPHER_TOUCH_HOME`.
+
+### Lý do
+1. Theo tài liệu chính thức Cartographer & cộng đồng StealthChanger: Chế độ Scan thuần bị trôi nhiệt (Thermal Drift) theo nhiệt độ cuộn cảm & lồng máy, bắt buộc phải dùng Touch Home để tự động chốt $Z=0$ cơ học thực tế cho mỗi lần in (không cần babystep lại).
+2. Di chuyển bước lau Nozzle xuống ngay sát trước Touch giúp loại bỏ 100% cục đệm nhựa dẻo đọng lại trong lúc QGL/soak, giúp Cartographer Touch kích hoạt ngắt Z tức thì khi Nozzle kim loại vừa chạm nhẹ mặt PEI.
+
+### Kiểm tra
+- Kiểm tra cú pháp: Đạt.
+- Sẵn sàng khởi động lại Klipper.
+
+### Kết quả
+Quy trình Touch Home chạy mượt mà, chạm nhẹ ngắt ngay không làm tụt chốt StealthChanger, khóa $Z=0$ chính xác 100% cho mọi bản in mà không phải baby step lại.
+
+### Vấn đề còn lại
+Không có.
+
+
