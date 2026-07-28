@@ -151,3 +151,79 @@ Cần slice và chạy bài ngắn với `preheat_time=20`, `machine_tool_change
 ### Nguồn kiểm tra chéo bổ sung
 - OrcaSlicer Material Multimaterial: https://github.com/OrcaSlicer/OrcaSlicer/wiki/material_multimaterial
 - OrcaSlicer Prime Tower: https://github.com/SoftFever/OrcaSlicer/wiki/multimaterial_settings_prime_tower
+
+## Đính chính sau khi kiểm tra file slice 5h02
+
+### File
+- `extras/gcode/voron_design_cube_v8-v1(1)_PETG_5h2m.gcode`
+- OrcaSlicer 2.4.2, tạo lúc `2026-07-28 20:45:26`.
+
+### Vì sao ước tính tăng lên 5h02
+- File cũ: `2h 24m 19s`.
+- File mới: `5h 1m 59s`.
+- Cả hai có đúng 520 block `CP TOOLCHANGE START`; mô hình và số lượt đổi tool không tăng.
+- File mới đặt `machine_tool_change_time = 15`.
+- Orca cộng `520 × 15 s = 7,800 s = 2h 10m` vào thống kê.
+- Chênh lệch tổng giữa hai file là `2h 37m 40s`; 27m40s còn lại là chênh lệch ròng từ các thay đổi khác như tốc độ tower 60 → 45 mm/s, đường chạy/vị trí tower và ramming 10 → 5 mm³.
+- Tài liệu Orca ghi `machine_tool_change_time` là thời gian dùng cho thống kê. Nó không chèn `G4 S15` hay làm shuttle cố ý đứng thêm 15 giây.
+- Giá trị 15 giây làm dự báo gần thời gian vật lý hơn vì macro đổi tool thực tế vẫn tốn khoảng 15 giây, bất kể footer đặt 0 hay 15.
+
+### Trường hợp T2 → T1 đứng chờ nhiệt
+- Đây là lần toolchange thực đầu tiên, tại dòng 502.
+- T2 được hạ về 150°C ở dòng 519.
+- T1 được chọn tại dòng 529.
+- Chỉ sau đó mới có `M109 S230 T1` tại dòng 531.
+- Không có `M104 ... T1` trước toolchange này, nên máy bắt buộc lấy T1 xuống rồi mới chờ tăng từ standby lên nhiệt in.
+- Phân tích toàn bộ 520 block cho thấy chỉ block đầu T2 → T1 thiếu preheat; block 520 là block kết thúc không chọn tool mới. Mọi toolchange thực còn lại đều có lệnh preheat.
+- File 2h24 cũ cũng thiếu M104 cho đúng lần T2 → T1 đầu tiên; do đó hiện tượng này không phải do đặt Tool change time 15 giây.
+- Macro M104/M109 hiện tại hỗ trợ đúng tham số `T`, nên không có bằng chứng lỗi chọn heater T1.
+
+### Đính chính khuyến nghị
+- Không dùng `machine_tool_change_time` để điều chỉnh thời điểm preheat. Giữ 15 nếu muốn thời gian dự kiến phản ánh thời gian đổi tool thật; đặt 0 chỉ làm số dự kiến ngắn hơn khoảng 2h10, không làm chuyển động thực nhanh hơn.
+- `preheat_time = 20 s` vẫn là tham số chính của Orca cho việc chèn M104 trước toolchange.
+- Với riêng file này, có thể chấp nhận một lần T1 chờ ở toolchange đầu; các lần sau có preheat.
+- Nếu muốn loại bỏ cả lần chờ đầu, cần một lệnh one-shot `M104 S230 T1` trước toolchange #1 hoặc cơ chế tự động nhận diện tool thứ hai. Không nên giữ tất cả tool ở nhiệt in từ lúc PRINT_START vì sẽ làm tăng ooze.
+
+### Nguồn
+- Orca Advanced Multi-Material Settings: https://www.orcaslicer.com/wiki/printer_settings/multimaterial/printer_multimaterial_advanced
+- Orca Ooze Prevention: https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_ooze_prevention.html
+- Orca 2.4 release notes: https://github.com/OrcaSlicer/OrcaSlicer/releases
+
+## Bổ sung: T0 rỉ nhựa do áp suất dư và lặp điểm vào tower
+
+### Quan sát thực tế
+- Mỗi lần T0 được lấy khỏi dock và đi xuống vùng in, nozzle kéo theo một sợi PETG dài gần 5 mm.
+- Không thể giải quyết bằng cách hạ nhiệt in vì mẫu bị tách lớp.
+- T0 luôn tiếp cận cùng điểm trên prime tower, nên sợi rỉ được dồn vào một vị trí và tạo blob cao dần.
+
+### Bằng chứng trong file 5h02
+- T0 được chọn 150 lần.
+- G-code cũng cooldown/cất T0 150 lần.
+- Trước mỗi lần cất T0, Orca thực hiện multi-tool ramming 5 mm³:
+  - ví dụ dòng 3399: đường ramming có `E2.0788`, tương đương khoảng 5 mm³ filament 1.75 mm;
+  - sau đó mới `G1 E-5 F1800` và `M104 S150 T0`.
+- Như vậy riêng T0 có thể đặt chủ động khoảng `150 × 5 = 750 mm³` nhựa lên tower trong toàn bộ file, chưa tính các đường wipe/framework và nhựa rỉ ngoài kế hoạch.
+- Khi T0 được lấy lại, G-code chỉ unretract 5 mm sau khi đã trở về điểm đầu tower. Sợi đã rỉ trong hành trình vì thế được kéo tới đúng điểm nhập tower trước khi đường wipe bắt đầu.
+
+### Cơ chế phù hợp nhất
+- PETG nóng và cột nhựa trong melt zone còn đàn hồi/nén sau đường đùn cuối.
+- Dừng stepper không làm áp suất và dòng nhớt giảm về 0 ngay; nhựa vẫn có thể chảy do pressure decay, giãn nở nhiệt và trọng lực.
+- Ramming ngay trước retract tạo thêm một xung đùn cuối. Retract 5 mm đã lớn nhưng không lấy hết phần nhựa nóng nằm dưới heatbreak/nozzle.
+- Hạ nhiệt in không phù hợp vì đã quan sát thấy mất liên kết lớp.
+
+### Thứ tự thử nhắm riêng T0
+1. Tắt `Enable ramming for multi-tool setups` chỉ trong filament preset gắn T0. Slice lại và xác nhận footer là `filament_multitool_ramming = 0,1,1,1,1` theo thứ tự T0–T4.
+2. Giữ toolchange retract T0 ở 5 mm trong lần thử đầu.
+3. Nếu T0 vẫn kéo sợi dài, thử retract riêng T0 `5 → 5.5 → 6 mm`, mỗi lần tăng 0.5 mm; không tăng đồng loạt các tool và không vượt xa 6 mm khi chưa kiểm tra nguy cơ kéo nhựa nóng lên heatbreak.
+4. Sau khi loại ảnh hưởng ramming, thử giảm `preheat_time` từ 20 xuống khoảng 16 giây. Dữ liệu trước cho thấy T0 cần khoảng 16–17 giây để đi từ 150°C lên 225°C; mục tiêu là T0 vừa đạt nhiệt lúc được dùng, không nằm đủ nhiệt trong dock nhiều giây.
+5. Nếu vẫn còn sợi do PETG chảy tự nhiên, giải pháp tin cậy là một cú flick/wipe cơ khí sau pickup và trước khi vào tower. Máy có brush ở X320/Y-8, nhưng macro `CLEAN_NOZZLE` hiện tại là chu trình đầy đủ, hạ xuống Z=2 và không phù hợp để gọi trực tiếp 150 lần giữa bản in. Cần một macro `TOOLCHANGE_FLICK` ngắn, có nâng Z an toàn và khôi phục vị trí, hoặc lắp wiper nhỏ ngay trên đường rời dock.
+
+### Tower
+- Đổi rotation chỉ chuyển blob sang góc khác; không loại nguyên nhân vì T0 vẫn vào lặp một điểm.
+- `prime_tower_skip_points=1` không nên được xem là giải pháp chắc chắn: Orca từng có lỗi skip-points không hoạt động đúng với regular printer profiles.
+- Giữ `Tool change on wipe tower` để tránh chuyển sợi rỉ sang bề mặt mẫu.
+- Không gọi trực tiếp `CLEAN_NOZZLE` hiện tại trong mỗi toolchange vì đường đi và Z=2 có thể va mẫu/tower ở các lớp cao.
+
+### Nguồn bổ sung
+- Orca Material Multimaterial / multi-tool ramming: https://github.com/OrcaSlicer/OrcaSlicer/wiki/material_multimaterial
+- Orca prime-tower skip-points regression: https://github.com/OrcaSlicer/OrcaSlicer/issues/12684
