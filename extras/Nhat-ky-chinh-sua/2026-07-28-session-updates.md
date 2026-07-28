@@ -227,3 +227,72 @@ Cần slice và chạy bài ngắn với `preheat_time=20`, `machine_tool_change
 ### Nguồn bổ sung
 - Orca Material Multimaterial / multi-tool ramming: https://github.com/OrcaSlicer/OrcaSlicer/wiki/material_multimaterial
 - Orca prime-tower skip-points regression: https://github.com/OrcaSlicer/OrcaSlicer/issues/12684
+
+## Tổng hợp toàn bộ giải pháp cho T0 rỉ PETG và tích tụ blob trên prime tower
+
+### Kết luận chẩn đoán
+- Ảnh tower cho thấy thân/framework vẫn tương đối ổn định, nhưng có các cục nhựa rời tập trung tại vùng tiếp cận lặp lại của tool. Đây phù hợp với nhựa rỉ bị mang từ dock tới tower hơn là tower tự sập hoặc over-extrusion đồng đều.
+- `preheat_time = 20 s` làm T0 đạt đủ 225°C sớm hơn khi còn ở dock. Macro pickup lại chờ đủ nhiệt khi nozzle đang nằm trên pad, nên nếu dock không có blocker/wiper thì T0 có thêm thời gian rỉ trước và trong hành trình xuống tower.
+- `preheat_time = 2 s` không tạo lỗi logic; nó chỉ bắt macro phải chờ lâu tại dock để T0 tăng từ idle 150°C lên nhiệt in.
+- File 5h02 bật multi-tool ramming 5 mm³ cho T0 và tắt `wipe while retracting`. Đây là hai thay đổi làm tăng áp lực cuối đường đùn và giảm khả năng kéo sạch nozzle, nhưng file cũ từng lỗi nên chúng là yếu tố làm nặng thêm chứ không phải nguyên nhân duy nhất.
+
+### Phương án ưu tiên
+1. Nâng cấp dock T0 sang StealthChanger Modular Dock có:
+   - blocker kiểu cup hoặc spring-steel dùng high-temperature RTV silicone để chặn nozzle khi đỗ;
+   - wiper PTFE hoặc Bambu để gạt nozzle khi tool rời dock.
+   Đây là giải pháp phần cứng chính thức và phù hợp trực tiếp với hiện tượng excess ooze khi tool quay lại bản in.
+2. Trong profile T0:
+   - tắt multi-tool ramming cho riêng T0, mục tiêu footer `filament_multitool_ramming = 0,1,1,1,1`;
+   - bật lại `wipe while retracting` cho T0; thử wipe distance 0.5 mm trước, sau đó 1–2 mm nếu cần;
+   - giữ toolchange retract 5 mm ở lần thử đầu, chỉ thử 5.5 rồi 6 mm nếu còn sợi; không tăng quá mức vì nguy cơ clog/under-extrusion.
+3. Nếu chưa có blocker/wiper:
+   - thử `preheat_time` 16 s rồi 14 s, chấp nhận chờ 1–3 s tại dock thay vì để tool đủ nóng quá lâu;
+   - không giảm nhiệt in 225°C nếu mẫu đã tách lớp ở nhiệt thấp hơn.
+4. Nếu chỉ chỉnh timing vẫn không đủ, dùng gia nhiệt hai giai đoạn:
+   - chỉ chờ T0 tới khoảng 190–200°C khi còn ở dock;
+   - pickup và đưa T0 về tower;
+   - tại tower mới chờ M109 lên đủ 225°C rồi purge/in.
+   Cách này giữ nguyên nhiệt độ in và độ bám lớp nhưng cần sửa an toàn logic pickup; không được sửa trực tiếp file upstream readonly.
+5. Phương án thay thế phần cứng: wiper/catch cup nhỏ ngay cửa ra dock. Macro `CLEAN_NOZZLE` hiện tại không phù hợp gọi giữa mỗi lần đổi tool vì là chu trình đầy đủ, xuống Z=2 và không khôi phục đường đi. Nếu dùng brush X320/Y-8 phải viết macro `TOOLCHANGE_FLICK` ngắn, Z-safe và khôi phục vị trí.
+
+### Kiểm tra vật liệu và hotend
+- Sấy PETG T0 ở 55°C khoảng 6 giờ và in từ dry box. Hơi ẩm có thể làm tăng áp lực/bọt trong melt zone và tăng ooze.
+- Vệ sinh mặt ngoài nozzle/heater block và kiểm tra silicone sock.
+- Xác định nhựa đi ra từ lỗ nozzle hay rò từ ren/nozzle-heatbreak. Nếu từ ren hoặc cạnh heater block, cần hot-tighten/sửa seal cơ khí; retraction không chữa được kiểu rò này.
+- Hiệu chuẩn Pressure Advance riêng cho đúng T0, nozzle, cuộn PETG, 225°C và lưu lượng thực tế. Không tăng PA tùy ý; giá trị phụ thuộc pigment và spool.
+
+### Các thay đổi tower chỉ có tác dụng giảm hậu quả
+- Giữ tốc độ tower khoảng 45 mm/s; không tăng lên 60–90 mm/s vì nozzle sẽ va blob với lực lớn hơn.
+- Giữ Type 2, Tool change on wipe tower và Rib/framework. Những cài đặt này tăng ổn định nhưng không loại nhựa được mang từ dock.
+- Rotation chỉ chuyển điểm tích tụ sang chỗ khác.
+- Tăng purge/minimal purge chỉ bù nhựa thiếu sau pickup; nó làm tower có thêm nhựa và không ngăn blob được mang tới.
+- Giảm extra flow, tăng infill gap hoặc làm tower thưa hơn để “bớt nhựa” sẽ làm tower yếu hơn và tăng nguy cơ crash.
+- Nếu mô hình cho phép, giảm số lần đổi tool/ghép các vùng màu nhỏ. File có 520 toolchange, trong đó T0 được gọi khoảng 150 lần, nên một sợi nhỏ cũng tích lũy thành lỗi lớn.
+
+### Ma trận thử ngắn được đề xuất
+- Dùng coupon T0↔T1 có 40–60 toolchange, giữ cùng cấu trúc tower.
+- Baseline đo bốn thứ: chiều dài sợi T0 khi rời dock, blob sau 10/20/40 lượt, thời gian M109 chờ tại dock, và 10 mm đường đầu tiên của T0 sau pickup.
+- Test 1: PETG đã sấy + ramming T0 off + wipe T0 on + preheat 16 s + retract 5 mm.
+- Nếu sợi còn trên 2 mm: retract 5.5 mm, sau đó 6 mm.
+- Nếu vẫn còn: preheat 14 s.
+- Nếu vẫn còn: lắp blocker + wiper; nếu chưa thể lắp thì thử gia nhiệt hai giai đoạn 195/200°C ở dock và 225°C tại tower.
+- Chỉ sau khi hết blob, nếu 10 mm đầu bị thiếu nhựa thì tăng minimal purge T0 từng bước 15 → 25 → 35 mm³ hoặc thử ramming nhỏ 2 mm³.
+- Tiêu chí đạt: không có blob cao đáng kể ở điểm vào sau 50 lượt, không ToolCrash, đường T0 đầu tiên không thiếu đùn, và thời gian chờ trung vị không quá khoảng 2 giây.
+
+### Không nên làm
+- Không tắt ToolCrash.
+- Không dùng retraction rất lớn hoặc long-retraction/cut dành cho hệ single-nozzle.
+- Không giữ tất cả tool ở nhiệt in liên tục.
+- Không gọi full `CLEAN_NOZZLE` sau mỗi toolchange.
+- Không dùng `machine_tool_change_time` để điều khiển chuyển động hoặc preheat; đây là tham số thống kê thời gian.
+- Không coi prime tower lớn hơn hoặc purge nhiều hơn là cách chữa rỉ nhựa.
+
+### Nguồn chính
+- StealthChanger Modular Dock: https://stealthchanger.com/hardware/modular_dock/
+- DraftShift ModularDock repository: https://github.com/DraftShift/ModularDock
+- OrcaSlicer Ooze Prevention: https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_ooze_prevention
+- OrcaSlicer Retraction: https://www.orcaslicer.com/wiki/printer_settings/extruder/printer_extruder_retraction
+- OrcaSlicer Prime Tower: https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_prime_tower
+- Klipper Pressure Advance: https://www.klipper3d.org/Pressure_Advance.html
+- Prusa XL combining materials: https://help.prusa3d.com/article/combining-materials-xl_498103
+- Prusa filament drying: https://help.prusa3d.com/article/drying-filament_332086
