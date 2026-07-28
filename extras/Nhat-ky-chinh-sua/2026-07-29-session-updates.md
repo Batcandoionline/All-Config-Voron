@@ -48,3 +48,23 @@
 3. If two-stage heating is not yet available, perform the final flick/wipe as late as possible, near the tower or at the existing brush, rather than relying only on a dock-exit wiper.
 4. Continue reducing internal pressure by disabling T0 multi-tool ramming, enabling wipe while retracting, drying the PETG and testing toolchange retract in 0.5 mm increments.
 5. Do not lower the actual object printing temperature; the final tower-side `M109` must still reach 225°C.
+
+## New unlogged failure: ToolCrash occurred while T4 was active
+
+### Observation
+- A later print reached approximately two thirds of the cube before ToolCrash.
+- T4 was active at the failure, and loose plastic debris was again present on the prime tower.
+- The logs currently stored in `extras/logs/` were last updated on 2026-07-28 at about 20:06 and do not contain this newer event.
+
+### Interpretation
+- The active tool at crash time is the tool that detected or experienced the collision; it is not necessarily the tool that deposited the debris.
+- Tool selection counts in the 5h02 G-code are T0=150, T1=150, T2=110, T3=55 and T4=55.
+- Incoming T4 transitions are primarily T2→T4 (34) and T1→T4 (20), with only one T0→T4 transition. Therefore the new observation weakens a T0-only explanation and supports a shared hot-travel/tower-contamination mechanism.
+- A late failure after roughly two thirds of the model is consistent with repeated small deposits accumulating until one tool collides with a sufficiently high fragment.
+
+### Revised scope
+1. Apply the two-stage pickup-temperature strategy to every tool, with a per-tool pickup temperature if required.
+2. Disable multi-tool ramming and enable wipe while retracting for all PETG tools during the diagnostic print, not only T0.
+3. Use a late wipe/flick shared by all tools, as close to the tower as safely possible.
+4. Record the color of the highest debris and the immediately preceding tool at the next event; this identifies the depositing tool more reliably than the ToolCrash tool number.
+5. Use a shorter 40–60-change diagnostic coupon before repeating the full 520-change cube.
