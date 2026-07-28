@@ -125,3 +125,29 @@ Không có. Chỉ đọc log, G-code, preset JSON, ảnh và tài liệu; ghi nh
 
 ### Vấn đề còn lại
 Cần slice và chạy bài ngắn với `preheat_time=20`, `machine_tool_change_time=15`, sau đó kiểm tra lại vị trí M104 và log nhiệt. Nếu timing đã đúng mà vẫn có edge ToolCrash, chuyển trọng tâm sang cơ khí/cảm biến T0.
+
+## Khuyến nghị giảm nhựa tích tụ trên prime tower
+
+### Phát hiện bổ sung trong G-code
+- Dù `Printersetting.json` ghi `enable_filament_ramming = 0`, footer G-code thực tế ghi `filament_multitool_ramming = 1,1,1,1,1`.
+- Mỗi filament đang dùng `filament_multitool_ramming_volume = 10 mm³` và flow `10 mm³/s`.
+- Ở toolchange #22, tool đi ra đùn `E3.0639 + E1.0936 = 4.1575 mm` filament trước khi retract 5 mm, tương đương xấp xỉ 10 mm³.
+- Với 22 toolchange đã xảy ra trước crash, ramming có thể chủ động đặt khoảng 220 mm³ nhựa lên tower, chưa tính đường wipe, framework và nhựa rỉ ngoài kế hoạch.
+
+### Thứ tự thử được khuyến nghị
+1. Sửa timing trước: giữ `preheat_time = 20 s`, đặt `machine_tool_change_time = 15 s`.
+2. Trong từng Filament preset của cả 5 tool, giảm **Multi-tool ramming volume** từ `10` xuống `5 mm³`; giữ flow ban đầu hoặc giảm nhẹ xuống `8 mm³/s`.
+3. Slice lại và xác nhận footer phải đổi thành volume `5,5,5,5,5`. Nếu muốn thử tắt hoàn toàn, footer phải là `filament_multitool_ramming = 0,0,0,0,0`; không chỉ dựa vào checkbox trong Printer Settings.
+4. Giảm `Maximum wipe tower print speed` từ `60` xuống `45 mm/s`. Việc này không làm giảm thể tích thiết kế nhiều, nhưng giảm khả năng kéo bật đường PETG, quấn sợi và lực va vào blob.
+5. Giữ `prime_tower_infill_gap = 100%`, bridging `5 mm`, extra flow `100%`, width `40 mm` trong bài thử đầu để không thay đổi quá nhiều biến cùng lúc.
+6. Nếu tower vẫn có cục nhô nhưng không còn nhựa rỉ từ dock, thử tắt ramming cho cả 5 filament. Chỉ tăng lại 2–3 mm³ nếu đầu mới bắt đầu in bị thiếu nhựa hoặc áp suất không ổn định.
+
+### Không khuyến nghị ở bước đầu
+- Không tăng toolchange retract vượt 5 mm khi chưa kiểm tra heatbreak.
+- Không tăng infill gap để tiết kiệm nhựa: khoảng đỡ thưa hơn có thể làm PETG võng và tạo bẫy blob.
+- Không giảm extra flow hoặc purge tùy tiện trước khi tách được phần ramming và phần ooze.
+- Không vô hiệu hóa ToolCrash.
+
+### Nguồn kiểm tra chéo bổ sung
+- OrcaSlicer Material Multimaterial: https://github.com/OrcaSlicer/OrcaSlicer/wiki/material_multimaterial
+- OrcaSlicer Prime Tower: https://github.com/SoftFever/OrcaSlicer/wiki/multimaterial_settings_prime_tower
