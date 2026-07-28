@@ -29,3 +29,22 @@
 ### Source
 - StealthChanger Modular Dock: https://stealthchanger.com/hardware/modular_dock/
 - StealthChanger dock adjustment guidance: https://sdylewski.github.io/StealthChanger/Docks/
+
+## Observation update: the 5 mm strand grows during dock-to-tower travel
+
+### Revised diagnosis
+- T0 does not primarily pull the 5 mm strand from the RTV blocker. The strand grows after pickup during the approximately five-second hot move from the dock to the prime tower.
+- An exit wiper can remove residue present at dock release, but it cannot prevent a new strand from growing after the nozzle has passed the wiper.
+- The current pickup macro waits for the selected extruder to reach its full target temperature while the nozzle is on the pad. Therefore `preheat_time` mainly changes how long the shuttle waits at the dock; T0 still leaves the dock at the full 225°C target.
+- Shortening `preheat_time` alone cannot eliminate hot-travel ooze while the pickup macro retains the full-target `M109` wait.
+
+### Updated solution order
+1. Run a controlled pickup-temperature test at 195, 200, 205, 210 and 225°C over the same five-second travel, recording strand length. Select the highest pickup temperature that keeps the strand below approximately 1 mm.
+2. Implement two-stage heating:
+   - heat/wait only to the measured pickup temperature while docked;
+   - pick up and travel toward the tower;
+   - complete heating to 225°C at the tower;
+   - purge before printing.
+3. If two-stage heating is not yet available, perform the final flick/wipe as late as possible, near the tower or at the existing brush, rather than relying only on a dock-exit wiper.
+4. Continue reducing internal pressure by disabling T0 multi-tool ramming, enabling wipe while retracting, drying the PETG and testing toolchange retract in 0.5 mm increments.
+5. Do not lower the actual object printing temperature; the final tower-side `M109` must still reach 225°C.
