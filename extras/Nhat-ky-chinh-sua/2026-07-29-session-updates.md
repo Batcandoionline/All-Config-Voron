@@ -68,3 +68,59 @@
 3. Use a late wipe/flick shared by all tools, as close to the tower as safely possible.
 4. Record the color of the highest debris and the immediately preceding tool at the next event; this identifies the depositing tool more reliably than the ToolCrash tool number.
 5. Use a shorter 40–60-change diagnostic coupon before repeating the full 520-change cube.
+
+## 1. Automatic OrcaSlicer profile synchronization
+
+### Goal
+Copy the active OrcaSlicer user presets directly from AppData into the repository and remove the need for manual JSON export.
+
+### Source
+- `C:\Users\batca\AppData\Roaming\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f`
+- Selected profile ID: `838ce884-12ee-416b-9e1b-1c7503cf6b5f`
+
+### Updated files
+- `extras/Orcasilcer setting/MulticolorPETG.json`
+- `extras/Orcasilcer setting/Printersetting.json`
+- `Orca Config/0.20mm PETG Multimaterial.json`
+- `Orca Config/PETG Bambu Basic Black.json`
+- `Orca Config/PETG Kabber Blue.json`
+- `Orca Config/PETG Tinmory.json`
+- `Orca Config/PETG TPoimns Orange.json`
+- `Orca Config/PETG TPoimns Red.json`
+- `Orca Config/PETG TPoimns White.json`
+- `Orca Config/Voron Stealthchanger.json`
+
+### Backup
+- `extras/backups/pre-orcaslicer-profile-sync-20260729-155440`
+
+### Validation
+- All source and destination JSON files passed `ConvertFrom-Json` validation.
+- Exact source bytes were copied without reformatting.
+
+### Result
+- 10 repository JSON file(s) synchronized.
+- Use `Orca Config\Sync-OrcaProfiles.cmd` for one-click sync, commit and push.
+
+## 2. One-click OrcaSlicer and diagnostic Git synchronization
+
+### Goal
+Automatically synchronize OrcaSlicer profiles and publish the requested G-code/log diagnostics without manual JSON export or separate Git commands.
+
+### Files added or documented
+- `Orca Config/Sync-OrcaProfiles.ps1` — discovers the active Orca account, validates/copies JSON, creates local backups, writes the daily journal, and optionally commits/pushes.
+- `Orca Config/Sync-OrcaProfiles.cmd` — one-click launcher using `-IncludeDiagnostics -Commit -Push`.
+- `Orca Config/README.md` — documents automatic and command-line use.
+
+### Diagnostic scope
+- All `.gcode` files under `extras/gcode/` were force-added because the extension is normally ignored.
+- `extras/logs/klippy.log` and `extras/logs/moonraker.log` were force-added.
+- Existing untracked Orca JSON exports and the two analysis aliases were included.
+
+### Safety and validation
+- Largest individual file: approximately 38.15 MiB, below GitHub's 100 MiB single-file limit.
+- No password, bearer token, API-key, access-token, secret, or token-assignment pattern was detected in the two log files or Orca JSON files.
+- All 24 repository Orca JSON files passed `ConvertFrom-Json`.
+- A second profile synchronization run reported zero updates, confirming idempotent behavior.
+
+### Backup
+- `extras/backups/pre-orcaslicer-profile-sync-20260729-155440/` (local and gitignored).

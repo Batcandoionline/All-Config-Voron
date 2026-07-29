@@ -1,5 +1,42 @@
 # Cấu hình OrcaSlicer (Orca Config)
 
+## Automatic synchronization
+
+Manual JSON export is no longer required. After saving a preset in OrcaSlicer,
+double-click:
+
+```text
+Sync-OrcaProfiles.cmd
+```
+
+The launcher runs `Sync-OrcaProfiles.ps1`, which:
+
+1. Finds the most recently used OrcaSlicer account under
+   `%APPDATA%\OrcaSlicer\user`.
+2. Validates every user `machine`, `process`, and `filament` JSON profile.
+3. Backs up changed repository copies under
+   `extras/backups/pre-orcaslicer-profile-sync-<timestamp>/`.
+4. Copies the exact active JSON files into this directory.
+5. Updates the analysis aliases in `extras/Orcasilcer setting/`.
+6. Force-adds the diagnostic G-code and log files that are normally ignored.
+7. Writes the daily project journal, creates an English Git commit, and pushes
+   it to the configured remote.
+
+The PowerShell script can also be run without Git actions:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File ".\Orca Config\Sync-OrcaProfiles.ps1"
+```
+
+To select a specific OrcaSlicer account instead of automatic discovery:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File ".\Orca Config\Sync-OrcaProfiles.ps1" `
+  -ProfileId "<account-id>" -Commit -Push
+```
+
 Thư mục này lưu trữ các profile tùy chỉnh (custom profiles) của OrcaSlicer dùng cho máy in **Voron 2.4 StealthChanger (5-Tool)**, bao gồm cấu hình máy in (`machine`), cấu hình nhựa (`filament`) và cấu hình tiến trình in (`process`).
 
 ---

@@ -1,0 +1,1207 @@
+-------------------- Log Start | Mon Jul 27 17:32:10 2026 --------------------
+platform: Linux-6.12.87+rpt-rpi-v8-aarch64-with-glibc2.36
+data_path: /home/voron/printer_data
+is_default_data_path: False
+config_file: /home/voron/printer_data/config/moonraker.conf
+backup_config: /home/voron/printer_data/config/.moonraker.conf.bkp
+startup_warnings: []
+verbose: False
+debug: False
+asyncio_debug: False
+is_backup_config: False
+is_python_package: True
+instance_uuid: 7d972c9d76ca4cd8b3b863091135e2a6
+unix_socket_path: /home/voron/printer_data/comms/moonraker.sock
+structured_logging: False
+software_version: v0.10.0-30-g6597123
+git_branch: master
+git_remote: origin
+git_repo_url: https://github.com/Arksine/moonraker.git
+modified_files: []
+unofficial_components: []
+log_file: /home/voron/printer_data/logs/moonraker.log
+python_version: 3.11.2 (main, Apr  8 2026, 01:58:00) [GCC 12.2.0]
+launch_args: /home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/__main__.py
+msgspec_enabled: True
+uvloop_enabled: True
+
+#################### Moonraker Configuration ####################
+
+[server]
+host = 0.0.0.0
+port = 7125
+klippy_uds_address = ~/printer_data/comms/klippy.sock
+
+[authorization]
+trusted_clients = 
+	192.168.0.0/16
+	100.64.0.0/10
+	10.0.0.0/8
+	127.0.0.0/8
+	169.254.0.0/16
+	172.16.0.0/12
+	fd7a:115c:a1e0::/48
+	FE80::/10
+	::1/128
+cors_domains = 
+	*.lan
+	*.local
+	*.local:*
+	*://localhost
+	*://localhost:*
+	*://my.mainsail.xyz
+	*://app.fluidd.xyz
+
+[octoprint_compat]
+
+[history]
+
+[update_manager]
+channel = dev
+refresh_interval = 168
+
+[update_manager mainsail]
+path = ~/mainsail
+repo = mainsail-crew/mainsail
+channel = stable
+type = web
+
+[update_manager mainsail-config]
+managed_services = klipper
+origin = https://github.com/mainsail-crew/mainsail-config.git
+path = ~/mainsail-config
+primary_branch = master
+type = git_repo
+
+[update_manager KlipperScreen]
+install_script = scripts/KlipperScreen-install.sh
+requirements = scripts/KlipperScreen-requirements.txt
+env = ~/.KlipperScreen-env/bin/python
+managed_services = KlipperScreen
+origin = https://github.com/KlipperScreen/KlipperScreen.git
+path = ~/KlipperScreen
+type = git_repo
+
+[update_manager crowsnest]
+type = git_repo
+path = ~/crowsnest
+origin = https://github.com/mainsail-crew/crowsnest.git
+managed_services = crowsnest
+install_script = tools/pkglist.sh
+
+[update_manager sonar]
+type = git_repo
+path = ~/sonar
+origin = https://github.com/mainsail-crew/sonar.git
+primary_branch = main
+managed_services = sonar
+install_script = tools/install.sh
+
+[update_manager timelapse]
+type = git_repo
+primary_branch = main
+path = ~/moonraker-timelapse
+origin = https://github.com/mainsail-crew/moonraker-timelapse.git
+managed_services = klipper moonraker
+
+[update_manager cartographer_plugin]
+type = python
+channel = stable
+virtualenv = ~/klippy-env
+project_name = cartographer3d-plugin
+is_system_service = False
+managed_services = klipper
+info_tags = desc=Cartographer Plugin
+
+[update_manager Klippain-ShakeTune]
+type = git_repo
+origin = https://github.com/Frix-x/klippain-shaketune.git
+path = ~/klippain_shaketune
+virtualenv = ~/klippy-env
+requirements = requirements.txt
+system_dependencies = system-dependencies.json
+primary_branch = main
+managed_services = klipper
+
+[update_manager klipper-toolchanger-easy]
+type = git_repo
+path = ~/klipper-toolchanger-easy
+origin = https://github.com/jwellman80/klipper-toolchanger-easy.git
+managed_services = klipper
+primary_branch = main
+
+#################################################################
+All Configuration Files:
+/home/voron/printer_data/config/moonraker.conf
+#################################################################
+2026-07-28 00:32:10,471 [confighelper.py:read_file()] - Configuration File '/home/voron/printer_data/config/moonraker.conf' parsed, total size: 2446 B
+2026-07-28 00:32:10,472 [server.py:add_log_rollover_item()] - 
+#################### Moonraker Configuration ####################
+
+[server]
+host = 0.0.0.0
+port = 7125
+klippy_uds_address = ~/printer_data/comms/klippy.sock
+
+[authorization]
+trusted_clients = 
+	192.168.0.0/16
+	100.64.0.0/10
+	10.0.0.0/8
+	127.0.0.0/8
+	169.254.0.0/16
+	172.16.0.0/12
+	fd7a:115c:a1e0::/48
+	FE80::/10
+	::1/128
+cors_domains = 
+	*.lan
+	*.local
+	*.local:*
+	*://localhost
+	*://localhost:*
+	*://my.mainsail.xyz
+	*://app.fluidd.xyz
+
+[octoprint_compat]
+
+[history]
+
+[update_manager]
+channel = dev
+refresh_interval = 168
+
+[update_manager mainsail]
+path = ~/mainsail
+repo = mainsail-crew/mainsail
+channel = stable
+type = web
+
+[update_manager mainsail-config]
+managed_services = klipper
+origin = https://github.com/mainsail-crew/mainsail-config.git
+path = ~/mainsail-config
+primary_branch = master
+type = git_repo
+
+[update_manager KlipperScreen]
+install_script = scripts/KlipperScreen-install.sh
+requirements = scripts/KlipperScreen-requirements.txt
+env = ~/.KlipperScreen-env/bin/python
+managed_services = KlipperScreen
+origin = https://github.com/KlipperScreen/KlipperScreen.git
+path = ~/KlipperScreen
+type = git_repo
+
+[update_manager crowsnest]
+type = git_repo
+path = ~/crowsnest
+origin = https://github.com/mainsail-crew/crowsnest.git
+managed_services = crowsnest
+install_script = tools/pkglist.sh
+
+[update_manager sonar]
+type = git_repo
+path = ~/sonar
+origin = https://github.com/mainsail-crew/sonar.git
+primary_branch = main
+managed_services = sonar
+install_script = tools/install.sh
+
+[update_manager timelapse]
+type = git_repo
+primary_branch = main
+path = ~/moonraker-timelapse
+origin = https://github.com/mainsail-crew/moonraker-timelapse.git
+managed_services = klipper moonraker
+
+[update_manager cartographer_plugin]
+type = python
+channel = stable
+virtualenv = ~/klippy-env
+project_name = cartographer3d-plugin
+is_system_service = False
+managed_services = klipper
+info_tags = desc=Cartographer Plugin
+
+[update_manager Klippain-ShakeTune]
+type = git_repo
+origin = https://github.com/Frix-x/klippain-shaketune.git
+path = ~/klippain_shaketune
+virtualenv = ~/klippy-env
+requirements = requirements.txt
+system_dependencies = system-dependencies.json
+primary_branch = main
+managed_services = klipper
+
+[update_manager klipper-toolchanger-easy]
+type = git_repo
+path = ~/klipper-toolchanger-easy
+origin = https://github.com/jwellman80/klipper-toolchanger-easy.git
+managed_services = klipper
+primary_branch = main
+
+#################################################################
+All Configuration Files:
+/home/voron/printer_data/config/moonraker.conf
+#################################################################
+2026-07-28 00:32:10,638 [server.py:load_component()] - Component (secrets) loaded
+2026-07-28 00:32:10,646 [server.py:load_component()] - Component (template) loaded
+2026-07-28 00:32:10,653 [server.py:load_component()] - Component (klippy_connection) loaded
+2026-07-28 00:32:11,673 [application.py:__init__()] - Detected Tornado Version 6.5.6
+2026-07-28 00:32:11,675 [server.py:load_component()] - Component (application) loaded
+2026-07-28 00:32:11,707 [server.py:load_component()] - Component (websockets) loaded
+2026-07-28 00:32:11,782 [server.py:add_log_rollover_item()] - Loading Sqlite database provider. Sqlite Version: 3.40.1
+2026-07-28 00:32:11,792 [server.py:add_log_rollover_item()] - Unsafe Shutdown Count: 205
+2026-07-28 00:32:11,798 [server.py:load_component()] - Component (database) loaded
+2026-07-28 00:32:11,975 [server.py:load_component()] - Component (dbus_manager) loaded
+2026-07-28 00:32:12,018 [file_manager.py:__init__()] - Using File System Observer: inotify
+2026-07-28 00:32:12,050 [server.py:load_component()] - Component (file_manager) loaded
+2026-07-28 00:32:12,074 [database.py:register_table()] - Found registered table authorized_users
+2026-07-28 00:32:12,076 [authorization.py:__init__()] - Authorization Configuration Loaded
+Trusted Clients:
+192.168.0.0/16
+100.64.0.0/10
+10.0.0.0/8
+127.0.0.0/8
+169.254.0.0/16
+172.16.0.0/12
+fd7a:115c:a1e0::/48
+fe80::/10
+::1/128
+CORS Domains:
+.*\.lan
+.*\.local
+.*\.local:.*
+.*://localhost
+.*://localhost:.*
+.*://my\.mainsail\.xyz
+.*://app\.fluidd\.xyz
+2026-07-28 00:32:12,079 [server.py:load_component()] - Component (authorization) loaded
+2026-07-28 00:32:12,089 [server.py:load_component()] - Component (klippy_apis) loaded
+2026-07-28 00:32:12,234 [server.py:add_log_rollover_item()] - 
+System Info:
+
+***python***
+  version: (3, 11, 2, 'final', 0)
+  version_string: 3.11.2 (main, Apr  8 2026, 01:58:00) [GCC 12.2.0]
+
+***cpu_info***
+  cpu_count: 4
+  bits: 64bit
+  processor: aarch64
+  cpu_desc: 
+  serial_number: 100000002b49334b
+  hardware_desc: 
+  model: Raspberry Pi Compute Module 4 Rev 1.1
+  total_memory: 3701932
+  memory_units: kB
+
+***sd_info***
+  manufacturer_id: 15
+  manufacturer: Unknown
+  oem_id: 0100
+  product_name: BJTD4
+  product_revision: 5.2
+  serial_number: 00769dca
+  manufacturer_date: 6/2181
+  capacity: Unknown
+  total_bytes: 0
+
+***distribution***
+  name: Debian GNU/Linux 12 (bookworm)
+  id: debian
+  version: 12
+  version_parts: {'major': '12', 'minor': '', 'build_number': ''}
+  like: 
+  codename: bookworm
+  release_info: {'name': 'MainsailOS', 'version_id': '2.2.2', 'codename': 'bookworm', 'id': 'mainsailos'}
+  kernel_version: 6.12.87+rpt-rpi-v8
+
+***virtualization***
+  virt_type: none
+  virt_identifier: none
+
+***network***
+
+***canbus***
+
+***Allowed Services***
+  klipper_mcu
+  webcamd
+  MoonCord
+  KlipperScreen
+  moonraker-telegram-bot
+  moonraker-obico
+  sonar
+  crowsnest
+  octoeverywhere
+  ratos-configurator
+  axiscope
+2026-07-28 00:32:12,237 [server.py:load_component()] - Component (shell_command) loaded
+2026-07-28 00:32:12,237 [machine.py:__init__()] - Using System Provider: systemd_dbus
+2026-07-28 00:32:12,421 [server.py:add_log_rollover_item()] - Found libcamera Python module, version: v0.5.2+99-bfd68f78
+2026-07-28 00:32:12,422 [server.py:load_component()] - Component (machine) loaded
+2026-07-28 00:32:12,428 [server.py:load_component()] - Component (data_store) loaded
+2026-07-28 00:32:12,431 [proc_stats.py:__init__()] - Detected 'vcgencmd', throttle checking enabled
+2026-07-28 00:32:12,432 [proc_stats.py:_get_cpu_thermal_file()] - Monitoring temperature for Raspberry Pi CPU
+2026-07-28 00:32:12,434 [server.py:load_component()] - Component (proc_stats) loaded
+2026-07-28 00:32:12,437 [server.py:load_component()] - Component (job_state) loaded
+2026-07-28 00:32:12,444 [server.py:load_component()] - Component (job_queue) loaded
+2026-07-28 00:32:12,450 [database.py:register_table()] - Found registered table job_history
+2026-07-28 00:32:12,450 [database.py:register_table()] - Found registered table job_totals
+2026-07-28 00:32:12,454 [server.py:load_component()] - Component (history) loaded
+2026-07-28 00:32:12,471 [server.py:load_component()] - Component (http_client) loaded
+2026-07-28 00:32:12,479 [server.py:load_component()] - Component (announcements) loaded
+2026-07-28 00:32:12,484 [server.py:load_component()] - Component (webcam) loaded
+2026-07-28 00:32:12,490 [server.py:load_component()] - Component (extensions) loaded
+2026-07-28 00:32:12,496 [server.py:load_component()] - Component (octoprint_compat) loaded
+2026-07-28 00:32:12,583 [base_deploy.py:log_info()] - Git Repo moonraker: Detected virtualenv: /home/voron/moonraker-env
+2026-07-28 00:32:12,588 [base_deploy.py:log_info()] - Git Repo klipper: Detected virtualenv: /home/voron/klippy-env
+2026-07-28 00:32:12,667 [base_deploy.py:log_info()] - Git Repo KlipperScreen: Option 'env' is deprecated, use 'virtualenv' instead.
+2026-07-28 00:32:12,668 [base_deploy.py:log_info()] - Git Repo KlipperScreen: Detected virtualenv: /home/voron/.KlipperScreen-env
+2026-07-28 00:32:12,684 [base_deploy.py:log_info()] - Python Package cartographer_plugin: Detected virtualenv: /home/voron/klippy-env
+2026-07-28 00:32:12,757 [source_info.py:_load_release_info_json()] - Package cartographer3d_plugin-1.8.0.dist-info: Detected release_info json file
+2026-07-28 00:32:12,761 [base_deploy.py:log_info()] - Python Package cartographer_plugin: Unable to find changelog url in metadata
+2026-07-28 00:32:12,763 [sysdeps_parser.py:parse_dependencies()] - Dependency data has no package definition for linux distro 'debian'
+2026-07-28 00:32:12,767 [base_deploy.py:log_info()] - Git Repo Klippain-ShakeTune: Detected virtualenv: /home/voron/klippy-env
+2026-07-28 00:32:12,782 [server.py:load_component()] - Component (update_manager) loaded
+2026-07-28 00:32:12,783 [server.py:_initialize_component()] - Performing Component Post Init: [database]
+2026-07-28 00:32:12,804 [server.py:_initialize_component()] - Performing Component Post Init: [dbus_manager]
+2026-07-28 00:32:12,820 [server.py:_initialize_component()] - Performing Component Post Init: [authorization]
+2026-07-28 00:32:12,822 [server.py:_initialize_component()] - Performing Component Post Init: [machine]
+2026-07-28 00:32:12,825 [machine.py:validation_init()] - Installation version in database up to date
+2026-07-28 00:32:13,379 [machine.py:check_virt_status()] - No Virtualization Detected
+2026-07-28 00:32:13,420 [machine.py:_find_public_ip()] - Detected Local IP: 192.168.1.43
+2026-07-28 00:32:13,426 [webcam.py:_set_default_host_ip()] - Default public webcam address set: http://192.168.1.43
+2026-07-28 00:32:13,500 [server.py:add_log_rollover_item()] - 
+Systemd unit moonraker.service:
+unit_name: moonraker.service
+is_default: True
+manager: systemd
+Properties:
+**Requires=['sysinit.target', 'system.slice', 'network-online.target']
+**After=['system.slice', 'network-online.target', 'sysinit.target', 'systemd-journald.socket', 'basic.target', 'klipper.service']
+**SupplementaryGroups=['moonraker-admin']
+**EnvironmentFiles=/home/voron/printer_data/systemd/moonraker.env
+**ExecStart=/home/voron/moonraker-env/bin/python $MOONRAKER_ARGS
+**WorkingDirectory=
+**FragmentPath=/etc/systemd/system/moonraker.service
+**Description=API Server for Klipper SV1
+**User=voron
+2026-07-28 00:32:13,500 [server.py:_initialize_component()] - Performing Component Post Init: [proc_stats]
+2026-07-28 00:32:13,500 [server.py:_initialize_component()] - Performing Component Post Init: [history]
+2026-07-28 00:32:13,545 [server.py:_initialize_component()] - Performing Component Post Init: [announcements]
+2026-07-28 00:32:13,553 [server.py:_initialize_component()] - Performing Component Post Init: [webcam]
+2026-07-28 00:32:13,554 [webcam.py:_set_default_host_ip()] - Default public webcam address set: http://192.168.1.43
+2026-07-28 00:32:13,562 [server.py:_initialize_component()] - Performing Component Post Init: [klippy_connection]
+2026-07-28 00:32:13,562 [server.py:add_log_rollover_item()] - 
+Systemd unit klipper.service:
+unit_name: klipper.service
+is_default: True
+manager: systemd
+Properties:
+**Requires=['sysinit.target', 'system.slice', '-.mount']
+**After=['sysinit.target', 'basic.target', 'system.slice', '-.mount', 'systemd-journald.socket', 'network-online.target']
+**SupplementaryGroups=[]
+**EnvironmentFiles=/home/voron/printer_data/systemd/klipper.env
+**ExecStart=/home/voron/klippy-env/bin/python $KLIPPER_ARGS
+**WorkingDirectory=/home/voron/klipper
+**FragmentPath=/etc/systemd/system/klipper.service
+**Description=Klipper 3D Printer Firmware SV1
+**User=voron
+2026-07-28 00:32:13,562 [server.py:_initialize_component()] - Performing Component Post Init: [update_manager]
+2026-07-28 00:32:14,082 [base_deploy.py:log_info()] - PackageDeploy: PackageKit Provider Configured
+2026-07-28 00:32:14,085 [base_deploy.py:log_info()] - Git Repo moonraker: Pip Version: 25.2, Python Version: 3.11
+Last checked on 2026-06-29 13:47:57.233706+00:00
+2026-07-28 00:32:14,086 [git_deploy.py:log_repo_info()] - Git Repo moonraker Detected:
+Owner: Arksine
+Repository Name: moonraker
+Path: /home/voron/moonraker
+Remote: origin
+Branch: master
+Remote URL: https://github.com/Arksine/moonraker.git
+Recovery URL: https://github.com/Arksine/moonraker.git
+Current Commit SHA: 659712321824d03ed8c2718b4583463bfc890abe
+Upstream Commit SHA: d5ee17128bb88434aacdab90c2e9e990e2b64e4a
+Current Version: v0.10.0-30-g65971232
+Upstream Version: v0.10.0-31-gd5ee1712
+Rollback Commit: 9008485843740c93e0154ccbdac1fc2b02b03aaa
+Rollback Branch: master
+Rollback Version: v0.10.0-20-g90084858
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 1
+Diverged: False
+Pinned Commit: None
+Repo Warnings:
+  Repo has untracked source files: ['moonraker/components/timelapse.py']
+2026-07-28 00:32:14,088 [git_deploy.py:log_repo_info()] - Git Repo klipper Detected:
+Owner: Klipper3d
+Repository Name: klipper
+Path: /home/voron/klipper
+Remote: origin
+Branch: master
+Remote URL: https://github.com/Klipper3d/klipper.git
+Recovery URL: https://github.com/Klipper3d/klipper.git
+Current Commit SHA: d6ea62542d3f14a1faf55305c85ed0cbe361a233
+Upstream Commit SHA: 7046bd00ef5c30dec6febc724f8d22967433c45c
+Current Version: v0.13.0-700-gd6ea6254
+Upstream Version: v0.13.0-708-g7046bd00
+Rollback Commit: 430a2a8a0054c5d5ac3f8cdaf5c968a3b1df49d3
+Rollback Branch: master
+Rollback Version: v0.13.0-697-g430a2a8a
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 8
+Diverged: False
+Pinned Commit: None
+Repo Warnings:
+  Repo has untracked source files: ['klippy/extras/axiscope.py', 'klippy/extras/bed_thermal_adjust.py', 'klippy/extras/manual_rail.py', 'klippy/extras/multi_fan.py', 'klippy/extras/rounded_path.py', 'klippy/extras/tool.py', 'klippy/extras/tool_crash.py', 'klippy/extras/tool_probe.py', 'klippy/extras/tool_probe_endstop.py', 'klippy/extras/toolchanger.py', 'klippy/extras/tools_calibrate.py']
+2026-07-28 00:32:14,094 [base_deploy.py:log_info()] - Web Client mainsail: Detected
+Repo: mainsail-crew/mainsail
+Channel: stable
+Path: /home/voron/mainsail
+Local Version: v2.18.0
+Remote Version: v2.18.2
+Valid: True
+Fallback Detected: False
+Pre-release: False
+Download Url: https://github.com/mainsail-crew/mainsail/releases/download/v2.18.2/mainsail.zip
+Download Size: 3133520
+Content Type: application/zip
+Rollback Version: v2.17.0
+Rollback Repo: mainsail-crew/mainsail
+2026-07-28 00:32:14,098 [git_deploy.py:log_repo_info()] - Git Repo mainsail-config Detected:
+Owner: mainsail-crew
+Repository Name: mainsail-config
+Path: /home/voron/mainsail-config
+Remote: origin
+Branch: master
+Remote URL: https://github.com/mainsail-crew/mainsail-config.git
+Recovery URL: https://github.com/mainsail-crew/mainsail-config.git
+Current Commit SHA: ff3869a621db17ce3ef660adbbd3fa321995ac42
+Upstream Commit SHA: ff3869a621db17ce3ef660adbbd3fa321995ac42
+Current Version: v1.2.1-1-gff3869a6
+Upstream Version: v1.2.1-1-gff3869a6
+Rollback Commit: ff3869a621db17ce3ef660adbbd3fa321995ac42
+Rollback Branch: master
+Rollback Version: v1.2.1-1-gff3869a6
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 0
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,101 [base_deploy.py:log_info()] - Git Repo KlipperScreen: Pip Version: 25.2, Python Version: 3.11
+Last checked on 2026-06-29 13:47:35.858321+00:00
+2026-07-28 00:32:14,103 [git_deploy.py:log_repo_info()] - Git Repo KlipperScreen Detected:
+Owner: KlipperScreen
+Repository Name: KlipperScreen
+Path: /home/voron/KlipperScreen
+Remote: origin
+Branch: master
+Remote URL: https://github.com/KlipperScreen/KlipperScreen.git
+Recovery URL: https://github.com/KlipperScreen/KlipperScreen.git
+Current Commit SHA: d837e5439eb2e068c983fb1642587641b97cdb32
+Upstream Commit SHA: ed40799f92f8a5044082aee75b832a9e97084c7f
+Current Version: v0.4.7-124-gd837e543
+Upstream Version: v0.4.7-149-ged40799f
+Rollback Commit: 62f72be9f76636b9a51800801081788817fe2c95
+Rollback Branch: master
+Rollback Version: v0.4.7-72-g62f72be9
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 25
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,106 [git_deploy.py:log_repo_info()] - Git Repo crowsnest Detected:
+Owner: mainsail-crew
+Repository Name: crowsnest
+Path: /home/voron/crowsnest
+Remote: origin
+Branch: master
+Remote URL: https://github.com/mainsail-crew/crowsnest.git
+Recovery URL: https://github.com/mainsail-crew/crowsnest.git
+Current Commit SHA: cf936dabdcf6a3d1eb0138d8eea9044745b40db6
+Upstream Commit SHA: cf936dabdcf6a3d1eb0138d8eea9044745b40db6
+Current Version: v4.2.0-1-gcf936dab
+Upstream Version: v4.2.0-1-gcf936dab
+Rollback Commit: 059fa8775f60503f7aca4bb4812795997b35b142
+Rollback Branch: master
+Rollback Version: v4.1.16-1-g059fa877
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 0
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,110 [git_deploy.py:log_repo_info()] - Git Repo sonar Detected:
+Owner: mainsail-crew
+Repository Name: sonar
+Path: /home/voron/sonar
+Remote: origin
+Branch: main
+Remote URL: https://github.com/mainsail-crew/sonar.git
+Recovery URL: https://github.com/mainsail-crew/sonar.git
+Current Commit SHA: 0d1d7c89bbb97fb5f54c80f7814ef322c24d6e45
+Upstream Commit SHA: 0d1d7c89bbb97fb5f54c80f7814ef322c24d6e45
+Current Version: v0.2.0-1-g0d1d7c89
+Upstream Version: v0.2.0-1-g0d1d7c89
+Rollback Commit: 3fe23fef07dbc19a9b66bdd111bbd1d574d19955
+Rollback Branch: main
+Rollback Version: v0.2.0-0-g3fe23fef
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 0
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,113 [git_deploy.py:log_repo_info()] - Git Repo timelapse Detected:
+Owner: mainsail-crew
+Repository Name: moonraker-timelapse
+Path: /home/voron/moonraker-timelapse
+Remote: origin
+Branch: main
+Remote URL: https://github.com/mainsail-crew/moonraker-timelapse.git
+Recovery URL: https://github.com/mainsail-crew/moonraker-timelapse.git
+Current Commit SHA: c7fff11e542b95e0e15b8bb1443cea8159ac0274
+Upstream Commit SHA: c7fff11e542b95e0e15b8bb1443cea8159ac0274
+Current Version: v0.0.1-143-gc7fff11e
+Upstream Version: v0.0.1-143-gc7fff11e
+Rollback Commit: c7fff11e542b95e0e15b8bb1443cea8159ac0274
+Rollback Branch: main
+Rollback Version: v0.0.1-143-gc7fff11e
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 0
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,117 [base_deploy.py:log_info()] - Python Package cartographer_plugin: Pip Version: 26.1.2, Python Version: 3.11
+Last checked on 2026-07-12 12:50:02.861042+00:00
+2026-07-28 00:32:14,117 [python_deploy.py:_log_package_info()] - Python Package cartographer_plugin detected:
+Channel: stable
+Package Source: PIP
+Repo Owner: Cartographer3D
+Repo Name: cartographer3d-plugin
+Repo URL: https://github.com/Cartographer3D/cartographer3d-plugin
+Changelog URL: 
+Full Version String: 1.8.0
+Current Version: 1.8.0
+Current Commit SHA: 
+Upstream Version: 1.8.0
+Upstream Commit SHA: 
+Converted Git Version: 1.8.0-0
+Rollback Version: 1.7.0
+Rollback Ref: 1.7.0
+
+2026-07-28 00:32:14,120 [git_deploy.py:log_repo_info()] - Git Repo Klippain-ShakeTune Detected:
+Owner: Frix-x
+Repository Name: klippain-shaketune
+Path: /home/voron/klippain_shaketune
+Remote: origin
+Branch: main
+Remote URL: https://github.com/Frix-x/klippain-shaketune.git
+Recovery URL: https://github.com/Frix-x/klippain-shaketune.git
+Current Commit SHA: 354ee4be6db218715239f7b9411c2c37fdea23dd
+Upstream Commit SHA: 354ee4be6db218715239f7b9411c2c37fdea23dd
+Current Version: v6.0.0-0-g354ee4be
+Upstream Version: v6.0.0-0-g354ee4be
+Rollback Commit: 354ee4be6db218715239f7b9411c2c37fdea23dd
+Rollback Branch: main
+Rollback Version: v6.0.0-0-g354ee4be
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 0
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:14,123 [git_deploy.py:log_repo_info()] - Git Repo klipper-toolchanger-easy Detected:
+Owner: jwellman80
+Repository Name: klipper-toolchanger-easy
+Path: /home/voron/klipper-toolchanger-easy
+Remote: origin
+Branch: main
+Remote URL: https://github.com/jwellman80/klipper-toolchanger-easy.git
+Recovery URL: https://github.com/jwellman80/klipper-toolchanger-easy.git
+Current Commit SHA: bc2b5c4c466d2f57233ac844371936b290eb4b9a
+Upstream Commit SHA: ac3a131ceca39bdeb13b29643c212632f9e2b1e2
+Current Version: v0.0.0-252-gbc2b5c4c-inferred
+Upstream Version: v0.0.0-257-inferred
+Rollback Commit: 5f0e5a3faf38ce870524dad14fe160c39e4baf4c
+Rollback Branch: main
+Rollback Version: v0.0.0-250-g5f0e5a3f-inferred
+Is Dirty: False
+Is Detached: False
+Is Shallow: False
+Commits Behind Count: 5
+Diverged: False
+Pinned Commit: None
+2026-07-28 00:32:15,147 [extensions.py:start_unix_server()] - Creating Unix Domain Socket at '/home/voron/printer_data/comms/moonraker.sock'
+2026-07-28 00:32:15,148 [server.py:start_server()] - Starting Moonraker on (0.0.0.0, 7125), Hostname: voron-local
+2026-07-28 00:32:15,149 [application.py:listen()] - SSL Certificate/Key not configured, aborting HTTPS Server startup
+2026-07-28 00:32:15,414 [klippy_connection.py:_do_connect()] - Klippy Connection Established
+2026-07-28 00:32:15,508 [server.py:add_log_rollover_item()] - 
+Systemd unit klipper.service:
+unit_name: klipper.service
+is_default: True
+manager: systemd
+Properties:
+**Requires=['sysinit.target', 'system.slice', '-.mount']
+**After=['sysinit.target', '-.mount', 'basic.target', 'systemd-journald.socket', 'system.slice', 'network-online.target']
+**SupplementaryGroups=[]
+**EnvironmentFiles=/home/voron/printer_data/systemd/klipper.env
+**ExecStart=/home/voron/klippy-env/bin/python $KLIPPER_ARGS
+**WorkingDirectory=/home/voron/klipper
+**FragmentPath=/etc/systemd/system/klipper.service
+**Description=Klipper 3D Printer Firmware SV1
+**User=voron
+2026-07-28 15:31:52,440 [authorization.py:_check_trusted_connection()] - Trusted Connection Detected, IP: 127.0.0.1
+2026-07-28 15:31:52,451 [application.py:log_request()] - 101 GET /websocket?token= (127.0.0.1) [_TRUSTED_USER_] 13.64ms
+2026-07-28 15:31:52,452 [websockets.py:open()] - Websocket Opened: ID: 547780109584, Proxied: False, User Agent: , Host Name: 127.0.0.1
+2026-07-28 15:31:52,522 [websockets.py:_handle_identify()] - Websocket 547780109584 Client Identified - Name: KlipperScreen, Version: v0.4.7-124-gd837e54, Type: display
+2026-07-28 15:31:52,684 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: printer.info, Code: -32601, Message: Method not found
+2026-07-28 15:31:53,631 [server.py:add_log_rollover_item()] - Klipper Version: v0.13.0-700-gd6ea62542-dirty
+2026-07-28 15:31:53,692 [authorization.py:_check_trusted_connection()] - Trusted Connection Detected, IP: 192.168.1.52
+2026-07-28 15:31:53,695 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 4.49ms
+2026-07-28 15:31:53,696 [websockets.py:open()] - Websocket Opened: ID: 547768868432, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 15:31:53,704 [websockets.py:_handle_identify()] - Websocket 547768868432 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 15:31:54,519 [base_deploy.py:log_info()] - PackageKit: Detected 0 package updates:
+
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo moonraker: Next refresh in: 15 Hours, 1 Minute, 49 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo klipper: Next refresh in: 15 Hours, 1 Minute, 51 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Web Client mainsail: Next refresh in: 15 Hours, 1 Minute, 51 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo mainsail-config: Next refresh in: 6 Days, 55 Minutes, 47 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo KlipperScreen: Next refresh in: 15 Hours, 1 Minute, 54 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo crowsnest: Next refresh in: 6 Days, 55 Minutes, 48 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo sonar: Next refresh in: 6 Days, 55 Minutes, 49 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo timelapse: Next refresh in: 6 Days, 55 Minutes, 50 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Python Package cartographer_plugin: Next refresh in: 6 Days, 55 Minutes, 57 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo Klippain-ShakeTune: Next refresh in: 6 Days, 55 Minutes, 58 Seconds
+2026-07-28 15:31:54,520 [base_deploy.py:log_info()] - Git Repo klipper-toolchanger-easy: Next refresh in: 6 Days, 55 Minutes, 59 Seconds
+2026-07-28 15:31:58,865 [klippy_connection.py:_request_initial_subscriptions()] - Webhooks Subscribed
+2026-07-28 15:31:58,866 [klippy_connection.py:_request_initial_subscriptions()] - GCode Output Subscribed
+2026-07-28 15:31:59,115 [job_state.py:_handle_started()] - Job state initialized: standby
+2026-07-28 15:31:59,379 [klippy_connection.py:_check_ready()] - Klippy ready
+2026-07-28 15:32:00,074 [data_store.py:_init_sensors()] - Configuring available sensors: ['temperature_sensor cartographer', 'temperature_sensor chamber', 'heater_bed', 'temperature_sensor cartographer_coil', 'temperature_fan cm4_fan', 'temperature_fan enclosure_fan', 'extruder', 'extruder1', 'extruder2', 'extruder3', 'extruder4']
+2026-07-28 15:32:00,366 [file_manager.py:get_file_list()] - Updating File List <gcodes>...
+2026-07-28 15:37:01,362 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 15:46:44,769 [websockets.py:on_close()] - Websocket Closed: ID: 547768868432 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.00
+2026-07-28 15:47:07,912 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.64ms
+2026-07-28 15:47:07,913 [websockets.py:open()] - Websocket Opened: ID: 547770986576, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 15:47:07,924 [websockets.py:_handle_identify()] - Websocket 547770986576 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 15:47:09,297 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 7.24ms
+2026-07-28 15:47:09,782 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 1.97ms
+2026-07-28 15:47:26,142 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.07ms
+2026-07-28 15:47:26,217 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.58ms
+2026-07-28 15:47:26,917 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.58ms
+2026-07-28 15:47:26,980 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.53ms
+2026-07-28 15:47:27,700 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.93ms
+2026-07-28 15:47:27,763 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.10ms
+2026-07-28 15:49:40,813 [websockets.py:on_close()] - Websocket Closed: ID: 547770986576 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.88
+2026-07-28 15:49:40,935 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.84ms
+2026-07-28 15:49:40,935 [websockets.py:open()] - Websocket Opened: ID: 547770497104, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 15:49:40,940 [websockets.py:_handle_identify()] - Websocket 547770497104 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 15:51:51,803 [websockets.py:on_close()] - Websocket Closed: ID: 547770497104 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.85
+2026-07-28 15:51:51,861 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.03ms
+2026-07-28 15:51:51,861 [websockets.py:open()] - Websocket Opened: ID: 547780228816, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 15:51:51,865 [websockets.py:_handle_identify()] - Websocket 547780228816 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 15:51:55,189 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.42ms
+2026-07-28 15:51:55,234 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 1.87ms
+2026-07-28 16:14:17,153 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------966345ae6b9be4d0
+2026-07-28 16:14:17,242 [application.py:post()] - Processing Uploaded File: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:14:17,610 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 16:14:17,745 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-gqm82x93.json) successfully finished
+2026-07-28 16:14:17,746 [klippy_apis.py:start_print()] - Requesting Job Start, filename = pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:14:17,770 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 619.18ms
+2026-07-28 16:14:17,989 [job_state.py:_send_job_event()] - Job Started: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:14:18,030 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:14:18,067 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:14:34,752 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 5.07ms
+2026-07-28 16:14:34,771 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.02ms
+2026-07-28 16:14:35,425 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.04ms
+2026-07-28 16:14:35,470 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.45ms
+2026-07-28 16:14:36,141 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.17ms
+2026-07-28 16:14:36,202 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.08ms
+2026-07-28 16:15:50,951 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.96ms
+2026-07-28 16:15:50,951 [websockets.py:open()] - Websocket Opened: ID: 547770444560, Proxied: True, User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0, Host Name: 192.168.1.43
+2026-07-28 16:15:50,979 [websockets.py:_handle_identify()] - Websocket 547770444560 Client Identified - Name: mainsail, Version: 2.18.0, Type: web
+2026-07-28 16:16:04,403 [klippy_connection.py:_process_status_update()] - Klippy has shutdown
+2026-07-28 16:16:04,412 [proc_stats.py:_handle_shutdown()] - 
+Moonraker System Usage Statistics:
+System Time: 1785230134.917374, Usage: 1.12%, Memory: 69644 kB
+System Time: 1785230135.920119, Usage: 1.34%, Memory: 69644 kB
+System Time: 1785230136.919181, Usage: 1.61%, Memory: 69644 kB
+System Time: 1785230137.919212, Usage: 1.75%, Memory: 69644 kB
+System Time: 1785230138.917865, Usage: 1.46%, Memory: 69644 kB
+System Time: 1785230139.918537, Usage: 1.13%, Memory: 69644 kB
+System Time: 1785230140.919597, Usage: 1.19%, Memory: 69644 kB
+System Time: 1785230141.920337, Usage: 2.01%, Memory: 69644 kB
+System Time: 1785230142.920089, Usage: 1.36%, Memory: 69644 kB
+System Time: 1785230143.921007, Usage: 1.23%, Memory: 69644 kB
+System Time: 1785230144.921357, Usage: 1.47%, Memory: 69644 kB
+System Time: 1785230145.922280, Usage: 1.49%, Memory: 69644 kB
+System Time: 1785230146.921542, Usage: 1.61%, Memory: 69644 kB
+System Time: 1785230147.921268, Usage: 1.62%, Memory: 69644 kB
+System Time: 1785230148.924436, Usage: 1.49%, Memory: 69644 kB
+System Time: 1785230149.925586, Usage: 1.65%, Memory: 69644 kB
+System Time: 1785230150.924914, Usage: 1.49%, Memory: 69644 kB
+System Time: 1785230152.365234, Usage: 88.61%, Memory: 69648 kB
+System Time: 1785230153.233476, Usage: 20.65%, Memory: 70376 kB
+System Time: 1785230154.233572, Usage: 3.08%, Memory: 70376 kB
+System Time: 1785230155.235250, Usage: 4.75%, Memory: 70376 kB
+System Time: 1785230156.236702, Usage: 1.76%, Memory: 70376 kB
+System Time: 1785230157.237012, Usage: 1.89%, Memory: 70376 kB
+System Time: 1785230158.237381, Usage: 1.57%, Memory: 70376 kB
+System Time: 1785230159.236403, Usage: 1.64%, Memory: 70376 kB
+System Time: 1785230160.237709, Usage: 1.42%, Memory: 70376 kB
+System Time: 1785230161.238313, Usage: 1.86%, Memory: 70380 kB
+System Time: 1785230162.242072, Usage: 2.6%, Memory: 70380 kB
+System Time: 1785230163.241209, Usage: 2.18%, Memory: 70380 kB
+System Time: 1785230164.241119, Usage: 1.52%, Memory: 70380 kB
+CPU Temperature: 48.199
+2026-07-28 16:16:04,415 [proc_stats.py:_handle_shutdown()] - Throttled Flags: 
+2026-07-28 16:16:05,620 [klippy_connection.py:_on_connection_closed()] - Klippy Connection Removed
+2026-07-28 16:16:06,880 [klippy_connection.py:_do_connect()] - Klippy Connection Established
+2026-07-28 16:16:12,449 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------6f407fcb4ace4ad0
+2026-07-28 16:16:12,658 [application.py:post()] - Processing Uploaded File: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:16:13,056 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 16:16:13,209 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-dslgps5f.json) successfully finished
+2026-07-28 16:16:13,212 [klippy_apis.py:start_print()] - Requesting Job Start, filename = pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:16:13,231 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 781.91ms
+2026-07-28 16:16:14,398 [klippy_connection.py:_request_initial_subscriptions()] - Webhooks Subscribed
+2026-07-28 16:16:14,399 [klippy_connection.py:_request_initial_subscriptions()] - GCode Output Subscribed
+2026-07-28 16:16:14,649 [job_state.py:_handle_started()] - Job state initialized: standby
+2026-07-28 16:16:14,936 [klippy_connection.py:_check_ready()] - Klippy ready
+2026-07-28 16:16:15,430 [data_store.py:_init_sensors()] - Configuring available sensors: ['temperature_sensor cartographer', 'temperature_sensor chamber', 'heater_bed', 'temperature_sensor cartographer_coil', 'temperature_fan cm4_fan', 'temperature_fan enclosure_fan', 'extruder', 'extruder1', 'extruder2', 'extruder3', 'extruder4']
+2026-07-28 16:16:15,764 [file_manager.py:get_file_list()] - Updating File List <gcodes>...
+2026-07-28 16:17:19,063 [websockets.py:on_close()] - Websocket Closed: ID: 547780228816 Close Code: None, Close Reason: None, Pong Time Elapsed: 6.65
+2026-07-28 16:17:22,505 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.68ms
+2026-07-28 16:17:22,506 [websockets.py:open()] - Websocket Opened: ID: 547770493264, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:17:22,531 [websockets.py:_handle_identify()] - Websocket 547770493264 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:17:24,545 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.90ms
+2026-07-28 16:17:25,062 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.69ms
+2026-07-28 16:17:41,428 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.56ms
+2026-07-28 16:17:41,490 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.97ms
+2026-07-28 16:17:42,038 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.20ms
+2026-07-28 16:17:42,106 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.85ms
+2026-07-28 16:17:42,655 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.83ms
+2026-07-28 16:17:42,713 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.40ms
+2026-07-28 16:17:52,894 [websockets.py:on_close()] - Websocket Closed: ID: 547770493264 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.30
+2026-07-28 16:17:53,013 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 4.97ms
+2026-07-28 16:17:53,014 [websockets.py:open()] - Websocket Opened: ID: 547769364880, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:17:53,024 [websockets.py:_handle_identify()] - Websocket 547769364880 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:17:53,305 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.70ms
+2026-07-28 16:17:53,553 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.85ms
+2026-07-28 16:19:18,364 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 16:27:45,695 [websockets.py:on_close()] - Websocket Closed: ID: 547769364880 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.64
+2026-07-28 16:27:50,100 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.64ms
+2026-07-28 16:27:50,101 [websockets.py:open()] - Websocket Opened: ID: 547769180688, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:27:50,113 [websockets.py:_handle_identify()] - Websocket 547769180688 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:27:51,542 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.39ms
+2026-07-28 16:27:51,767 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 1.87ms
+2026-07-28 16:28:07,849 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.97ms
+2026-07-28 16:28:07,914 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.74ms
+2026-07-28 16:28:08,460 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.46ms
+2026-07-28 16:28:08,525 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.60ms
+2026-07-28 16:28:09,073 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.01ms
+2026-07-28 16:28:09,146 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.67ms
+2026-07-28 16:29:14,412 [websockets.py:on_close()] - Websocket Closed: ID: 547769180688 Close Code: None, Close Reason: None, Pong Time Elapsed: 4.30
+2026-07-28 16:29:14,501 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.63ms
+2026-07-28 16:29:14,501 [websockets.py:open()] - Websocket Opened: ID: 547769971344, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:29:14,506 [websockets.py:_handle_identify()] - Websocket 547769971344 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:30:06,009 [websockets.py:on_close()] - Websocket Closed: ID: 547769971344 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.50
+2026-07-28 16:30:06,070 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.53ms
+2026-07-28 16:30:06,070 [websockets.py:open()] - Websocket Opened: ID: 547768840912, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:30:06,077 [websockets.py:_handle_identify()] - Websocket 547768840912 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:36:48,500 [authorization.py:_prune_conn_handler()] - Trusted Connection Expired, IP: 127.0.0.1
+2026-07-28 16:37:45,572 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------fbca7c71624e0bfd
+2026-07-28 16:37:45,641 [application.py:post()] - Processing Uploaded File: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:37:45,934 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 16:37:46,061 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-khaaqnt8.json) successfully finished
+2026-07-28 16:37:46,063 [klippy_apis.py:start_print()] - Requesting Job Start, filename = pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:37:46,095 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 524.32ms
+2026-07-28 16:37:46,336 [job_state.py:_send_job_event()] - Job Started: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:37:46,396 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:37:46,679 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:42:47,364 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 16:43:16,733 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:48:17,363 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 16:50:57,298 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:54:48,656 [websockets.py:on_close()] - Websocket Closed: ID: 547768840912 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.46
+2026-07-28 16:54:48,745 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.98ms
+2026-07-28 16:54:48,746 [websockets.py:open()] - Websocket Opened: ID: 547769954512, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 16:54:48,750 [websockets.py:_handle_identify()] - Websocket 547769954512 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 16:55:57,365 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 16:56:32,270 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------57156efd753705cf
+2026-07-28 16:56:32,308 [application.py:post()] - Processing Uploaded File: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:56:32,630 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 16:56:32,759 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-hp78rnjp.json) successfully finished
+2026-07-28 16:56:32,760 [klippy_apis.py:start_print()] - Requesting Job Start, filename = pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:56:32,785 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 516.87ms
+2026-07-28 16:56:33,019 [job_state.py:_send_job_event()] - Job Started: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 16:56:33,294 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 16:57:27,289 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.41ms
+2026-07-28 16:57:27,351 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.39ms
+2026-07-28 17:01:33,363 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:02:51,388 [websockets.py:write_to_socket()] - Websocket closed while writing: 547770444560
+2026-07-28 17:02:56,288 [websockets.py:on_close()] - Websocket Closed: ID: 547770444560 Close Code: None, Close Reason: None, Pong Time Elapsed: 25.00
+2026-07-28 17:04:03,966 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.47ms
+2026-07-28 17:04:03,967 [websockets.py:open()] - Websocket Opened: ID: 547770057808, Proxied: True, User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0, Host Name: 192.168.1.43
+2026-07-28 17:04:07,659 [websockets.py:_handle_identify()] - Websocket 547770057808 Client Identified - Name: mainsail, Version: 2.18.0, Type: web
+2026-07-28 17:04:22,128 [websockets.py:on_close()] - Websocket Closed: ID: 547770057808 Close Code: None, Close Reason: None, Pong Time Elapsed: 8.16
+2026-07-28 17:07:57,152 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:10:08,776 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------98b8abddf6402cb4
+2026-07-28 17:10:08,809 [application.py:post()] - Processing Uploaded File: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 17:10:09,161 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 17:10:09,289 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-7_6_lgyk.json) successfully finished
+2026-07-28 17:10:09,290 [klippy_apis.py:start_print()] - Requesting Job Start, filename = pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 17:10:09,324 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 548.78ms
+2026-07-28 17:10:09,557 [job_state.py:_send_job_event()] - Job Started: pressure_advance_test_PETG_7m6s.gcode
+2026-07-28 17:10:35,213 [websockets.py:on_close()] - Websocket Closed: ID: 547769954512 Close Code: None, Close Reason: None, Pong Time Elapsed: 6.35
+2026-07-28 17:10:38,981 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.49ms
+2026-07-28 17:10:38,982 [websockets.py:open()] - Websocket Opened: ID: 547769863568, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:10:38,993 [websockets.py:_handle_identify()] - Websocket 547769863568 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:10:39,766 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.09ms
+2026-07-28 17:10:39,817 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.90ms
+2026-07-28 17:11:34,459 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.99ms
+2026-07-28 17:11:34,460 [websockets.py:open()] - Websocket Opened: ID: 547771217360, Proxied: True, User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0, Host Name: 192.168.1.43
+2026-07-28 17:11:34,466 [websockets.py:_handle_identify()] - Websocket 547771217360 Client Identified - Name: mainsail, Version: 2.18.0, Type: web
+2026-07-28 17:12:57,377 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:13:26,611 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:15:10,363 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:21:26,877 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:26:27,372 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:27:43,519 [websockets.py:on_close()] - Websocket Closed: ID: 547771217360 Close Code: 1001, Close Reason: None, Pong Time Elapsed: 8.82
+2026-07-28 17:28:23,260 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.05ms
+2026-07-28 17:28:23,261 [websockets.py:open()] - Websocket Opened: ID: 547769255824, Proxied: True, User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0, Host Name: 192.168.1.43
+2026-07-28 17:28:23,276 [websockets.py:_handle_identify()] - Websocket 547769255824 Client Identified - Name: mainsail, Version: 2.18.0, Type: web
+2026-07-28 17:29:45,227 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.53ms
+2026-07-28 17:29:45,284 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.98ms
+2026-07-28 17:29:51,469 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.03ms
+2026-07-28 17:29:51,544 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 5.14ms
+2026-07-28 17:30:09,267 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.64ms
+2026-07-28 17:30:09,323 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.82ms
+2026-07-28 17:30:09,855 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 8.20ms
+2026-07-28 17:30:09,898 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.68ms
+2026-07-28 17:30:10,437 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.31ms
+2026-07-28 17:30:10,502 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.60ms
+2026-07-28 17:31:27,152 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------0ab670ba4b11f054
+2026-07-28 17:31:29,560 [application.py:post()] - Processing Uploaded File: sc_chip(1)_PETG_30m32s.gcode
+2026-07-28 17:31:29,953 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 17:31:30,145 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-up5vnwvy.json) successfully finished
+2026-07-28 17:31:30,148 [klippy_apis.py:start_print()] - Requesting Job Start, filename = sc_chip(1)_PETG_30m32s.gcode
+2026-07-28 17:31:30,173 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 3022.16ms
+2026-07-28 17:31:30,510 [job_state.py:_send_job_event()] - Job Started: sc_chip(1)_PETG_30m32s.gcode
+2026-07-28 17:31:30,587 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:36:31,362 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:36:41,846 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:37:56,680 [websockets.py:on_close()] - Websocket Closed: ID: 547769863568 Close Code: None, Close Reason: None, Pong Time Elapsed: 7.56
+2026-07-28 17:37:56,747 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.42ms
+2026-07-28 17:37:56,747 [websockets.py:open()] - Websocket Opened: ID: 547769868560, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:37:56,752 [websockets.py:_handle_identify()] - Websocket 547769868560 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:38:21,609 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.66ms
+2026-07-28 17:38:21,728 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.14ms
+2026-07-28 17:41:42,363 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:41:54,685 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:42:26,567 [websockets.py:on_close()] - Websocket Closed: ID: 547769868560 Close Code: None, Close Reason: None, Pong Time Elapsed: 9.80
+2026-07-28 17:42:26,834 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.21ms
+2026-07-28 17:42:26,834 [websockets.py:open()] - Websocket Opened: ID: 547770034320, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:42:26,859 [websockets.py:_handle_identify()] - Websocket 547770034320 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:42:28,323 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.15ms
+2026-07-28 17:42:28,464 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.05ms
+2026-07-28 17:42:44,526 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 5.55ms
+2026-07-28 17:42:44,582 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.59ms
+2026-07-28 17:42:45,137 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.71ms
+2026-07-28 17:42:45,199 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.20ms
+2026-07-28 17:42:45,751 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.46ms
+2026-07-28 17:42:45,809 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.57ms
+2026-07-28 17:42:48,894 [websockets.py:on_close()] - Websocket Closed: ID: 547770034320 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.06
+2026-07-28 17:42:49,077 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.46ms
+2026-07-28 17:42:49,077 [websockets.py:open()] - Websocket Opened: ID: 547769999568, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:42:49,114 [websockets.py:_handle_identify()] - Websocket 547769999568 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:42:49,754 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 1.85ms
+2026-07-28 17:42:50,273 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.22ms
+2026-07-28 17:43:06,065 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.34ms
+2026-07-28 17:43:06,117 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.53ms
+2026-07-28 17:43:06,665 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.45ms
+2026-07-28 17:43:06,727 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.63ms
+2026-07-28 17:43:07,276 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.73ms
+2026-07-28 17:43:07,335 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.45ms
+2026-07-28 17:43:11,901 [websockets.py:on_close()] - Websocket Closed: ID: 547769999568 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.80
+2026-07-28 17:43:13,756 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.38ms
+2026-07-28 17:43:13,756 [websockets.py:open()] - Websocket Opened: ID: 547515207120, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:43:13,776 [websockets.py:_handle_identify()] - Websocket 547515207120 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:43:15,922 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.17ms
+2026-07-28 17:43:16,324 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.45ms
+2026-07-28 17:43:32,236 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.28ms
+2026-07-28 17:43:32,280 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.77ms
+2026-07-28 17:43:32,820 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.31ms
+2026-07-28 17:43:32,880 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.14ms
+2026-07-28 17:43:33,400 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.91ms
+2026-07-28 17:43:33,448 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 6.53ms
+2026-07-28 17:43:33,564 [authorization.py:_check_trusted_connection()] - Trusted Connection Detected, IP: 127.0.0.1
+2026-07-28 17:43:33,570 [application.py:log_request()] - 404 GET /server/database/item?namespace=mainsail&key=miscellaneous.entries (127.0.0.1) [_TRUSTED_USER_] 6.92ms
+2026-07-28 17:48:35,364 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:48:41,812 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:53:42,372 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:53:44,312 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 17:55:58,192 [websockets.py:on_close()] - Websocket Closed: ID: 547515207120 Close Code: None, Close Reason: None, Pong Time Elapsed: 4.15
+2026-07-28 17:55:58,664 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 5.25ms
+2026-07-28 17:55:58,664 [websockets.py:open()] - Websocket Opened: ID: 547771145616, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:55:58,680 [websockets.py:_handle_identify()] - Websocket 547771145616 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:55:58,843 [websockets.py:on_close()] - Websocket Closed: ID: 547771145616 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.18
+2026-07-28 17:55:58,877 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.16ms
+2026-07-28 17:55:58,877 [websockets.py:open()] - Websocket Opened: ID: 547771310672, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 17:55:58,881 [websockets.py:_handle_identify()] - Websocket 547771310672 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 17:55:59,128 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.09ms
+2026-07-28 17:55:59,192 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.48ms
+2026-07-28 17:58:44,368 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 17:58:54,445 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:01:20,343 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.33ms
+2026-07-28 18:01:20,398 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 6.55ms
+2026-07-28 18:01:20,941 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.62ms
+2026-07-28 18:01:20,984 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.40ms
+2026-07-28 18:01:21,520 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.38ms
+2026-07-28 18:01:21,575 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 1.85ms
+2026-07-28 18:03:54,375 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:04:14,048 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:09:14,367 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:09:21,035 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:14:14,005 [websockets.py:on_close()] - Websocket Closed: ID: 547771310672 Close Code: None, Close Reason: None, Pong Time Elapsed: 5.03
+2026-07-28 18:14:14,809 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.66ms
+2026-07-28 18:14:14,810 [websockets.py:open()] - Websocket Opened: ID: 547770056784, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:14:14,824 [websockets.py:_handle_identify()] - Websocket 547770056784 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:14:16,094 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.76ms
+2026-07-28 18:14:16,565 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.73ms
+2026-07-28 18:14:21,365 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:14:23,969 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:14:32,458 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 6.76ms
+2026-07-28 18:14:32,530 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.49ms
+2026-07-28 18:14:33,063 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.06ms
+2026-07-28 18:14:33,119 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.87ms
+2026-07-28 18:14:33,646 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.43ms
+2026-07-28 18:14:33,715 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 5.28ms
+2026-07-28 18:19:24,372 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:19:33,468 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:19:33,808 [websockets.py:write_to_socket()] - Websocket closed while writing: 547769255824
+2026-07-28 18:19:38,602 [websockets.py:on_close()] - Websocket Closed: ID: 547769255824 Close Code: None, Close Reason: None, Pong Time Elapsed: 24.93
+2026-07-28 18:19:57,894 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.02ms
+2026-07-28 18:19:57,895 [websockets.py:open()] - Websocket Opened: ID: 547771194320, Proxied: True, User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0, Host Name: 192.168.1.43
+2026-07-28 18:19:57,980 [websockets.py:_handle_identify()] - Websocket 547771194320 Client Identified - Name: mainsail, Version: 2.18.0, Type: web
+2026-07-28 18:22:07,978 [websockets.py:on_close()] - Websocket Closed: ID: 547770056784 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.05
+2026-07-28 18:24:33,375 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:24:34,202 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:29:34,376 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:30:14,795 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.42ms
+2026-07-28 18:30:14,796 [websockets.py:open()] - Websocket Opened: ID: 547770353616, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:30:14,813 [websockets.py:_handle_identify()] - Websocket 547770353616 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:30:16,368 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.51ms
+2026-07-28 18:30:16,450 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 9.41ms
+2026-07-28 18:30:28,333 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:30:34,117 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.81ms
+2026-07-28 18:30:34,171 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.29ms
+2026-07-28 18:30:34,724 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.14ms
+2026-07-28 18:30:34,777 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 5.30ms
+2026-07-28 18:30:35,326 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.09ms
+2026-07-28 18:30:35,383 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.80ms
+2026-07-28 18:32:29,365 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:36:07,586 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------0396d0cea02a9870
+2026-07-28 18:36:11,745 [application.py:post()] - Processing Uploaded File: voron_design_cube_v8(1)_PETG_37m32s.gcode
+2026-07-28 18:36:12,148 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 18:36:12,337 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-fs_nfz_2.json) successfully finished
+2026-07-28 18:36:12,339 [klippy_apis.py:start_print()] - Requesting Job Start, filename = voron_design_cube_v8(1)_PETG_37m32s.gcode
+2026-07-28 18:36:12,371 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 4786.07ms
+2026-07-28 18:36:12,461 [job_state.py:_send_job_event()] - Job Started: voron_design_cube_v8(1)_PETG_37m32s.gcode
+2026-07-28 18:36:12,506 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:36:12,543 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 18:41:13,366 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 18:41:38,061 [websockets.py:on_close()] - Websocket Closed: ID: 547770353616 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.02
+2026-07-28 18:41:38,335 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.66ms
+2026-07-28 18:41:38,335 [websockets.py:open()] - Websocket Opened: ID: 547771313616, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:41:38,339 [websockets.py:_handle_identify()] - Websocket 547771313616 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:41:38,849 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.53ms
+2026-07-28 18:41:39,191 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.66ms
+2026-07-28 18:41:39,807 [websockets.py:on_close()] - Websocket Closed: ID: 547771313616 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.47
+2026-07-28 18:41:40,299 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.03ms
+2026-07-28 18:41:40,299 [websockets.py:open()] - Websocket Opened: ID: 547770222864, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:41:40,318 [websockets.py:_handle_identify()] - Websocket 547770222864 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:41:40,681 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.05ms
+2026-07-28 18:41:41,667 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.02ms
+2026-07-28 18:41:43,112 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.17ms
+2026-07-28 18:41:43,113 [websockets.py:open()] - Websocket Opened: ID: 547768890128, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:41:43,138 [websockets.py:_handle_identify()] - Websocket 547768890128 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:41:45,196 [websockets.py:on_close()] - Websocket Closed: ID: 547770222864 Close Code: None, Close Reason: None, Pong Time Elapsed: 4.90
+2026-07-28 18:41:45,199 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.47ms
+2026-07-28 18:43:05,725 [websockets.py:on_close()] - Websocket Closed: ID: 547768890128 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.59
+2026-07-28 18:43:07,375 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.70ms
+2026-07-28 18:43:07,376 [websockets.py:open()] - Websocket Opened: ID: 547771226704, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:43:07,397 [websockets.py:_handle_identify()] - Websocket 547771226704 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:43:08,971 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.13ms
+2026-07-28 18:43:09,267 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 8.47ms
+2026-07-28 18:43:30,463 [websockets.py:on_close()] - Websocket Closed: ID: 547771226704 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.08
+2026-07-28 18:43:30,589 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.54ms
+2026-07-28 18:43:30,589 [websockets.py:open()] - Websocket Opened: ID: 547771344912, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:43:30,594 [websockets.py:_handle_identify()] - Websocket 547771344912 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:43:51,007 [websockets.py:on_close()] - Websocket Closed: ID: 547771344912 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.41
+2026-07-28 18:43:51,053 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.80ms
+2026-07-28 18:43:51,054 [websockets.py:open()] - Websocket Opened: ID: 547770349712, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:43:51,058 [websockets.py:_handle_identify()] - Websocket 547770349712 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:43:53,629 [websockets.py:on_close()] - Websocket Closed: ID: 547770349712 Close Code: None, Close Reason: None, Pong Time Elapsed: 2.58
+2026-07-28 18:43:53,664 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.76ms
+2026-07-28 18:43:53,665 [websockets.py:open()] - Websocket Opened: ID: 547771348752, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 18:43:53,669 [websockets.py:_handle_identify()] - Websocket 547771348752 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 18:46:48,509 [authorization.py:_prune_conn_handler()] - Trusted Connection Expired, IP: 127.0.0.1
+2026-07-28 19:15:08,277 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 19:19:02,714 [websockets.py:on_close()] - Websocket Closed: ID: 547771348752 Close Code: None, Close Reason: None, Pong Time Elapsed: 8.85
+2026-07-28 19:19:02,996 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.72ms
+2026-07-28 19:19:02,996 [websockets.py:open()] - Websocket Opened: ID: 547887203600, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:19:03,035 [websockets.py:_handle_identify()] - Websocket 547887203600 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:19:03,979 [websockets.py:on_close()] - Websocket Closed: ID: 547887203600 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.99
+2026-07-28 19:19:05,840 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.79ms
+2026-07-28 19:19:05,840 [websockets.py:open()] - Websocket Opened: ID: 547514549392, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:19:05,879 [websockets.py:_handle_identify()] - Websocket 547514549392 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:19:07,192 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.53ms
+2026-07-28 19:19:07,432 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.30ms
+2026-07-28 19:19:08,744 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.17ms
+2026-07-28 19:19:08,744 [websockets.py:open()] - Websocket Opened: ID: 547768651472, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:19:08,767 [websockets.py:_handle_identify()] - Websocket 547768651472 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:19:10,370 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.22ms
+2026-07-28 19:19:10,556 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.05ms
+2026-07-28 19:19:11,501 [websockets.py:on_close()] - Websocket Closed: ID: 547514549392 Close Code: None, Close Reason: None, Pong Time Elapsed: 5.66
+2026-07-28 19:19:32,523 [websockets.py:on_close()] - Websocket Closed: ID: 547768651472 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.77
+2026-07-28 19:19:32,615 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.54ms
+2026-07-28 19:19:32,615 [websockets.py:open()] - Websocket Opened: ID: 547769367312, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:19:32,622 [websockets.py:_handle_identify()] - Websocket 547769367312 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:20:08,362 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 19:40:37,810 [application.py:prepare()] - Upload Request Received from 192.168.1.52
+Content-Type: multipart/form-data; boundary=------------------------15c1d61a42b19818
+2026-07-28 19:40:47,820 [application.py:post()] - Processing Uploaded File: voron_design_cube_v8-v1(1)_PETG_2h24m.gcode
+2026-07-28 19:40:48,171 [shell_command.py:pipe_data_received()] - INFO:metadata:Processor preprocess_cancellation is disabled
+
+2026-07-28 19:40:48,397 [shell_command.py:_check_proc_success()] - Command (/home/voron/moonraker-env/bin/python /home/voron/moonraker/moonraker/components/file_manager/metadata.py -c /tmp/metacfg-ny5x_e8n.json) successfully finished
+2026-07-28 19:40:48,399 [klippy_apis.py:start_print()] - Requesting Job Start, filename = voron_design_cube_v8-v1(1)_PETG_2h24m.gcode
+2026-07-28 19:40:48,427 [application.py:log_request()] - 201 POST /api/files/local (192.168.1.52) [_TRUSTED_USER_] 10618.35ms
+2026-07-28 19:40:48,656 [job_state.py:_send_job_event()] - Job Started: voron_design_cube_v8-v1(1)_PETG_2h24m.gcode
+2026-07-28 19:40:48,720 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 19:41:27,072 [websockets.py:on_close()] - Websocket Closed: ID: 547769367312 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.70
+2026-07-28 19:41:27,569 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.90ms
+2026-07-28 19:41:27,570 [websockets.py:open()] - Websocket Opened: ID: 547771311056, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:41:27,598 [websockets.py:_handle_identify()] - Websocket 547771311056 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:41:28,668 [websockets.py:on_close()] - Websocket Closed: ID: 547771311056 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.10
+2026-07-28 19:41:30,949 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.59ms
+2026-07-28 19:41:30,950 [websockets.py:open()] - Websocket Opened: ID: 547512920784, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:41:30,958 [websockets.py:_handle_identify()] - Websocket 547512920784 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:41:32,111 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.97ms
+2026-07-28 19:41:32,421 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 4.72ms
+2026-07-28 19:41:33,993 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.48ms
+2026-07-28 19:41:33,993 [websockets.py:open()] - Websocket Opened: ID: 547770157072, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:41:34,041 [websockets.py:_handle_identify()] - Websocket 547770157072 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:41:34,632 [websockets.py:on_close()] - Websocket Closed: ID: 547512920784 Close Code: None, Close Reason: None, Pong Time Elapsed: 3.68
+2026-07-28 19:41:35,708 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 3.44ms
+2026-07-28 19:41:36,080 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 7.08ms
+2026-07-28 19:45:49,365 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 19:45:53,106 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 19:46:39,370 [websockets.py:on_close()] - Websocket Closed: ID: 547770157072 Close Code: None, Close Reason: None, Pong Time Elapsed: 5.35
+2026-07-28 19:46:39,902 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.41ms
+2026-07-28 19:46:39,903 [websockets.py:open()] - Websocket Opened: ID: 547769556112, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:46:39,915 [websockets.py:_handle_identify()] - Websocket 547769556112 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:46:40,917 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.72ms
+2026-07-28 19:46:41,191 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 2.12ms
+2026-07-28 19:46:41,864 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.48ms
+2026-07-28 19:46:41,864 [websockets.py:open()] - Websocket Opened: ID: 547512976208, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:46:41,894 [websockets.py:_handle_identify()] - Websocket 547512976208 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:46:43,129 [websockets.py:on_close()] - Websocket Closed: ID: 547512976208 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.26
+2026-07-28 19:47:17,137 [websockets.py:on_close()] - Websocket Closed: ID: 547769556112 Close Code: None, Close Reason: None, Pong Time Elapsed: 7.23
+2026-07-28 19:47:17,634 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.75ms
+2026-07-28 19:47:17,634 [websockets.py:open()] - Websocket Opened: ID: 547769556880, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:47:17,647 [websockets.py:_handle_identify()] - Websocket 547769556880 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:47:17,719 [websockets.py:on_close()] - Websocket Closed: ID: 547769556880 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.09
+2026-07-28 19:47:17,744 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 1.13ms
+2026-07-28 19:47:17,744 [websockets.py:open()] - Websocket Opened: ID: 547769555856, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:47:17,747 [websockets.py:_handle_identify()] - Websocket 547769555856 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:47:18,609 [websockets.py:on_close()] - Websocket Closed: ID: 547769555856 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.87
+2026-07-28 19:50:53,364 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 19:50:58,266 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 19:51:43,580 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.08ms
+2026-07-28 19:51:43,580 [websockets.py:open()] - Websocket Opened: ID: 547769991824, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:51:43,601 [websockets.py:_handle_identify()] - Websocket 547769991824 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:51:44,600 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 4.66ms
+2026-07-28 19:51:44,850 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.32ms
+2026-07-28 19:51:55,267 [websockets.py:on_close()] - Websocket Closed: ID: 547769991824 Close Code: None, Close Reason: None, Pong Time Elapsed: 1.68
+2026-07-28 19:51:55,381 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 3.30ms
+2026-07-28 19:51:55,381 [websockets.py:open()] - Websocket Opened: ID: 547769365584, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 19:51:55,388 [websockets.py:_handle_identify()] - Websocket 547769365584 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 19:51:56,435 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.48ms
+2026-07-28 19:51:56,682 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.28ms
+2026-07-28 19:55:58,375 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 19:56:08,184 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 20:00:26,017 [websockets.py:on_close()] - Websocket Closed: ID: 547769365584 Close Code: None, Close Reason: None, Pong Time Elapsed: 0.60
+2026-07-28 20:00:29,599 [application.py:log_request()] - 101 GET /websocket (192.168.1.52) [_TRUSTED_USER_] 2.26ms
+2026-07-28 20:00:29,599 [websockets.py:open()] - Websocket Opened: ID: 547514813712, Proxied: False, User Agent: okhttp/4.12.0, Host Name: 192.168.1.43
+2026-07-28 20:00:29,628 [websockets.py:_handle_identify()] - Websocket 547514813712 Client Identified - Name: Klipper Manager, Version: 0.1.0, Type: mobile
+2026-07-28 20:00:31,378 [application.py:log_request()] - 404 GET /webcam/?action=snapshot (192.168.1.52) [_TRUSTED_USER_] 2.42ms
+2026-07-28 20:00:31,826 [application.py:log_request()] - 404 GET /webcam/snapshot (192.168.1.52) [_TRUSTED_USER_] 3.64ms
+2026-07-28 20:01:08,372 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.off, Code: -32601, Message: Method not found
+2026-07-28 20:01:19,535 [common.py:build_error()] - JSON-RPC Request Error - Requested Method: machine.device_power.on, Code: -32601, Message: Method not found
+2026-07-28 20:02:28,083 [klippy_connection.py:_process_status_update()] - Klippy has shutdown
+2026-07-28 20:02:28,090 [proc_stats.py:_handle_shutdown()] - 
+Moonraker System Usage Statistics:
+System Time: 1785243718.551708, Usage: 1.45%, Memory: 72640 kB
+System Time: 1785243719.554481, Usage: 2.09%, Memory: 72640 kB
+System Time: 1785243720.552612, Usage: 2.44%, Memory: 72640 kB
+System Time: 1785243721.552941, Usage: 1.7%, Memory: 72640 kB
+System Time: 1785243722.554948, Usage: 1.52%, Memory: 72640 kB
+System Time: 1785243723.554440, Usage: 1.93%, Memory: 72640 kB
+System Time: 1785243724.555612, Usage: 1.49%, Memory: 72640 kB
+System Time: 1785243725.557327, Usage: 1.59%, Memory: 72640 kB
+System Time: 1785243726.558878, Usage: 1.68%, Memory: 72640 kB
+System Time: 1785243727.557031, Usage: 1.67%, Memory: 72640 kB
+System Time: 1785243728.559726, Usage: 1.69%, Memory: 72640 kB
+System Time: 1785243729.559139, Usage: 1.86%, Memory: 72640 kB
+System Time: 1785243730.558242, Usage: 2.71%, Memory: 72640 kB
+System Time: 1785243731.560649, Usage: 1.82%, Memory: 72640 kB
+System Time: 1785243732.561573, Usage: 1.41%, Memory: 72640 kB
+System Time: 1785243733.564412, Usage: 1.81%, Memory: 72640 kB
+System Time: 1785243734.561638, Usage: 2.14%, Memory: 72640 kB
+System Time: 1785243735.561006, Usage: 1.57%, Memory: 72640 kB
+System Time: 1785243736.562762, Usage: 1.53%, Memory: 72640 kB
+System Time: 1785243737.563946, Usage: 1.69%, Memory: 72640 kB
+System Time: 1785243738.565798, Usage: 1.47%, Memory: 72640 kB
+System Time: 1785243739.563208, Usage: 1.93%, Memory: 72640 kB
+System Time: 1785243740.567907, Usage: 2.4%, Memory: 72640 kB
+System Time: 1785243741.569313, Usage: 2.39%, Memory: 72640 kB
+System Time: 1785243742.565871, Usage: 1.38%, Memory: 72640 kB
+System Time: 1785243743.565779, Usage: 1.55%, Memory: 72640 kB
+System Time: 1785243744.568254, Usage: 1.59%, Memory: 72640 kB
+System Time: 1785243745.566035, Usage: 1.93%, Memory: 72640 kB
+System Time: 1785243746.567934, Usage: 1.39%, Memory: 72640 kB
+System Time: 1785243747.567544, Usage: 1.44%, Memory: 72640 kB
+CPU Temperature: 49.66
+2026-07-28 20:02:28,092 [proc_stats.py:_handle_shutdown()] - Throttled Flags: 
+2026-07-28 20:02:39,769 [klippy_connection.py:_on_connection_closed()] - Klippy Connection Removed
+2026-07-28 20:02:41,029 [klippy_connection.py:_do_connect()] - Klippy Connection Established
+2026-07-28 20:02:48,346 [klippy_connection.py:_request_initial_subscriptions()] - Webhooks Subscribed
+2026-07-28 20:02:48,347 [klippy_connection.py:_request_initial_subscriptions()] - GCode Output Subscribed
+2026-07-28 20:02:48,597 [job_state.py:_handle_started()] - Job state initialized: standby
+2026-07-28 20:02:48,862 [klippy_connection.py:_check_ready()] - Klippy ready
+2026-07-28 20:02:49,705 [file_manager.py:get_file_list()] - Updating File List <gcodes>...
+2026-07-28 20:02:49,892 [data_store.py:_init_sensors()] - Configuring available sensors: ['temperature_sensor cartographer', 'temperature_sensor chamber', 'heater_bed', 'temperature_sensor cartographer_coil', 'temperature_fan cm4_fan', 'temperature_fan enclosure_fan', 'extruder', 'extruder1', 'extruder2', 'extruder3', 'extruder4']

@@ -1,7 +1,6 @@
 {
 	"brim_object_gap": "0.17",
 	"brim_type": "no_brim",
-	"enable_support": "1",
 	"from": "User",
 	"inherits": "0.20mm Standard @Voron",
 	"initial_layer_line_width": "0.56",
@@ -16,9 +15,12 @@
 	"ooze_prevention": "1",
 	"outer_wall_jerk": "9",
 	"outer_wall_line_width": "0.42",
-	"preheat_time": "40",
+	"preheat_time": "20",
 	"prime_tower_brim_width": "5",
-	"prime_volume": "60",
+	"prime_tower_enable_framework": "1",
+	"prime_tower_infill_gap": "100%",
+	"prime_tower_width": "40",
+	"prime_volume": "40",
 	"print_extruder_id": [
 		"1"
 	],
@@ -46,5 +48,7 @@
 	"support_type": "tree(auto)",
 	"top_shell_thickness": "1",
 	"top_surface_line_width": "0.42",
-	"version": "2.4.0.1"
+	"version": "2.4.0.1",
+	"wipe_tower_bridging": "5",
+	"wipe_tower_max_purge_speed": "45"
 }

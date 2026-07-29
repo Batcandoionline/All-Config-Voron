@@ -12,7 +12,7 @@
 		"PETG Tinmory"
 	],
 	"from": "User",
-	"inherits": "Generic PETG @BBL A1M",
+	"inherits": "Generic PETG @System",
 	"name": "PETG Tinmory",
 	"nozzle_temperature": [
 		"230"
