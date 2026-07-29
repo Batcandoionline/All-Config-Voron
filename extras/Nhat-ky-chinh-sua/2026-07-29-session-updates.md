@@ -476,3 +476,29 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   line.
 - The previously documented pickup override is not part of this plan and must
   not be applied under the current user constraint.
+
+## 2026-07-29 - Clarification: eliminating the dock temperature pause
+
+- Orca's `Ooze prevention -> Preheat time` is the available slicer control for
+  eliminating the visible temperature pause without changing pickup G-code. It
+  sends the next tool's non-blocking `M104` while the current tool is still
+  printing.
+- The current upstream pickup sequence explicitly executes `M109` before
+  running the physical pickup path. Therefore no Orca setting can make this
+  configuration release an under-temperature tool and finish heating during
+  the dock-to-tower move. Preheat can make the `M109` condition already true,
+  but the tool still leaves the dock at the accepted target window.
+- The observed 2 s preheat plus approximately 13 s dock wait implies an initial
+  local preheat value of approximately 15 s. Tune in 1 s increments:
+  `new preheat = current preheat + observed dock wait`; subtract time when the
+  tool reaches temperature early.
+- Start at 15 s for the next short coupon. A 14 s setting is preferable if a
+  near-zero one-second pause is acceptable and minimizing full-temperature
+  dock dwell is more important.
+- The active local process JSON currently contains 20 s. That value can remove
+  waiting but starts heat roughly five seconds earlier than the measured need,
+  increasing parked full-temperature dwell and residual pressure.
+- A user whose tool visibly continues heating during descent either has a
+  different pickup sequence, a wider heater wait window, or is observing
+  temperature recovery after the wait threshold. That exact behavior is not
+  selectable in the current Orca profile alone.
