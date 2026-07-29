@@ -392,3 +392,80 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
    pickup override with a 200 C release, 0.5 mm pressure relief on the blocker,
    raised `Z+5 -> XY -> Z` return, and matched restart compensation on the
    tower.
+
+## 2026-07-29 - Non-pickup-gcode mitigation plan
+
+### User constraint
+- Do not modify or override `pickup_gcode`.
+- Prefer OrcaSlicer settings and mechanical ooze control. A wider local `M109`
+  deadband is an optional printer-wide timing optimization, not a pickup-path
+  change.
+
+### Evidence from the active profiles and generated file
+- `voron_design_cube_v8-v1(1)_PETG_5h2m.gcode` was generated with 520 tool
+  changes, 20 s preheat, 15 s machine tool-change time, 5 mm tool-change
+  retraction, wipe disabled for every extruder, and 5 mm3 multi-tool ramming
+  enabled for all five filaments.
+- At 520 changes, 5 mm3 ramming alone commands approximately 2,600 mm3
+  (2.6 cm3) of extra tower material before accounting for purge, priming, and
+  uncontrolled leakage.
+- The generated file uses the `Voron Stealthchanger` printer profile. Its wipe
+  arrays are disabled even though the separate `Stealthchanger.json` profile
+  has wipe enabled; changes must therefore be made in the profile actually
+  selected for slicing.
+- All five filament profiles use a non-zero 150 C idle temperature. In Orca,
+  this explicit idle temperature takes priority over the configured -80 C
+  standby delta.
+- The local `SET_TEMPERATURE_WITH_DEADBAND` macro already replaces exact `M109`
+  stabilization with a 4 C total window (target +/-2 C).
+
+### GUI-only baseline
+1. Set machine tool-change time to 0 s. It is an estimate, not a physical delay,
+   and the local 15 s value causes excessively early heat scheduling and an
+   inflated slice estimate.
+2. Start preheat at 12 s and test 12-14 s. The local log with 2 s preheat showed
+   about 13 s of additional temperature waiting; the target is no more than
+   0-2 s of final wait without reaching full temperature early at the dock.
+3. Keep idle temperature at 150 C initially. Do not raise it to community
+   examples from machines with different hotends and materials.
+4. Disable `filament_multitool_ramming` in all five PETG filament profiles.
+   Keep Type 2 and `tool_change_on_wipe_tower` enabled so the incoming tool still
+   returns to the tower.
+5. Enable wipe while retracting on all five extruders, starting with the
+   existing 0.5 mm wipe distance and 70 percent retract-before-wipe.
+6. Keep tool-change retract at 5 mm for the first A/B coupon, then test 6, 7,
+   and 8 mm one value at a time. Keep restart extra at 0 initially; only add
+   0.2-0.5 mm if the first tower extrusion is visibly starved.
+7. Keep the current conservative 45 mm/s maximum tower purge speed and 40 mm
+   tower width. Do not trade a leakage problem for a higher tower collision
+   impulse.
+
+### Mechanical controls
+- Verify light spring contact between each TZ V6 nozzle and RTV blocker,
+  especially T4. Any visible light gap allows a parked tool to retain a bead
+  before release.
+- Align a silicone lip or dock-exit wiper so it removes the initial bead during
+  undock. A blocker seals while parked but cannot stop pressure-driven leakage
+  during the subsequent 5-6 s travel.
+- Dry PETG before comparing retract values so moisture expansion is not
+  mistaken for hotend pressure.
+
+### Optional non-pickup printer setting
+- PID-tune each hotend at its real PETG print temperature and representative fan
+  state.
+- If the shuttle still waits for exact temperature, increase the existing
+  printer-wide deadband from 4 C total to 8 C total (target +/-4 C). Community
+  reports for compact high-power TriangleLab-style hotends commonly use a
+  +/-4-5 C `M109` window after PID tuning.
+- This allows heater ramp-up to continue during the 5-6 s trip and reduces
+  full-temperature travel without changing any pickup coordinate or command.
+
+### Validation
+- Slice a 40-60-change T0/T4 coupon and inspect the G-code footer before
+  printing: machine tool-change time 0, preheat 12-14, ramming
+  `0,0,0,0,0`, wipe `1,1,1,1,1`, and retract 5 for the first run.
+- Success criteria: final temperature wait no more than 2 s, post-blocker strand
+  no longer than 1 mm, no growing entry blob, and a continuous first tower
+  line.
+- The previously documented pickup override is not part of this plan and must
+  not be applied under the current user constraint.
