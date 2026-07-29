@@ -406,6 +406,13 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   changes, 20 s preheat, 15 s machine tool-change time, 5 mm tool-change
   retraction, wipe disabled for every extruder, and 5 mm3 multi-tool ramming
   enabled for all five filaments.
+- Direct inspection of tool changes #1-#3 shows the outgoing sequence extrudes
+  approximately 2.0788 mm of filament as the 5 mm3 ramming pulse and then
+  retracts 5 mm before `Tn`. After pickup there is no `G1 E5` restore before
+  travel to the tower; priming resumes progressively in the tower extrusion
+  moves. The observed strand therefore is not caused by an early 5 mm
+  unretract. It is consistent with residual molten-zone pressure/gravity despite
+  the existing retract.
 - At 520 changes, 5 mm3 ramming alone commands approximately 2,600 mm3
   (2.6 cm3) of extra tower material before accounting for purge, priming, and
   uncontrolled leakage.
