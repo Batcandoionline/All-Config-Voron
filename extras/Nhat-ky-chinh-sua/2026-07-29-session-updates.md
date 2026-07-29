@@ -340,3 +340,55 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
 - The Discord restore-order guidance strengthens the case for a local guarded
   pickup override: pressure relief on the blocker, a safe raised return toward
   the tower, final descent, then restart compensation/purge at the tower.
+
+## 2026-07-29 - Background Discord control and matching failure thread
+
+### Background access
+- Restarted Discord with Electron remote debugging bound only to
+  `127.0.0.1:9223`.
+- Connected through the local DevTools protocol and verified the signed-in
+  DraftShift Design session.
+- Search and message inspection now run through the background DOM. They do not
+  synthesize mouse or keyboard input and do not take focus from the user.
+
+### Exact matching community case
+- AjzRide, `#stealthchanger`, 2025-09-06, reported heavy ooze while a toolhead
+  traveled down from its dock. It accumulated as a clump on the prime tower or
+  fell onto the print before the move to the tower. The user specifically asked
+  about fetching at standby temperature and heating near print height.
+- Community replies recommended:
+  - an Orca waiting/idle temperature, with 175 C given only as an example;
+  - tuning Orca's preheat time;
+  - tuning tool-change retraction in the Orca GUI.
+- cekim noted that insufficient preheat can produce under-extrusion or clogging
+  because heat must propagate from the nozzle walls into the center of the
+  filament column. This confirms that moving all heating to bed level is not a
+  zero-risk change.
+- The thread did not provide a standard macro that fetches fully at standby
+  temperature and heats only at bed level. It ended with Orca preheat and
+  tool-change retraction tuning.
+
+### Retraction and blocker evidence
+- MikeyMike (DSD), 2025-06-11, stated that practical tool-change retracts vary
+  with hotend, nozzle, filament, cooling, and tool-change time; the reported
+  range was 4-15 mm, with tip shaping suggested as the upper-limit reference.
+- Shane, 2025-10-12, reported that increasing post-toolchanger retraction still
+  did not stop leakage. MikeyMike separately noted that retract/de-retract helps
+  stringing, but the sequence and timing may still fail to solve the ooze blob.
+- A separate community diagnostic recommends checking each silicone blocker for
+  visible clearance at the nozzle. A gap at one tool can explain why a specific
+  tool, such as T4, oozes more than its neighbors.
+
+### Updated local test order
+1. Confirm light contact between every nozzle and its silicone pad, especially
+   T4; no visible light gap is acceptable.
+2. Disable the current 5 mm3 multi-tool ramming for all five PETG profiles while
+   retaining Orca's move-to-prime-tower behavior.
+3. Keep the measured preheat strategy; do not copy the community's 30-second
+   example because the local 20-second file already heated far too early.
+4. Test the existing 5 mm tool-change retract first, then 6, 7, and 8 mm in
+   separate short tool-change coupons. Do not jump directly to 15 mm.
+5. Only if the GUI-only tests still leave a long pickup strand, test the guarded
+   pickup override with a 200 C release, 0.5 mm pressure relief on the blocker,
+   raised `Z+5 -> XY -> Z` return, and matched restart compensation on the
+   tower.
