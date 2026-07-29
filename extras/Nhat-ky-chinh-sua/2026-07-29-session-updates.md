@@ -259,3 +259,40 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   https://raw.githubusercontent.com/viesturz/klipper-toolchanger/main/klipper/extras/tool.py
 - Prusa multi-tool moisture and travel-ooze guidance:
   https://help.prusa3d.com/article/printing-without-purge-tower-on-the-xl-multi-tool_649633
+
+## 2026-07-29 - Refined local pickup-override design
+
+### Local geometry constraint
+- The existing `CLEAN_NOZZLE` brush/bucket is at X320/Y-8/Z2 while the tool
+  docks are at approximately Z343.
+- Calling the complete cleaning macro during every pickup would add a full-height
+  Z trip and a multi-pass scrub to every change. It is not suitable for a
+  520-change print.
+- The first implementation should therefore perform pressure relief on the RTV
+  blocker only. A dedicated late wiper should be considered separately only if
+  pressure relief is insufficient.
+
+### Phase-one pickup behavior
+- Preserve the complete upstream pickup path and verification sequence in a
+  local `[toolchanger] pickup_gcode` override.
+- During an active print only:
+  1. Keep the incoming heater's final target unchanged.
+  2. Replace the full-target dock wait with
+     `TEMPERATURE_WAIT SENSOR=<incoming extruder> MINIMUM=200`.
+  3. Because klipper-toolchanger has already activated the incoming extruder,
+     issue a relative 0.5 mm retract at 30 mm/s while the nozzle remains on the
+     RTV blocker.
+  4. Execute the original pickup path and position restore unchanged.
+- Preserve the upstream full-target `M109` behavior outside an active print so
+  PRINT_START, calibration, pause, and manual tool selection do not unexpectedly
+  change behavior.
+- Set Orca's tool-change restart-extra value to 0.5 mm so a generated `G1 E5`
+  restore becomes `G1 E5.5`, compensating exactly for the added pickup retract
+  on the prime tower.
+
+### Initial tuning range
+- Start with release temperature 200 C and pickup pressure relief 0.5 mm.
+- If the post-blocker strand remains longer than 1 mm, test 0.8 mm and then
+  1.0 mm.
+- If the first prime line is incomplete, reduce pressure relief or confirm that
+  Orca generated the matching restart compensation.
