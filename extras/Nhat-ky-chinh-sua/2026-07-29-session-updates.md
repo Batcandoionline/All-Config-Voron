@@ -545,6 +545,10 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
 - It suggests 5-10 mm3 minimal purge on the wipe tower; the generated file uses
   15 mm3 for all five filaments.
 - It suggests enabling no-sparse-layers; the generated file has it disabled.
+- The generated footer reports `flush_multiplier = 0.3,1,1,1,1`, while the
+  workbook suggests 0.2-0.4 for a real tool changer. Confirm the project-level
+  assignment in Orca before changing it; do not assume the first 0.3 applies
+  uniformly to all five tools.
 - Its optional multi-tool ramming recommendation is 10 mm3 at 10 mm3/s when
   dock ooze remains. The local value is already enabled at 5 mm3 and 8 mm3/s.
   Because this printer fails from an over-height tower and repeated clumps,
