@@ -124,3 +124,87 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
 
 ### Backup
 - `extras/backups/pre-orcaslicer-profile-sync-20260729-155440/` (local and gitignored).
+
+## Full G-code, Klipper configuration, and Orca profile correlation
+
+### Scope
+- Scanned all 243,251 lines of `voron_design_cube_v8-v1(1)_PETG_5h2m.gcode`.
+- Scanned the complete 31-file Klipper include tree (3,957 lines).
+- Parsed all 24 live Orca JSON profiles under `Orca Config/` and
+  `extras/Orcasilcer setting/`; backup copies were excluded from the live-profile
+  count.
+- Compared the live JSON values with the settings footer embedded by Orca in the
+  generated G-code.
+
+### G-code findings
+- The print contains 520 tool-change blocks.
+- Incoming selections are T0=150, T1=150, T2=109, T3=55, and T4=55; the initial
+  T2 selection occurs outside the regular tool-change blocks.
+- T4 is normally selected after T2 (34 times) or T1 (20 times), and only once
+  after T0. The active tool at a ToolCrash is therefore the collision victim and
+  does not identify the tool that deposited the debris.
+- Every PETG profile enables 5 mm3 of multi-tool ramming at 8 mm3/s. The print
+  schedules approximately 2.6 cm3 of rapid ramming across the 520 changes.
+- The outgoing tool is retracted by 5 mm, cooled to 150 C, and the incoming tool
+  is restored by 5 mm at the tower. No positive G4 dwell is present.
+- The generated file has `wipe = 0,0,0,0,0` even though two legacy duplicate
+  machine JSON files contain `wipe = 1,1,1,1,1`.
+
+### Temperature and timing findings
+- The readonly upstream pickup macro waits for the selected tool's full current
+  target with `M109` while the nozzle is resting on the blocker pad.
+- The local override changes dropoff behavior but does not override pickup, so
+  the full-target wait remains active.
+- The fine pickup path takes approximately 3.42 seconds at 15 mm/s. Restoring
+  from the dock to the tower adds approximately 2.3-2.6 seconds at the configured
+  250 mm/s fast speed. This predicts the observed 5-6 second hot travel.
+- Comparison of the two cube G-codes:
+  - `2h24m`, machine tool-change time 0: effective preheat comments average
+    20.09 seconds (20-22 seconds).
+  - `5h02m`, machine tool-change time 15: effective preheat comments average
+    30.03 seconds (20-35 seconds).
+- The 15-second value does not emit a physical dwell, but this Orca build uses
+  the estimate when placing preheat commands. The newer file therefore heats the
+  next tool roughly ten seconds earlier on average and increases full-temperature
+  soak behind the silicone blocker.
+
+### Correlated diagnosis
+- The prime-tower brim and outer frame remain attached. The photograph shows
+  multi-color fragments accumulated on purge bands, consistent with repeated
+  carried ooze rather than initial tower adhesion failure.
+- The silicone blocker controls ooze only while parked. It cannot stop thermal
+  expansion from creating a new strand after the nozzle leaves the blocker.
+- The primary failure is full-temperature pickup plus a 5-6 second dock-to-tower
+  flight, amplified by early preheating, disabled wipe-while-retracting, enabled
+  ramming on all five filaments, and 520 repetitions.
+- The stored logs end at 2026-07-28 20:06 and contain the earlier T0 crash only;
+  they do not contain the later unlogged T4 crash.
+
+### Recommended implementation order
+1. Set the Orca machine tool-change time back to 0 while diagnosing. It is a
+   statistics field, and in this Orca build it also moves preheat commands earlier.
+2. Disable multi-tool ramming and enable wipe while retracting for all five PETG
+   profiles. Keep the 5 mm tool-change retract initially.
+3. Add a local pickup override (never edit readonly configuration) that waits only
+   for a measured release temperature, initially 200 C, while leaving the final
+   220-225 C target active so heating finishes during the 5-6 second flight.
+4. Add a short Z-safe purge/flick at the existing X320/Y-8 bucket immediately
+   before returning to the tower, or add a dedicated late wiper/catch point.
+5. Validate with a 40-60-change diagnostic coupon before repeating the full
+   520-change cube.
+
+### Primary references
+- OrcaSlicer Ooze Prevention:
+  https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_ooze_prevention
+- OrcaSlicer Retraction:
+  https://www.orcaslicer.com/wiki/printer_settings/extruder/printer_extruder_retraction
+- OrcaSlicer Prime Tower:
+  https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_prime_tower
+- OrcaSlicer Material Multimaterial:
+  https://www.orcaslicer.com/wiki/material_settings/multimaterial/material_multimaterial
+- OrcaSlicer Advanced Multi-Material Settings:
+  https://www.orcaslicer.com/wiki/printer_settings/multimaterial/printer_multimaterial_advanced
+- Klipper Pressure Advance:
+  https://www.klipper3d.org/Pressure_Advance.html
+- StealthChanger Modular Dock:
+  https://stealthchanger.com/hardware/modular_dock/
