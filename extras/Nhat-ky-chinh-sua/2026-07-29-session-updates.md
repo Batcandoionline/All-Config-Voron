@@ -208,3 +208,54 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   https://www.klipper3d.org/Pressure_Advance.html
 - StealthChanger Modular Dock:
   https://stealthchanger.com/hardware/modular_dock/
+
+## 2026-07-29 - StealthChanger-specific ooze-control research
+
+### Confirmed upstream behavior
+- Official StealthChanger documentation defines the RTV blocker as protection
+  while the nozzle is docked and the optional PTFE/Bambu wiper as a cleaner while
+  the tool exits the dock. Neither component can prevent a new strand from
+  forming after the nozzle has left the wiper.
+- Official tuning guidance states that a normal Voron 2.4 tool change is under
+  10 seconds and eventually becomes limited by the physical pickup operation.
+  The observed 5-6 second pickup-to-tower interval is therefore not itself a
+  fault and should not be removed by unsafe motion increases.
+- The upstream klipper-toolchanger selection sequence activates the incoming
+  extruder before executing its `pickup_gcode`. This makes a guarded, local
+  pressure-relief retract technically possible while the incoming nozzle is
+  still resting on its RTV blocker. Any added retract must be restored only at a
+  waste location, not over the model or the tower entry point.
+
+### Recommended StealthChanger control sequence
+1. Keep the incoming tool below full PETG print temperature while parked; use a
+   measured release temperature around 195-205 C, initially 200 C.
+2. While the nozzle is still sealed by the RTV blocker, apply only a small
+   additional pressure-relief retract, initially 0.5 mm.
+3. Pick up the tool normally and allow the existing 5-6 second motion to provide
+   most of the remaining heat-up time.
+4. Finish heating, restore the additional 0.5 mm, and perform a short purge/flick
+   at a waste bucket or late wiper immediately before returning to the tower.
+5. Keep Orca's 5 mm tool-change retract initially, disable multi-tool ramming,
+   enable wipe-while-retracting, and set machine tool-change time to 0 while
+   validating.
+
+### Validation limits
+- Do not jump directly to very long tool-change retractions: excessive retraction
+  can pull softened PETG into the heatbreak and cause clogs or missing extrusion.
+- Tune the added pressure-relief retract in 0.5 mm steps and stop when the
+  pickup-to-tower strand is at most 1 mm and the first prime line remains
+  continuous.
+- Dry PETG remains a prerequisite because moisture materially increases leakage
+  from a preheated nozzle.
+
+### Additional references
+- StealthChanger slicer guidance:
+  https://stealthchanger.com/software/slicers/
+- StealthChanger tuning:
+  https://stealthchanger.com/calibration/tuning/
+- klipper-toolchanger selection sequence:
+  https://raw.githubusercontent.com/viesturz/klipper-toolchanger/main/klipper/extras/toolchanger.py
+- klipper-toolchanger tool activation:
+  https://raw.githubusercontent.com/viesturz/klipper-toolchanger/main/klipper/extras/tool.py
+- Prusa multi-tool moisture and travel-ooze guidance:
+  https://help.prusa3d.com/article/printing-without-purge-tower-on-the-xl-multi-tool_649633
