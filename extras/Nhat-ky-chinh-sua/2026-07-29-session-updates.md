@@ -296,3 +296,47 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   1.0 mm.
 - If the first prime line is incomplete, reduce pressure relief or confirm that
   Orca generated the matching restart compensation.
+
+## 2026-07-29 - DraftShift Discord ooze-control research
+
+### Access and scope
+- Searched the signed-in DraftShift Design Discord desktop application in
+  read-only mode. No message, reaction, account setting, or server setting was
+  changed.
+- Mouse-driven search automation was stopped after it was found to take control
+  away from the user. Discord is not currently running with an Electron remote
+  debugging port; starting a second process with
+  `--remote-debugging-port=9223` did not enable one on the existing instance.
+
+### Community findings
+- MikeyMike (DSD), `#general`, 2026-07-22: the common baseline is Orca ooze
+  prevention for idle temperature and preheating, spring-steel/silicone
+  overmold blockers, tool-change retract settings, and a small prime tower.
+  A front-bed brush is used mostly for nozzle probing rather than as the main
+  tool-change ooze solution.
+- Drakarah, `#help-and-support`, 2025-08-16: restore a picked tool using a safe
+  sequence of `Z+5`, then `XY`, then final `Z`. This sends leakage that begins
+  during pickup to the tower instead of dragging the nozzle across the model.
+  The same message recommends a sufficiently wide, measured `M109` deadband to
+  avoid unnecessary waiting for heater overshoot.
+- Nic335 (DSD), `#stealthchanger`, 2026-07-28: Orca's move-to-prime-tower
+  behavior can be used without multi-tool ramming. The main value is restoring
+  the tool to the prime tower so incidental ooze is caught there; ramming is not
+  necessarily required for that movement.
+- Other community replies recommend small prime towers, toolchanger ramming,
+  and ooze prevention as a general starting point. This is not a consensus that
+  ramming must stay enabled for every machine.
+
+### Local interpretation
+- The local printer already enables `tool_change_on_wipe_tower`, so it can keep
+  the important return-to-tower behavior while testing all five PETG filament
+  profiles with multi-tool ramming disabled.
+- Because this printer's failure is tower over-height caused by repeated
+  leakage and blobs, disabling the current 5 mm3 ramming is a targeted
+  diagnostic A/B test, not a universal StealthChanger rule.
+- No DraftShift result established a universal numeric retract for the TZ V6
+  2.0. The current 5 mm Orca tool-change retract is already substantial;
+  increasing it blindly is not supported by the community evidence.
+- The Discord restore-order guidance strengthens the case for a local guarded
+  pickup override: pressure relief on the blocker, a safe raised return toward
+  the tower, final descent, then restart compensation/purge at the tower.
