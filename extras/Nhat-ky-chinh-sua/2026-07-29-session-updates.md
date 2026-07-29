@@ -502,3 +502,64 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
   different pickup sequence, a wider heater wait window, or is observing
   temperature recovery after the wait threshold. That exact behavior is not
   selectable in the current Orca profile alone.
+
+## 2026-07-29 - Comparison with the shared OrcaSlicer Tool Changer workbook
+
+### Source scope
+- Read the shared Google workbook
+  `OrcaSlicer_Thong_so_Machine_Filament_Process_ToolChanger` in view-only mode.
+- The workbook states that its values are community starting ranges, not
+  universal machine-specific settings. The comparison below is restricted to
+  the active PETG tool-change, ooze-prevention, and prime-tower behavior.
+
+### Settings that already match the workbook
+- Single Extruder Multi Material is disabled.
+- Relative E distances are enabled.
+- All Orca extruder offsets are 0,0; offsets remain in firmware.
+- Ooze prevention and tool-change-on-wipe-tower are enabled.
+- Avoid-crossing-walls is enabled.
+- Z hop is 0.6 mm for all five tools.
+- Prime tower width is 40 mm and brim width is 5 mm.
+
+### Material differences
+- The workbook says preheat must equal the measured hotend heat-up time; its
+  20-40 s range is explicitly a common example. The local 2 s test plus about
+  13 s waiting indicates approximately 15 s for this printer. The active 20 s
+  profile is therefore about five seconds earlier than the measured need.
+- The workbook suggests a PETG standby delta near -30 C. The local explicit
+  idle temperature is 150 C, which overrides the stored -80 C delta and creates
+  an effective drop of 70-75 C from the 220-225 C print targets. Copying -30 C
+  would heat faster but would substantially increase dock ooze, so it is not
+  appropriate for this failure without a separate test.
+- The workbook suggests tool-change retract 1-4 mm. The local 5 mm is already
+  above that range; the workbook does not support increasing it blindly.
+- The workbook suggests wipe enabled with a 1-2 mm distance. The generated
+  file has wipe disabled on all five tools and a dormant 0.5 mm distance. This
+  is a clear actionable mismatch: enable wipe and start at 1.0 mm.
+- The workbook suggests deretraction near 20 mm/s when a restart blob occurs;
+  the local value is 30 mm/s.
+
+### Tower-material differences
+- The workbook suggests 10-20 mm3 prime volume for a real tool changer; the
+  local process uses 40 mm3.
+- It suggests 5-10 mm3 minimal purge on the wipe tower; the generated file uses
+  15 mm3 for all five filaments.
+- It suggests enabling no-sparse-layers; the generated file has it disabled.
+- Its optional multi-tool ramming recommendation is 10 mm3 at 10 mm3/s when
+  dock ooze remains. The local value is already enabled at 5 mm3 and 8 mm3/s.
+  Because this printer fails from an over-height tower and repeated clumps,
+  increasing ramming to 10 mm3 is contraindicated. Test ramming disabled before
+  considering any increase.
+
+### Recommended non-pickup A/B profile
+1. Preheat 15 s, tuned in 1 s increments for a 0-1 s dock pause.
+2. Keep idle temperature 150 C.
+3. Disable filament multi-tool ramming on all five PETG profiles.
+4. Enable wipe on all tools; start with 1.0 mm and 70 percent
+   retract-before-wipe.
+5. Keep tool-change retract at 5 mm and restart extra at 0 for the first test.
+6. Reduce deretraction speed from 30 to 20 mm/s.
+7. Reduce prime volume from 40 to 20 mm3.
+8. Reduce minimal purge from 15 to 8-10 mm3.
+9. Enable no-sparse-layers and keep the current 40 mm tower with 5 mm brim.
+10. Validate with a 40-60-change T0/T4 coupon before a full cube.
