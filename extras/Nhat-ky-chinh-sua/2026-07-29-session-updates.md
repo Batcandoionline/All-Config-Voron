@@ -567,3 +567,109 @@ Automatically synchronize OrcaSlicer profiles and publish the requested G-code/l
 8. Reduce minimal purge from 15 to 8-10 mm3.
 9. Enable no-sparse-layers and keep the current 40 mm tower with 5 mm brim.
 10. Validate with a 40-60-change T0/T4 coupon before a full cube.
+
+## 2026-07-29 - Deadband versus dock wait: full code-path and log audit
+
+### Active code path
+- `printer.cfg` loads `readonly-configs/toolchanger-include.cfg`.
+- The include file loads the upstream `toolchanger.cfg` and
+  `toolchanger-macros.cfg` first, then loads the local
+  `toolchanger-config.cfg` last. The local M109/deadband definitions are
+  therefore the active definitions.
+- Orca emits a non-blocking `M104` before the change. The later `Tn` macro only
+  calls `SELECT_TOOL T=n`.
+- The upstream pickup sequence moves the empty shuttle to the selected dock,
+  then executes `M109 Tn S<current target>` while the nozzle is still resting
+  on its dock pad. The physical pickup path does not begin until this M109
+  completes.
+- After `SELECT_TOOL` completes and the shuttle restores the saved XY/Z
+  position, the generated G-code executes another `M109 S... Tn` immediately
+  after the `Tn` command before tower extrusion.
+
+### What the active deadband actually does
+- Upstream KTC-Easy defaults to a total deadband of 1 C, equivalent to
+  target +/-0.5 C.
+- The local override is a total deadband of 4 C, equivalent to target +/-2 C.
+  Klipper's effective configuration dump confirms this exact active value and
+  its `MINIMUM=S-(D/2)` / `MAXIMUM=S+(D/2)` calculation.
+- Examples: S220 releases at 218-222 C, S225 at 223-227 C, and S230 at
+  228-232 C.
+- Therefore D=4 is already less strict and faster than the upstream default.
+  It is not a timer and is not the primary cause of the dock pause.
+- One T4 S220 ramp in the current log shows 216.4 C at 15726.0, 217.7 C at
+  15727.0, the range event immediately afterward, 218.8 C at 15728.0, and
+  219.8 C at 15730.0. The current D=4 saves only about 2-3 seconds compared
+  with waiting near the exact target on that ramp.
+- Increasing the one global default substantially is unsafe: the post-change
+  Orca M109 uses the same default. A wide window could therefore allow tower
+  extrusion to begin while the hotend is still materially below print
+  temperature.
+
+### Measured heat-up times in the attached log
+- The latest paired print in `moonraker.log` is
+  `voron_design_cube_v8-v1(1)_PETG_2h24m.gcode`, started on 2026-07-28 at
+  19:40:48.
+- That G-code footer contains `preheat_time = 20`, not 2. It also contains
+  `machine_tool_change_time = 0`. Consequently, the attached log cannot be
+  used as evidence for the earlier 2-second test.
+- Measured time from the first stats record with a new print target until
+  Klipper reports the heater inside the active D=4 window:
+
+| Tool/heater | Transition | Observed time |
+| --- | --- | --- |
+| T0 / extruder | about 150-175 C to 225 C | 14-20 s |
+| T1 / extruder1 | about 150-166 C to 220 C | 15-19 s |
+| T2 / extruder2 | about 150-152 C to 220 C | 15 s |
+| T4 / extruder4 | about 150 C to 220 C | 24 s on all three samples |
+| T0 / extruder | about 150 C to 230 C | 22-23 s |
+| T1 / extruder1 | about 150 C to 230 C | 22-24 s |
+| T2 / extruder2 | about 150 C to 230 C | 19.1 s |
+| T3 / extruder3 | about 150 C to 230 C | 25 s |
+| T4 / extruder4 | about 150 C to 230 C | 28-29 s |
+
+- T4 is consistently slower than the other PETG tools at the same starting
+  and target temperatures. A single global preheat value cannot perfectly
+  eliminate T4's wait without heating faster tools earlier and increasing
+  their full-temperature ooze time.
+
+### Comparison with the shared workbook and Orca behavior
+- The workbook recommends preheat 20-40 seconds as a community range and,
+  more importantly, says to set it equal to the measured heat-up time.
+- Orca's own documentation defines preheat time as how far in advance it
+  inserts a non-blocking M104 while the current tool is still printing.
+- The current G-code is following that model: comments show approximately
+  20-21 seconds between the M104 preheat command and the corresponding T
+  command.
+- The workbook does not define or recommend a KTC M109 deadband. It therefore
+  does not support attributing another user's no-pause behavior to the local
+  D=4 value.
+
+### Corrected conclusion and safe next steps
+- The primary reason the shuttle waits at the dock is the explicit M109 placed
+  before the pickup path plus insufficient preheat lead for the slowest tool.
+  D=4 only controls the final two degrees below target.
+- The earlier 15-second recommendation was based on an unpaired visual
+  estimate and is superseded by the complete log/G-code pair. With this
+  hardware, 20-22 seconds is a compromise; it normally covers T0/T1/T2 but T4
+  may still wait roughly 2-4 seconds. A global 24-25 seconds should cover the
+  measured T4 S220 ramps but increases hot full-temperature dwell and ooze on
+  the faster tools.
+- Keep the active D=4 for now. Do not use a very large global deadband as a
+  substitute for correct preheat timing.
+- Inspect and PID-tune T4 at the actual PETG temperature and representative
+  fan state. Also check its heater cartridge seating, wiring, connector, and
+  supply voltage because its repeatable 24-second S220 ramp is materially
+  slower than T1/T2.
+- `machine_tool_change_time = 15` only changes Orca's time estimate; it does
+  not move M104 earlier and does not alter the physical pickup order.
+- Achieving the exact behavior "release cooler, heat during the 5-6 second
+  dock-to-tower trip, then enforce print temperature before extrusion" needs
+  two different wait windows: a loose pickup threshold and a tight final
+  threshold. The current Orca setting and one global deadband cannot express
+  that safely. It would require a context-aware local M109 override or an
+  equivalent two-stage macro, even if the readonly pickup coordinates and path
+  remain untouched.
+
+### Changes
+- Analysis and documentation only. No printer configuration, Orca preset, or
+  pickup G-code was modified.
