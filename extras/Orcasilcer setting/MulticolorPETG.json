@@ -1,6 +1,6 @@
 {
 	"brim_object_gap": "0.17",
-	"brim_type": "no_brim",
+	"brim_type": "painted",
 	"from": "User",
 	"inherits": "0.20mm Standard @Voron",
 	"initial_layer_line_width": "0.56",
@@ -15,7 +15,7 @@
 	"ooze_prevention": "1",
 	"outer_wall_jerk": "9",
 	"outer_wall_line_width": "0.42",
-	"preheat_time": "20",
+	"preheat_time": "15",
 	"prime_tower_brim_width": "5",
 	"prime_tower_enable_framework": "1",
 	"prime_tower_infill_gap": "100%",
