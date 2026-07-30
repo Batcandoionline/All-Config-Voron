@@ -435,3 +435,71 @@ multi-tool handoff.
 No setting was changed. Disable the ramming checkbox when no pre-change ramming
 extrusion is desired; do not use a negative ramming volume. Keep restart extra
 separate and calibrate it conservatively.
+
+## 6. Verification of the revised `6h13m` G-code
+
+### Goal
+
+Verify whether `extras/gcode/voron_design_cube_v8PETG_6h13m.gcode` correctly
+disables ramming while retaining the requested `8 mm / -3 mm` tool-change
+retraction values.
+
+### Confirmed values
+
+- Generated estimate: `06:13:16`.
+- Tool changes: `519`.
+- Total planned filament: `39.07 g`.
+- Tool-change retract: `8 mm` for all five tools.
+- Restart extra: `-3 mm` for all five tools.
+- Preheat: `15 s`.
+- Statistical tool-change time: `22.9 s`.
+- Tower type: Type 2.
+- General `enable_filament_ramming`: disabled.
+
+### Remaining issue
+
+The five active filament profiles still enable multi-tool ramming:
+
+```text
+filament_multitool_ramming = 1,1,1,1,1
+filament_multitool_ramming_volume = 5,5,5,5,5
+filament_multitool_ramming_flow = 8,8,8,8,8
+```
+
+The executable G-code confirms this is not stale metadata:
+
+- `G1 E-8 F1800`: `519` occurrences.
+- Outgoing `E2.0788` extrusion: `519` occurrences.
+- `2.0788 mm` of 1.75 mm filament is approximately `5 mm³`, matching the
+  configured multi-tool ramming volume.
+
+Disabling the general ramming switch removed the generated ramming routine and
+reduced the estimate/material, but it did not disable the separate per-filament
+multi-tool ramming extrusion.
+
+### Required OrcaSlicer correction
+
+For each of the five active PETG filament presets, open:
+
+```text
+Filament Settings
+  -> Multimaterial
+  -> Tool change parameters with multi extruder
+  -> Enable ramming for multi-tool setups
+```
+
+Disable the checkbox, save every filament preset and slice again. A correct
+ramming-off footer must contain:
+
+```text
+filament_multitool_ramming = 0,0,0,0,0
+```
+
+The resulting executable G-code must also contain no outgoing `E2.0788`
+ramming lines before the `E-8` retract.
+
+### Result
+
+No G-code or profile was modified. The revised file correctly applies `8/-3`
+and disables the general ramming routine, but it is not yet the requested
+ramming-off baseline because per-filament multi-tool ramming remains active.
