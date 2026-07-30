@@ -313,3 +313,88 @@ before maximum volumetric speed and pressure advance/flow afterwards.
 No profile value was changed. Keep `15 mm³/s` as a temporary ceiling until
 per-spool tests provide measured limits; focus the tower-debris investigation
 on tool-change ooze, wiping and tower entry rather than hotend throughput.
+
+## 4. Verification of the `8 mm / -3 mm` tool-change settings
+
+### Goal
+
+Verify whether `Retraction When Switching Materials = 8 mm` and
+`Extra length on restart = -3 mm` are present and executed in
+`extras/gcode/voron_design_cube_v8_PETG_6h28m.gcode`.
+
+### Confirmed values
+
+- OrcaSlicer version: `2.4.2`.
+- Generated: `2026-07-30 16:11:02`.
+- Tool changes: `519`.
+- Estimated time: `06:28:22`.
+- `machine_tool_change_time`: `22.9 s`.
+- `retract_length_toolchange`: `8,8,8,8,8`.
+- `retract_restart_extra_toolchange`: `-3,-3,-3,-3,-3`.
+- Exact `G1 E-8 F1800` unload moves: `519`, one per tool change.
+
+The restart compensation is integrated into the Type 2 tower extrusion paths
+rather than emitted as one standalone `G1 E5` command. Semantically, an `8 mm`
+retract plus `-3 mm` restart extra leaves a nominal `5 mm` compensation. For
+1.75 mm filament, the negative `3 mm` removes approximately `7.216 mm³` from
+the restart amount.
+
+### Comparison with the previous completed G-code
+
+The new file changes more than the two requested retraction values:
+
+| Setting | Previous completed file | New file |
+| --- | --- | --- |
+| Tool-change retract | `6 mm` | `8 mm` |
+| Restart extra | `0 mm` | `-3 mm` |
+| Filament ramming | Off | On |
+| Ramming volume | Inactive | `5 mm³` per change |
+| Preheat time | `12 s` | `15 s` |
+| Tower type | Type 1 | Type 2 |
+| Statistical tool-change time | `0 s` | `22.9 s` |
+
+The new G-code contains `519` outgoing `E2.0788` moves, each equal to
+approximately `5 mm³` of 1.75 mm filament, before the `E-8` retract. Ramming
+therefore adds `2.595 cm³` of planned outgoing material across the job. This
+conflicts with the previous ramming-off baseline and can recreate raised tower
+material.
+
+Total planned filament falls from `67.13 g` to `43.54 g`, a reduction of
+`23.59 g` or `35.1%`. This confirms that the new tower/restart combination
+materially changes the generated tool-change paths, but the reduction cannot be
+attributed to `-3 mm` alone because the tower type also changed.
+
+### Assessment
+
+- The `8 mm` and `-3 mm` values are correctly stored and used by OrcaSlicer.
+- G-code inspection cannot prove that they stop physical PETG ooze; that
+  requires a print observation or photograph.
+- `8 mm` can reduce residual pressure before parking.
+- `-3 mm` acts when extrusion resumes and cannot prevent material that already
+  leaked during full-temperature dock-to-tower travel.
+- `-3 mm` is aggressive relative to the configured `15 mm³` minimal purge and
+  can cause an under-filled first tower line or delayed extrusion at the
+  object.
+- The file is not a controlled A/B test because ramming, preheat and tower type
+  changed at the same time.
+
+### Recommendation
+
+Do not use the full `519`-change object as the first validation print. Generate
+a 40-to-60-change coupon. For a clean test of the community recommendation,
+disable multi-tool ramming again and keep all other baseline variables fixed.
+Test `8/0`, then `8/-1`; only retain `8/-3` if the first tower line is continuous,
+the object resumes without under-extrusion and the dock-to-tower tail is
+visibly shorter. If the travel tail does not improve with `8/0`, a negative
+restart-extra value will not correct the root cause.
+
+### Official reference
+
+- OrcaSlicer retraction settings:
+  https://www.orcaslicer.com/wiki/printer_settings/extruder/printer_extruder_retraction
+
+### Result
+
+No G-code or profile was modified. The new file correctly encodes `8/-3`, but
+ramming must be disabled and a short physical coupon must pass before this
+combination can be considered validated for production.
