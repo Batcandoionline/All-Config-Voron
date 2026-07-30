@@ -255,3 +255,61 @@ user approval and should be tested one variable group at a time:
 - The remaining primary issue is cumulative full-temperature PETG
   dock-to-tower contamination, amplified by tower entry stability across
   `519` tool changes.
+
+## 3. PETG maximum volumetric speed assessment
+
+### Goal
+
+Assess whether the uncalibrated `15 mm³/s` filament maximum volumetric speed is
+reasonable for the TZ V6 2.0 setup and whether it can explain the tower debris.
+
+### Current G-code
+
+- Layer height: `0.20 mm`.
+- Maximum volumetric speed: `15 mm³/s` for all five tools.
+- Outer wall: `0.42 mm × 0.20 mm × 120 mm/s`, approximately `10.1 mm³/s`.
+- Top surface: `0.42 mm × 0.20 mm × 100 mm/s`, approximately `8.4 mm³/s`.
+- Inner wall request: `0.45 mm × 0.20 mm × 200 mm/s`, approximately
+  `18.0 mm³/s`; therefore capped by the `15 mm³/s` filament limit.
+- Internal solid infill request: `0.42 mm × 0.20 mm × 230 mm/s`,
+  approximately `19.3 mm³/s`; therefore capped.
+- Sparse infill request: `0.45 mm × 0.20 mm × 230 mm/s`, approximately
+  `20.7 mm³/s`; therefore capped.
+- A `0.42 mm × 0.20 mm` tower path at the configured `45 mm/s` purge speed is
+  approximately `3.8 mm³/s`, far below the filament limit.
+
+### Assessment
+
+`15 mm³/s` is a plausible ceiling for this hotend, but hotend model alone does
+not validate it. The usable quality limit also depends on the exact PETG brand
+and color, nozzle, print temperature, extruder and cooling. At the current
+`220 °C`, opaque white, black and other pigmented PETG profiles may reach their
+quality limit at different flow rates.
+
+The current limit affects fast inner/infill paths but does not explain the
+dock-to-tower PETG tails or loose tower loops. A high maximum volumetric-speed
+setting is only a ceiling; it does not force every path to extrude at that flow.
+
+### Recommended calibration
+
+Run OrcaSlicer's Max Volumetric Speed calibration for each of the five active
+filament/tool combinations at the actual `220 °C` print condition. Use the
+official `5–20 mm³/s` range and `0.5 mm³/s` step, identify the first visible
+loss of surface quality, sheen consistency, adhesion or extrusion, then set the
+production profile `10–20%` below that failure value. Calibrate temperature
+before maximum volumetric speed and pressure advance/flow afterwards.
+
+### Official references
+
+- OrcaSlicer material volumetric-speed limit:
+  https://www.orcaslicer.com/wiki/material_settings/filament/material_volumetric_speed_limitation.html
+- OrcaSlicer maximum flow calibration:
+  https://github.com/OrcaSlicer/OrcaSlicer/wiki/volumetric_speed_calib
+- OrcaSlicer calibration order:
+  https://www.orcaslicer.com/wiki/calibration/Calibration/
+
+### Result
+
+No profile value was changed. Keep `15 mm³/s` as a temporary ceiling until
+per-spool tests provide measured limits; focus the tower-debris investigation
+on tool-change ooze, wiping and tower entry rather than hotend throughput.
