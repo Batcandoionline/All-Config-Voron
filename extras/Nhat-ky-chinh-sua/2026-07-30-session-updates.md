@@ -503,3 +503,191 @@ ramming lines before the `E-8` retract.
 No G-code or profile was modified. The revised file correctly applies `8/-3`
 and disables the general ramming routine, but it is not yet the requested
 ramming-off baseline because per-filament multi-tool ramming remains active.
+
+## 7. Full audit of `PETG_6h20m.gcode`
+
+### Goal
+
+Audit the complete executable and configuration blocks of
+`extras/gcode/PETG_6h20m.gcode`, verify all `519` tool changes and determine
+whether the file is ready for a full production print.
+
+### File integrity
+
+- SHA-256:
+  `DA07F014DADA1FF579AB43F82DECBAF721E60FAE20B78AEDD6830BECD2FC58AC`
+- OrcaSlicer: `2.4.2`.
+- Generated: `2026-07-30 16:24:54`.
+- File size: `6,766,679` bytes.
+- Layers: `150`.
+- Maximum Z: `30.04 mm`.
+- Estimated time: `06:19:37`.
+- Total planned filament: `37.36 g`.
+- One balanced header, executable and configuration block.
+- Exactly one `PRINT_START` and one `PRINT_END`.
+- `669` balanced `EXCLUDE_OBJECT_START/END` pairs.
+- No `M112`, restart, shutdown, forced-position, cancellation or pause command
+  was found.
+
+### Tool-change structure
+
+- Numbered tool-change blocks: `519`, sequential from `1` through `519`.
+- Tool commands including the initial `T2`:
+  - `T0`: `150`
+  - `T1`: `150`
+  - `T2`: `110`
+  - `T3`: `55`
+  - `T4`: `55`
+- Every numbered block contains:
+  - exactly one target `T` command;
+  - one outgoing `M104 S150` cooldown;
+  - one incoming `M109 S220/230` wait;
+  - one wipe-tower section;
+  - a total outgoing retract of `8.000 mm`, split between the fast retract and
+    wipe move according to `retract_before_wipe = 70%`.
+- No block contains positive extrusion before its target `T` command.
+- The four first pickups of initially unused tools have no standalone
+  deretraction; the other `515` pickups contain one `G1 E8` restoration before
+  tower extrusion. This is internally consistent with relative extrusion
+  (`M83`) and per-tool slicer state.
+- `G4 S0` occurs `1,559` times and represents zero-second synchronization, not a
+  fixed dwell.
+
+### Ramming verification
+
+The requested ramming-off state is now correct:
+
+```text
+enable_filament_ramming = 0
+filament_multitool_ramming = 0,0,0,0,0
+```
+
+- No `Ramming start/end` routine exists.
+- No outgoing `E2.0788` / `5 mm³` ramming extrusion exists.
+- Relative to the previous `6h13m` file, the only meaningful footer change is
+  `filament_multitool_ramming: 1,1,1,1,1 -> 0,0,0,0,0`.
+- Planned filament decreases from `39.07 g` to `37.36 g`.
+
+### Retraction and restart
+
+- Tool-change retract: `8 mm` for all tools.
+- Tool-change restart extra: `-3 mm` for all tools.
+- Normal travel retract: `0.8 mm`.
+- Normal restart extra: `0 mm`.
+- Wipe: enabled, `0.5 mm`.
+
+The generated paths are internally valid, but physical success of `-3 mm`
+remains unverified. It may reduce the tower-entry blob but can also under-fill
+the first tower line or delay object extrusion. This value remains suitable
+only for a short coupon until the first line and object resumption are observed.
+
+### Temperature and timing
+
+- First layer: `230 °C`.
+- Printing: `220 °C`.
+- Idle: `150 °C`.
+- Preheat: `15 s`, one preheat step.
+- `519` outgoing cooldown commands and `519` incoming preheat commands are
+  present.
+- Every `T` is followed by an explicit target-temperature `M109`. The pickup
+  macro also waits at the dock before releasing the tool; the second wait has no
+  fixed delay but can extend the handoff if the nozzle falls outside the
+  configured temperature deadband.
+- `machine_tool_change_time = 22.9 s` is correctly present for estimate
+  statistics.
+
+### Tower settings
+
+- Type 2, rib wall with fillet.
+- Width: `40 mm`.
+- Brim: `5 mm`.
+- Framework: enabled.
+- Infill gap: `100%`.
+- Maximum purge speed: `45 mm/s`.
+- Minimal purge: `15 mm³` per filament.
+- No sparse layers: disabled, avoiding downward tower travel.
+- Skip points: enabled, but the OrcaSlicer regression tracker states that this
+  feature did not affect regular non-Bambu profiles. It must not be relied upon
+  for tower safety.
+
+### Production blocker: tool-change position
+
+The footer still contains:
+
+```text
+wipe_tower_type = type2
+tool_change_on_wipe_tower = 0
+```
+
+All `519` target `T` commands are issued while Orca's current XY position is
+over the printed object:
+
+- T-command X range: `159.387` to `187.710`.
+- T-command Y range: `153.603` to `181.664`.
+- Tower location is around X `162` to `202`, Y `69` to `89`.
+- Target commands issued at the tower: `0 / 519`.
+
+For example, the first `T1` is issued near object coordinate
+`X175.829 Y180.829`; only after the tool macro completes does the generated
+G-code move toward the tower. The local toolchanger restores only the configured
+Z axis, so it does not deliberately return the picked-up tool to the object XY.
+Nevertheless, OrcaSlicer's Type 2 documentation explicitly states that
+`Tool Change on Wipe Tower` should be enabled when the `Tx` command must be
+issued at the tower rather than above the printed part. The current value does
+not meet that deterministic Type 2 handoff requirement.
+
+### Quality settings that remain uncalibrated
+
+- Maximum volumetric speed: `15 mm³/s` for all five filaments.
+- Outer/inner/top/internal-solid speeds:
+  `120/200/100/230 mm/s`.
+- Per-tool pressure advance:
+  `0.074/0.060/0.066/0.068/0.072`.
+- Per-tool flow:
+  `0.96/0.95/0.95/0.95/0.96`.
+- Maximum fan:
+  `100/40/40/100/100%`.
+- Supports are disabled.
+
+These values are syntactically valid but are not evidence that every spool/tool
+is calibrated for the best surface finish. The previous loose logo/overhang
+feature may remain if it is geometry/cooling related rather than transferred
+tower debris.
+
+### Required next slice
+
+1. Keep multi-tool ramming disabled for all five filament profiles.
+2. Keep Type 2 tower.
+3. Enable `Tool Change on Wipe Tower`.
+4. Prefer `prime_tower_skip_points = 0` for a deterministic regular-printer
+   baseline.
+5. Retain `8/-3` only for a short 40-to-60-change coupon; use `8/-1` for the
+   safer first physical validation.
+6. Verify the next footer contains:
+
+```text
+filament_multitool_ramming = 0,0,0,0,0
+tool_change_on_wipe_tower = 1
+wipe_tower_type = type2
+```
+
+Then verify that the executable `T` commands are preceded by travel to the tower
+coordinates.
+
+### Official references
+
+- OrcaSlicer Type 2 tool-change position:
+  https://www.orcaslicer.com/wiki/printer_settings/multimaterial/printer_multimaterial_wipe_tower
+- OrcaSlicer prime-tower stability:
+  https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_prime_tower
+- OrcaSlicer ooze prevention and preheat:
+  https://www.orcaslicer.com/wiki/print_settings/multimaterial/multimaterial_settings_ooze_prevention
+- OrcaSlicer 2.3.2 prime-tower regression tracker:
+  https://github.com/OrcaSlicer/OrcaSlicer/issues/12684
+
+### Result
+
+The file is complete and internally consistent, and ramming is now fully
+disabled. It is not yet approved for a full `519`-change production print
+because `Tool Change on Wipe Tower` remains disabled for the Type 2 tower and
+the aggressive `-3 mm` restart value has not passed a physical coupon.
