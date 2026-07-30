@@ -398,3 +398,40 @@ restart-extra value will not correct the root cause.
 No G-code or profile was modified. The new file correctly encodes `8/-3`, but
 ramming must be disabled and a short physical coupon must pass before this
 combination can be considered validated for production.
+
+## 5. Clarification of negative ramming versus negative restart extra
+
+### Goal
+
+Clarify whether setting a value such as `-5` prevents extrusion during a
+multi-tool handoff.
+
+### Findings
+
+- Multi-tool ramming volume is a forward extrusion volume in `mm³` before the
+  tool change. It is not a retraction control and should not be made negative.
+- To generate no ramming extrusion, disable `Enable ramming for multi-tool
+  setups` so `filament_multitool_ramming = 0`. The stored `5 mm³` volume is then
+  inactive.
+- `Extra length on restart = -5 mm` is a different setting. With an `8 mm`
+  tool-change retract, the nominal restart compensation becomes `3 mm`.
+- Negative restart extra does not remove normal prime-tower purge paths. Even
+  `-8 mm` would only reduce the retraction compensation to zero; OrcaSlicer
+  would still emit the separately planned wipe-tower extrusion.
+- For 1.75 mm filament, `-5 mm` removes approximately `12.03 mm³` from restart
+  compensation, close to the current `15 mm³` minimal purge. This creates a
+  high risk of an under-filled first tower line and delayed extrusion at the
+  object.
+
+### Official references
+
+- OrcaSlicer multi-tool ramming:
+  https://www.orcaslicer.com/wiki/material_settings/multimaterial/material_multimaterial
+- OrcaSlicer retraction and restart extra:
+  https://www.orcaslicer.com/wiki/printer_settings/extruder/printer_extruder_retraction
+
+### Result
+
+No setting was changed. Disable the ramming checkbox when no pre-change ramming
+extrusion is desired; do not use a negative ramming volume. Keep restart extra
+separate and calibrate it conservatively.
