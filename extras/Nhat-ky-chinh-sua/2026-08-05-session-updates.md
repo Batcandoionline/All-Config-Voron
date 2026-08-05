@@ -94,3 +94,19 @@ Cập nhật toàn bộ file `README.md` chính của kho lưu trữ để phả
 
 ### Kết quả
 Tài liệu `README.md` đã được đồng bộ chuẩn xác với cấu hình production thực tế của kho lưu trữ.
+
+---
+
+## 5. Đồng bộ và hoàn thiện các file README.md phụ (`config/README.md` & `Orca Config/README.md`)
+
+### Mục tiêu
+Cập nhật hai file `README.md` phụ để khớp hoàn toàn với trạng thái dự án thực tế:
+1. `config/README.md`: Bổ sung thông số phần cứng chi tiết, pinout MCU/CAN, bảng tham số `nozzle-clean.cfg` mới và cấu trúc thư mục payload.
+2. `Orca Config/README.md`: Liệt kê đầy đủ 21 file JSON profile active (`machine`, `process`, `filament`) và quy trình đồng bộ script `Sync-OrcaProfiles.ps1`.
+
+### File đã sửa đổi
+- `config/README.md`
+- `Orca Config/README.md`
+
+### Kết quả
+Toàn bộ hệ thống tài liệu `README.md` ở tất cả các cấp thư mục đã được chuẩn hóa và sát thực tế 100%.

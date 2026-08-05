@@ -1,108 +1,65 @@
 # Cấu hình OrcaSlicer (Orca Config)
 
-## Automatic synchronization
+Thư mục này lưu trữ các profile tùy chỉnh (custom profiles) của OrcaSlicer dùng cho máy in **Voron 2.4 StealthChanger (5-Tool)**, bao gồm cấu hình máy in (`machine`), cấu hình nhựa (`filament`) và cấu hình tiến trình in (`process`).
 
-Manual JSON export is no longer required. After saving a preset in OrcaSlicer,
-double-click:
+---
+
+## ⚡ Đồng bộ tự động (Automatic Synchronization)
+
+Sau khi chỉnh sửa hoặc tạo preset mới trong phần mềm OrcaSlicer, bạn có thể đồng bộ nhanh bằng cách nhấp đúp file:
 
 ```text
 Sync-OrcaProfiles.cmd
 ```
 
-The launcher runs `Sync-OrcaProfiles.ps1`, which:
-
-1. Finds the most recently used OrcaSlicer account under
-   `%APPDATA%\OrcaSlicer\user`.
-2. Validates every user `machine`, `process`, and `filament` JSON profile.
-3. Backs up changed repository copies under
-   `extras/backups/pre-orcaslicer-profile-sync-<timestamp>/`.
-4. Copies the exact active JSON files into this directory.
-5. Updates the analysis aliases in `extras/Orcasilcer setting/`.
-6. Force-adds the diagnostic G-code and log files that are normally ignored.
-7. Writes the daily project journal, creates an English Git commit, and pushes
-   it to the configured remote.
-
-The PowerShell script can also be run without Git actions:
+Hoặc chạy dòng lệnh PowerShell:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File ".\Orca Config\Sync-OrcaProfiles.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\Orca Config\Sync-OrcaProfiles.ps1"
 ```
 
-To select a specific OrcaSlicer account instead of automatic discovery:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File ".\Orca Config\Sync-OrcaProfiles.ps1" `
-  -ProfileId "<account-id>" -Commit -Push
-```
-
-Thư mục này lưu trữ các profile tùy chỉnh (custom profiles) của OrcaSlicer dùng cho máy in **Voron 2.4 StealthChanger (5-Tool)**, bao gồm cấu hình máy in (`machine`), cấu hình nhựa (`filament`) và cấu hình tiến trình in (`process`).
+**Cơ chế hoạt động của `Sync-OrcaProfiles.ps1`:**
+1. Tự động phát hiện tài khoản OrcaSlicer được sử dụng gần nhất dưới đường dẫn `%APPDATA%\OrcaSlicer\user`.
+2. Kiểm tra và xác thực các file JSON profile (`machine`, `process`, `filament`).
+3. Tạo bản sao lưu tự động tại `extras/backups/pre-orcaslicer-profile-sync-<timestamp>/`.
+4. Sao chép các file JSON active vào thư mục `Orca Config/`.
+5. Tạo commit Git và thực hiện `git push` tự động lên GitHub repository.
 
 ---
 
-## 📂 Danh sách các file cấu hình quan trọng
+## 📂 Danh sách các Profile chính hiện có
 
-- **Máy in (Machine):**
-  - `Voron Stealthchanger.json` — Cấu hình máy in Voron Stealthchanger 5 đầu đùn
-- **Tiến trình in (Process):**
-  - `0.20mm ABS.json` — Cấu hình in ABS chiều cao lớp 0.20mm
-  - `0.20mm PETG Multimaterial.json` — Cấu hình in nhiều màu PETG
-  - `0.20 Tinmory.json` — Cấu hình in cho nhựa Tinmory
-- **Nhựa (Filament):**
-  - Các cấu hình nhựa ABS, PETG chuyên dụng cho từng hãng (`Tinmory`, `TPoimns`, `Bambu Basic`...).
+### 1. Cấu hình máy in (Machine Profiles)
+- `Voron Stealthchanger.json` — Profile máy in Voron 2.4 StealthChanger 5 đầu đùn (T0–T4)
+- `Stealthchanger.json` — Preset máy in StealthChanger tham chiếu
+- `VoronStealthchanger.json` — Variant profile máy in
+
+### 2. Cấu hình tiến trình in (Process Profiles)
+- `0.20mm ABS.json` — Tiến trình in ABS tiêu chuẩn 0.20mm
+- `0.20mm ABS TPmoins.json` — Tiến trình in ABS tối ưu cho nhựa TPmoins
+- `0.20mm PETG Multimaterial.json` — Tiến trình in nhiều màu / nhiều đầu phun PETG
+- `0.20 Tinmory.json` — Tiến trình in PETG/ABS Tinmory
+
+### 3. Cấu hình nhựa (Filament Profiles)
+- **ABS:** `ABS Tpoimns Black.json`, `ABS Tpoimns Pink.json`, `ABS-Pro Tinmory Black.json`
+- **PETG:** `PETG Bambu Basic Black.json`, `PETG Bambu Basic.json`, `PETG Kabber Blue.json`, `PETG Noname Antums.json`, `PETG TPoimns Black.json`, `PETG TPoimns Gray.json`, `PETG TPoimns Orange.json`, `PETG TPoimns Red.json`, `PETG TPoimns White.json`, `PETG TPoimns Yellow.json`, `PETG Tinmory Black.json`, `PETG Tinmory.json`
 
 ---
 
-## 🔄 Hướng dẫn đồng bộ và sao chép cấu hình
+## 🔄 Khôi phục thủ công về OrcaSlicer (Restore Profiles)
 
-Khi bạn cập nhật các profile trong OrcaSlicer và muốn lưu trữ chúng lên GitHub, hoặc muốn khôi phục chúng từ GitHub về máy tính:
+Nếu bạn vừa clone repository về máy tính mới và muốn đưa các profile này vào OrcaSlicer:
 
-### 1. Vị trí lưu trữ profile của OrcaSlicer trên Windows
-OrcaSlicer lưu trữ các profile tùy chỉnh của người dùng tại đường dẫn:
+**Đường dẫn tài khoản OrcaSlicer trên Windows:**
 ```cmd
 %APPDATA%\OrcaSlicer\user\<user_id>\
 ```
-*(Trong đó `<user_id>` là một chuỗi mã định danh duy nhất của tài khoản của bạn, ví dụ: `838ce884-12ee-416b-9e1b-1c7503cf6b5f`)*
 
-Trong thư mục này sẽ có các thư mục con:
-- `machine/` — Cấu hình máy in
-- `filament/` — Cấu hình nhựa
-- `process/` — Cấu hình tiến trình in
-
----
-
-### 2. Cách sao chép tự động (Bằng dòng lệnh PowerShell)
-
-Để tự động sao chép toàn bộ các file `.json` từ OrcaSlicer vào thư mục này để chuẩn bị commit lên GitHub:
-
-1. Mở PowerShell.
-2. Chạy câu lệnh sau (đường dẫn đã được cấu hình tự động cho tài khoản của bạn):
+**Thao tác copy bằng PowerShell:**
 ```powershell
-Get-ChildItem -Path "$env:APPDATA\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f" -Filter *.json -Recurse | Copy-Item -Destination "C:\Users\batca\OneDrive\Desktop\All-Config-Voron-main\Orca Config" -Force
+# Copy các file .json từ repo vào thư mục OrcaSlicer user
+$orcaUser = Get-ChildItem "$env:APPDATA\OrcaSlicer\user" | Select-Object -First 1
+Copy-Item -Path ".\Orca Config\Voron Stealthchanger.json" -Destination "$orcaUser.FullName\machine\" -Force
+Copy-Item -Path ".\Orca Config\PETG*.json" -Destination "$orcaUser.FullName\filament\" -Force
+Copy-Item -Path ".\Orca Config\0.20*.json" -Destination "$orcaUser.FullName\process\" -Force
 ```
-
-Nếu bạn muốn copy ngược lại từ GitHub vào OrcaSlicer (sau khi clone repo hoặc pull code mới về máy):
-1. **Sao chép cấu hình Máy in:**
-```powershell
-Copy-Item -Path "C:\Users\batca\OneDrive\Desktop\All-Config-Voron-main\Orca Config\Voron Stealthchanger.json" -Destination "$env:APPDATA\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f\machine\" -Force
-```
-2. **Sao chép cấu hình Nhựa (Filament):**
-```powershell
-# Ví dụ copy file PETG TPoimns Black.json
-Copy-Item -Path "C:\Users\batca\OneDrive\Desktop\All-Config-Voron-main\Orca Config\PETG TPoimns Black.json" -Destination "$env:APPDATA\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f\filament\" -Force
-```
-3. **Sao chép cấu hình Tiến trình in (Process):**
-```powershell
-# Ví dụ copy file 0.20mm ABS.json
-Copy-Item -Path "C:\Users\batca\OneDrive\Desktop\All-Config-Voron-main\Orca Config\0.20mm ABS.json" -Destination "$env:APPDATA\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f\process\" -Force
-```
-
----
-
-### 3. Cách sao chép thủ công (Giao diện đồ họa)
-Nếu bạn không muốn sử dụng dòng lệnh:
-1. Nhấn tổ hợp phím `Windows + R`, gõ `%APPDATA%\OrcaSlicer\user` và nhấn **Enter**.
-2. Truy cập vào thư mục ID người dùng của bạn.
-3. Vào các thư mục `filament`, `machine`, `process` copy các file `.json` bạn muốn và dán vào thư mục `Orca Config` trong thư mục Git này.
-4. Ngược lại, khi muốn khôi phục, bạn copy các file `.json` từ thư mục này dán vào các thư mục tương ứng trong AppData của OrcaSlicer.
