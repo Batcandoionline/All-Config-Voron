@@ -75,3 +75,22 @@ Cập nhật và lưu trữ các file mới trong `extras/` bao gồm hình ản
 
 ### Kết quả
 Đã đồng bộ thành công toàn bộ dữ liệu lưu trữ bổ sung trong `extras/` lên GitHub repository.
+
+---
+
+## 4. Cập nhật tài liệu README.md dự án
+
+### Mục tiêu
+Cập nhật toàn bộ file `README.md` chính của kho lưu trữ để phản ánh đầy đủ thông số phần cứng mới nhất, hệ thống chùi đầu phun Nozzle Clean (chổi silicon Bambu A1), bổ sung cấu trúc thư mục chi tiết (`extras/`, `Orca Config/`, `Printer-Setup/`) và cập nhật quy trình cài đặt & hiệu chuẩn.
+
+### File đã sửa đổi
+- `README.md`
+
+### Chi tiết cập nhật
+- **Bảng phần cứng:** Bổ sung hệ thống vệ sinh đầu phun Bambu A1 Silicone Brush + Purge Bucket.
+- **Cấu trúc cây thư mục:** Cập nhật đầy đủ các thư mục con trong `extras/` (pictures, gcode, docs, Orcasilcer setting, axiscope-cartographer...).
+- **Hệ thống Nozzle Clean:** Thêm section tài liệu riêng cho macro `CLEAN_NOZZLE` và `PURGE_AND_CLEAN` với tọa độ X: 277 → 312, Y: -7 → -10, Z: 1.2mm, bán kính quét $R = 1.5\text{mm}$.
+- **Quy trình phụ thuộc & Cài đặt:** Cập nhật lệnh cài đặt dependencies SSH cho `klipper-toolchanger-easy`, `cartographer3d-plugin` và `Klippain-ShakeTune`.
+
+### Kết quả
+Tài liệu `README.md` đã được đồng bộ chuẩn xác với cấu hình production thực tế của kho lưu trữ.
