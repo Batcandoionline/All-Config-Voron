@@ -60,3 +60,18 @@ Khắc phục lỗi dừng khẩn cấp Klipper `Move out of range: 280.275 -10.
 
 ### Kết quả
 Đã giải quyết dứt điểm lỗi `Move out of range`. Macro `CLEAN_NOZZLE` hoạt động trơn tru.
+
+---
+
+## 3. Cập nhật các tài liệu, ảnh và file G-code thử nghiệm vào thư mục extras/
+
+### Mục tiêu
+Cập nhật và lưu trữ các file mới trong `extras/` bao gồm hình ảnh thực tế và các file G-code thử nghiệm (`extras/pictures/`, `extras/gcode/`) lên GitHub repository để lưu trữ dài hạn.
+
+### File đã sửa đổi & bổ sung
+- `.gitignore` — Thêm ngoại lệ cho phép theo dõi các file G-code mẫu trong `extras/gcode/`.
+- `extras/pictures/` — Thêm 7 ảnh chụp thực tế máy in và linh kiện (`IMG_20260730_152140.jpg` ... `IMG_20260730_152159.jpg`).
+- `extras/gcode/` — Thêm các file mẫu in thử PETG G-code (`PETG_6h20m.gcode`, `voron_design_cube_v8...gcode`).
+
+### Kết quả
+Đã đồng bộ thành công toàn bộ dữ liệu lưu trữ bổ sung trong `extras/` lên GitHub repository.
