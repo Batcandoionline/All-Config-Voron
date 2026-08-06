@@ -1,11 +1,10 @@
-# Local config downloads and zips
-extras/Config download/
-extras/backups/
-*.zip
-!extras/gcode/*.gcode
+# Quản lý dữ liệu log máy in
 *.log
 
-# Bảo mật thông tin nhạy cảm
+# Bảo mật thông tin nhạy cảm (BẢO VỆ TUYỆT ĐỐI)
 *.secrets
 moonraker.secrets
 wpa_supplicant.conf
+*.key
+*.pem
+*.env

@@ -1,0 +1,24 @@
+{
+	"filament_extruder_variant": [
+		"Direct Drive Standard"
+	],
+	"filament_flow_ratio": [
+		"0.96"
+	],
+	"filament_max_volumetric_speed": [
+		"12"
+	],
+	"filament_settings_id": [
+		"PETG Tinmory"
+	],
+	"from": "User",
+	"inherits": "Generic PETG @BBL A1M",
+	"name": "PETG Tinmory",
+	"nozzle_temperature": [
+		"230"
+	],
+	"nozzle_temperature_initial_layer": [
+		"235"
+	],
+	"version": "2.1.0.16"
+}

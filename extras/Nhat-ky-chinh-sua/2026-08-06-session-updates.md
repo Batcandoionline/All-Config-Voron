@@ -31,3 +31,23 @@ Do chuyển đổi phần cứng và nâng Z thực tế khi in:
 
 ### Vấn đề còn lại
 Cần người dùng chạy `FIRMWARE_RESTART` trên Klipper và in thử nghiệm để xác nhận lớp đầu tiên.
+
+---
+
+## 2. Đồng bộ toàn bộ thư mục Sao lưu (Backups) và Cấu hình lên GitHub
+
+### Mục tiêu
+Theo yêu cầu của người dùng, đưa toàn bộ dữ liệu sao lưu (`extras/backups/`) và các bản tải cấu hình (`extras/Config download/`) lên kho lưu trữ GitHub để phòng ngừa sự cố máy tính bị hỏng hóc/mất dữ liệu, đồng thời đảm bảo an toàn thông tin nhạy cảm.
+
+### File đã sửa đổi
+- `Voron 5 Tool/.gitignore` — Loại bỏ `extras/backups/` và `extras/Config download/` khỏi danh sách bỏ qua; giữ nguyên quy định chặn các file nhạy cảm (`*.secrets`, `moonraker.secrets`, `wpa_supplicant.conf`, `*.key`, `*.pem`, `*.env`).
+
+### Lý do
+Phòng ngừa rủi ro mất mát dữ liệu lịch sử cấu hình máy in khi máy tính cá nhân gặp sự cố phần cứng.
+
+### Kiểm tra
+- Quét thông tin nhạy cảm (mật khẩu, API key, credential): Không tìm thấy thông tin lộ lặp nào.
+- Trạng thái Git: Tất cả 36 thư mục sao lưu và các file zip cấu hình đã được theo dõi và đẩy lên GitHub thành công.
+
+### Kết quả
+Toàn bộ lịch sử sao lưu đã được bảo vệ trên GitHub `origin/main`.
