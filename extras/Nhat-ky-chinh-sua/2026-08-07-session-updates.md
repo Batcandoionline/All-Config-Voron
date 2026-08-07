@@ -57,3 +57,34 @@ Do T0 là reference tool, khi đặt `touch_model z_offset = -0.03` để T0 có
 
 ### Vấn đề còn lại
 Cần người dùng chạy `FIRMWARE_RESTART` trên Klipper / Mainsail và thực hiện in thử nghiệm đa màu/đa tool để kiểm chứng.
+
+---
+
+## 3. Khôi phục lại mức Z-Offset chuẩn -0.05mm dựa trên thử nghiệm thực tế của người dùng
+
+### Mục tiêu
+Khôi phục lại `[cartographer touch_model default]` `z_offset = -0.05` và các giá trị `gcode_z_offset` gốc của T1–T4 sau khi người dùng thực hiện thử nghiệm in thực tế ở các mức offset khác nhau (`-0.01`, `-0.03`, `-0.05`, `-0.07`).
+
+### Kết quả thử nghiệm thực tế từ người dùng
+- `z_offset = -0.01`: Đầu in quá sát bàn, nhựa bị ép quá mức hiển thị rõ hằn mặt sần.
+- `z_offset = -0.07`: Đầu in xa bàn, đường in có dấu hiệu tách dính kém.
+- **`z_offset = -0.05`:** Lớp in đầu tiên đạt chất lượng đẹp nhất, dính phẳng tối ưu.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — Khôi phục `z_offset = -0.05` và các `gcode_z_offset` tiêu chuẩn cho T1–T4.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-touch-z-offset-005-20260807-171000/printer.cfg)
+
+### Chi tiết thay đổi
+- **T0 (Cartographer Touch `z_offset`):** `-0.03` → `-0.05`
+- **T1 (`gcode_z_offset`):** `0.308` → `0.328`
+- **T2 (`gcode_z_offset`):** `-0.195` → `-0.175`
+- **T3 (`gcode_z_offset`):** `-0.198` → `-0.178`
+- **T4 (`gcode_z_offset`):** `0.066` → `0.086`
+
+### Kiểm tra
+- Kiểm tra cú pháp Klipper: Đạt
+
+### Kết quả
+Đã khôi phục hoàn toàn cấu hình `printer.cfg` về mức Z-offset tối ưu nhất theo kết quả in thực tế của người dùng.
