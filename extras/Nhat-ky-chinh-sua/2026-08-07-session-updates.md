@@ -88,3 +88,29 @@ Khôi phục lại `[cartographer touch_model default]` `z_offset = -0.05` và c
 
 ### Kết quả
 Đã khôi phục hoàn toàn cấu hình `printer.cfg` về mức Z-offset tối ưu nhất theo kết quả in thực tế của người dùng.
+
+---
+
+## 4. Khôi phục cấu hình từ bản sao lưu pre-z-offset-hardware-adjust (06/08/2026)
+
+### Mục tiêu
+Khôi phục lại hoàn toàn các thông số Z-offset về bản sao lưu trước khi điều chỉnh phần cứng ngày 06/08/2026 (`pre-z-offset-hardware-adjust-20260806-202200`) theo xác nhận của người dùng.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — Cập nhật các thông số Z-offset về nguyên bản 06/08/2026.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-aug06-backup-20260807-173400/printer.cfg)
+
+### Chi tiết thay đổi
+- **T0 (Cartographer Touch `z_offset`):** `-0.05`
+- **T1 (`gcode_z_offset`):** `0.328` → `0.20799999999127493` (~0.208)
+- **T2 (`gcode_z_offset`):** `-0.175` → `-0.28500000002525155` (~ -0.285)
+- **T3 (`gcode_z_offset`):** `-0.178` → `-0.2580000000428268` (~ -0.258)
+- **T4 (`gcode_z_offset`):** `0.086` → `0.065999999939054135` (~ 0.066)
+
+### Kiểm tra
+- Kiểm tra cú pháp Klipper: Đạt
+
+### Kết quả
+Đã khôi phục thành công cấu hình `printer.cfg` về bản sao lưu nguyên bản ngày 06/08/2026.
