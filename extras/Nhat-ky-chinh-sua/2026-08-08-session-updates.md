@@ -22,11 +22,21 @@ Cập nhật lại các thông số sau đợt hiệu chuẩn mới của ngư�
 - **T4 (`gcode_z_offset`):** `0.065999999939054135` → `0.086`
 - **Bed Mesh Points:** Sửa lỗi thiếu số 0 (`-0.94642` → `-0.094642`, `-0.96387` → `-0.096387`)
 
-### Lý do
-Người dùng đã hoàn thành chu trình hiệu chuẩn lại `CARTOGRAPHER_TOUCH_CALIBRATE` và đo lại Z-offset của các đầu in T1–T4.
+### 2. Đồng bộ kết quả hiệu chuẩn Cartographer Touch và Bed Mesh hoàn chỉnh
 
-### Kiểm tra
-- Cú pháp Klipper: Đạt chuẩn.
+### Mục tiêu
+Cập nhật các số liệu sau chuỗi đo kiểm tra đạt chuẩn độ chính xác cao:
+1. `threshold = 1652` (chính xác với độ lệch chuẩn 0.002040 mm).
+2. Toàn bộ ma trận `[bed_mesh default]` phân giải 55x55 điểm đo quét thực tế từ Cartographer v3.
+3. Đồng bộ hóa toàn diện cấu hình sản xuất lên GitHub.
 
-### Kết quả
-Đã đồng bộ toàn bộ thông số mới vào `printer.cfg`, tạo bản ghi sao lưu và cập nhật Git.
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — Cập nhật `threshold = 1652` và toàn bộ ma trận `[bed_mesh default]`.
+
+### Sao lưu
+- [printer.cfg (Backup 21:09)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-final-calib-update-20260808-210900/README.md)
+
+### Kết quả đo kiểm chứng
+- `CARTOGRAPHER_TOUCH_ACCURACY`: `stddev = 0.002040 mm`, `range = 0.006 mm`.
+- `QUAD_GANTRY_LEVEL`: `Probed points range: 0.004979 mm` (đạt dung sai < 0.0075 mm).
+
