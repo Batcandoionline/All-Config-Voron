@@ -40,3 +40,32 @@ Cập nhật các số liệu sau chuỗi đo kiểm tra đạt chuẩn độ ch
 - `CARTOGRAPHER_TOUCH_ACCURACY`: `stddev = 0.002040 mm`, `range = 0.006 mm`.
 - `QUAD_GANTRY_LEVEL`: `Probed points range: 0.004979 mm` (đạt dung sai < 0.0075 mm).
 
+## 3. Áp dụng điều chỉnh Z offset khi in thực tế cho T1–T3
+
+### Mục tiêu
+Đồng bộ vào cấu hình các điều chỉnh Z offset tương đối mà người dùng đã thực hiện trên KlipperScreen khi in thực tế qua màn hình HDMI.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/printer.cfg` — cập nhật ba giá trị `gcode_z_offset` đã lưu trong `SAVE_CONFIG`.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-print-z-offset-adjustments-20260808-215317/printer.cfg)
+
+### Chi tiết thay đổi
+- **T1:** `0.328` + `(-0.100)` → `0.228`
+- **T2:** `-0.175` + `(-0.120)` → `-0.295`
+- **T3:** `-0.178` + `(-0.090)` → `-0.268`
+
+### Lý do
+Các mức điều chỉnh được xác định khi in thực tế bằng KlipperScreen; giá trị âm được cộng vào `gcode_z_offset` hiện có để hạ nozzle tương ứng.
+
+### Kiểm tra
+- Kiểm tra cú pháp tĩnh: đạt — ba block `SAVE_CONFIG` của T1, T2, T3 có đúng giá trị số mới; `git diff --check` không báo lỗi khoảng trắng.
+- Khởi động lại Klipper: chưa thực hiện từ workspace.
+- Thử in: cần xác nhận lớp đầu tiên sau khi Klipper nạp lại cấu hình.
+
+### Kết quả
+Ba giá trị Z offset đã được đồng bộ trong cấu hình nguồn.
+
+### Vấn đề còn lại
+Khởi động lại Klipper và kiểm tra lớp đầu tiên của T1, T2, T3 trước khi in dài.
