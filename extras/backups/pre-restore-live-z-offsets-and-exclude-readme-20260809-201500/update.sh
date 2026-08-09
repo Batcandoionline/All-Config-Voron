@@ -21,7 +21,7 @@ mkdir -p "${BACKUP_DIR}"
 rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
 
 echo "Copying latest config files."
-rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" --exclude "README.md" --exclude "*.md" "${REPO_DIR}/config/" "${CONFIG_DIR}/"
+rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" "${REPO_DIR}/config/" "${CONFIG_DIR}/"
 
 if [ "${BACKUP_KEEP}" -gt 0 ] 2>/dev/null; then
   echo "Keeping the newest ${BACKUP_KEEP} config backups in: ${BACKUP_ROOT}"

@@ -19,7 +19,7 @@ fi
 
 echo "Installing config files from: ${SOURCE_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
-rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" --exclude "README.md" --exclude "*.md" "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
+rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
 
 echo "Install complete."
 echo "Source repository: ${REPO_URL}"

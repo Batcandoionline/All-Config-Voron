@@ -59,8 +59,24 @@ Tổng hợp kết quả đo từ 3 lần chạy hiệu chuẩn Z-offset tự đ
 | **T3** | -0.156 | -0.114 | -0.131 | **-0.134** | -0.268 | +0.134 mm |
 | **T4** | -0.064 | 0.000 | -0.039 | **-0.034** | +0.086 | -0.120 mm |
 
+---
+
+## 5. Khôi phục Z-Offset In Thực Tế Đẹp & Loại Bỏ File README.md Khi Đồng Bộ Sang Máy In
+
+### Mục tiêu
+1. Khôi phục lại bộ giá trị `gcode_z_offset` in thực tế đẹp (`T1: 0.228, T2: -0.295, T3: -0.268, T4: 0.086`) theo yêu cầu người dùng sau khi đánh giá chất lượng lớp in đầu tiên.
+2. Cập nhật các script `install.sh` và `update.sh` để thêm quy tắc `--exclude "README.md"` và `--exclude "*.md"`, đảm bảo thư mục cấu hình vận hành `~/printer_data/config` trên máy in hoàn toàn sạch sẽ, không bị lẫn các file tài liệu hướng dẫn markdown của Git.
+
 ### File đã sửa đổi
-- `config/printer.cfg` — Cập nhật `gcode_z_offset` cho `[tool T1]`, `[tool T2]`, `[tool T3]`, `[tool T4]` theo giá trị trung bình mới.
+- `config/printer.cfg` — Khôi phục `gcode_z_offset`: T1=0.228, T2=-0.295, T3=-0.268, T4=0.086.
+- `config/scripts/install.sh` — Thêm `--exclude "README.md" --exclude "*.md"`.
+- `config/scripts/update.sh` — Thêm `--exclude "README.md" --exclude "*.md"`.
 
 ### Sao lưu
-- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-apply-axiscope-avg-z-offsets-20260809-184500/printer.cfg)
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-live-z-offsets-and-exclude-readme-20260809-201500/printer.cfg)
+- [install.sh (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-live-z-offsets-and-exclude-readme-20260809-201500/install.sh)
+- [update.sh (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-live-z-offsets-and-exclude-readme-20260809-201500/update.sh)
+
+### Kiểm tra
+- Cú pháp Klipper và Bash scripts hợp lệ.
+- Lệnh `rsync --delete --delete-excluded` sẽ tự động xóa các file `README.md` cũ trên máy in khi chạy `bash scripts/update.sh`.
