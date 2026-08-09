@@ -77,6 +77,23 @@ Tổng hợp kết quả đo từ 3 lần chạy hiệu chuẩn Z-offset tự đ
 - [install.sh (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-live-z-offsets-and-exclude-readme-20260809-201500/install.sh)
 - [update.sh (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-live-z-offsets-and-exclude-readme-20260809-201500/update.sh)
 
-### Kiểm tra
-- Cú pháp Klipper và Bash scripts hợp lệ.
-- Lệnh `rsync --delete --delete-excluded` sẽ tự động xóa các file `README.md` cũ trên máy in khi chạy `bash scripts/update.sh`.
+---
+
+## 6. Rà Soát Toàn Diện và Viết Lại Tài Liệu Dự Án & Hệ Thống Quy Tắc AI
+
+### Mục tiêu
+Đọc lại từng phần của dự án, cập nhật và đồng bộ hóa toàn bộ các file hướng dẫn, sơ đồ phần cứng, quy tắc sao lưu đám mây, nhật ký quyết định và tài liệu kỹ thuật sau thời gian dài vận hành.
+
+### File đã sửa đổi
+- `.agents/PROJECT.md` — Cập nhật chuẩn xác phần cứng: Manta M8P V2 + CM4 (thay cho thông tin Octopus Pro cũ), Cartographer V3 fw6.1.0, Axiscope microswitch trên chân PF2.
+- `.agents/DIRECTORY.md` — Cập nhật cấu trúc thư mục, làm rõ cơ chế loại trừ markdown của script triển khai và chính sách lưu trữ backup trên Git.
+- `.agents/BACKUP.md` — Cập nhật chính sách đồng bộ sao lưu đám mây Git.
+- `.agents/GIT_RULE.md` — Cập nhật quy tắc commit, loại bỏ các file nhạy cảm.
+- `.agents/DECISIONS.md` — Bổ sung các quyết định kỹ thuật ngày 2026-08-09 (PF2 switch, chiến lược Z-offset kết hợp, loại trừ markdown).
+- `.agents/CHANGELOG.md` — Thêm phiên bản `[1.4.0] — 2026-08-09`.
+- `.agents/TODO.md` — Cập nhật các tác vụ đã hoàn thành trong phiên.
+- `Voron 5 Tool/README.md` — Viết lại tài liệu tổng quan tiếng Anh: sơ đồ phần cứng Manta M8P V2, pinout PF2, hướng dẫn cài đặt sạch, quy trình hiệu chuẩn.
+- `Voron 5 Tool/config/README.md` — Cập nhật tài liệu kỹ thuật của thư mục cấu hình và bảng tra cứu chân tín hiệu.
+
+### Sao lưu
+- [pre-doc-and-rules-refresh-20260809-202500](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-and-rules-refresh-20260809-202500/README.md)

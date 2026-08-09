@@ -6,27 +6,25 @@ Production-ready Klipper/Moonraker configuration for a **Voron 2.4 350mm** runni
 
 ## 🛠️ Hardware Stack
 
-| Component | Specification | Interface / Pin Assignment |
+| Component | Specification | Interface / Notes |
 | :--- | :--- | :--- |
 | **Printer** | Voron 2.4 350mm — CoreXY | — |
-| **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
-| **Host System** | BTT CM4 running MainsailOS | Mounted directly on Manta M8P |
-| **Toolheads** | 5× StealthChanger Toolhead (T0–T4) | BTT EBB36 V1.2 via CAN bus (`EBB0`–`EBB4`) |
-| **Hotends** | TZ V6 2.0 (×5) | EBB36 Heater ports |
-| **Extruders** | WW BMG (×5) | EBB36 onboard TMC2209 |
-| **Bed Probe / Z Homing** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Z-Offset Calibrator** | Microswitch / Axiscope Calibration Switch | Manta M8P `PF2` (GND + `^PF2`) at $X=68.0, Y=-10.0, Z=7.0$ |
-| **Nozzle Cleaner** | Bambu A1 Silicone Brush + Purge Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
-| **Accelerometer** | ADXL345 on each EBB36 + Cartographer V3 | SPI / I2C |
-| **Chamber Sensor** | Generic 3950 100K NTC Thermistor | Manta M8P `PB1` (THB port) |
-| **Bed Heater** | AC Bed Heater with SSR | Thermistor: `PB0` (NTC 100K), Heater: `PA1` |
-| **Screen** | KlipperScreen (language: vi) | HDMI / DSI |
+| **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`can0`) |
+| **Toolheads** | 5× StealthChanger Toolhead (T0–T4) | EBB36 V1.2 via CAN bus (`EBB0`–`EBB4`) |
+| **Hotends** | TZ V6 2.0 (×5) | EBB36 Heater |
+| **Extruders** | WW BMG (×5) | EBB36 TMC2209 |
+| **Bed Probe / Z Homing** | Cartographer V3 (Touch + Scan mode) | CAN bus `cartographer` (`da13d909ce34`) |
+| **Z-Offset Calibrator** | SexBolt / SexBall — **Temporary calibration mount** | Manta M8P `PF4` (M1-STOP) |
+| **Nozzle Cleaner** | Bambu A1 Silicone Brush + Purge Bucket | X: 277 → 312, Y: -7 → -10, Z: 1.2mm |
+| **Accelerometer** | ADXL345 on each EBB36 + Cartographer V3 | SPI |
+| **Chamber Sensor** | Generic 3950 NTC Thermistor | Manta M8P `PB1` (THB port) |
+| **Screen** | KlipperScreen (language: vi) | HDMI / Direct |
 | **Slicer** | OrcaSlicer (Multi-Color / Multi-Tool) | Profiles in `extras/Orcasilcer setting/` |
 
 > [!NOTE]
-> - **Cartographer V3** handles all primary Z homing, Quad Gantry Leveling (QGL), and high-density adaptive bed mesh (55×55 points).
-> - **Axiscope Z-Switch** ($X=68, Y=-10, Z=7$) on pin `PF2` serves as a repeatable hardware baseline reference for relative tool lengths.
-> - **Nozzle Cleaning System** uses a Bambu A1 silicone pad with `CLEAN_NOZZLE` (flick & 360° circular scrub) and `PURGE_AND_CLEAN` macros to clean nozzles at 150°C before probing/printing.
+> - **Cartographer V3** handles all Z homing, bed leveling (QGL), and adaptive bed mesh during printing (Touch/Scan mode).
+> - **SexBolt/SexBall** is a *calibration-only* reference probe — plugged into M1-STOP (`PF4`) when running `CALIBRATE_ALL_OFFSETS` to measure XYZ offsets between tools (T0–T4).
+> - **Nozzle Clean System** uses a Bambu A1 silicone pad with `CLEAN_NOZZLE` (flick & 360° circular scrub) and `PURGE_AND_CLEAN` macros to clean nozzles at 150°C before probing/printing.
 
 ---
 
@@ -34,49 +32,34 @@ Production-ready Klipper/Moonraker configuration for a **Voron 2.4 350mm** runni
 
 ```
 Voron 5 Tool/
-├── README.md                 ← Project overview and documentation (English)
-│
-├── config/                   ← Active Klipper configuration payload
-│   ├── README.md             ← Config-specific guide & pinout mapping
+├── config/                   ← Active Klipper config (synced to ~/printer_data/config)
 │   ├── printer.cfg           ← Main entry point (includes, kinematics, SAVE_CONFIG block)
-│   ├── KlipperScreen.conf    ← KlipperScreen display configuration
-│   ├── moonraker.conf        ← Moonraker API server & update manager configuration
-│   ├── crowsnest.conf        ← Camera streaming configuration (WebRTC)
-│   ├── mainsail.cfg          ← Mainsail web interface macros
-│   │
 │   ├── Printer-Setup/        ← Hardware, probe, fans, input shaper, macros
-│   │   ├── hardware.cfg      ← Steppers, MCU definitions, bed heater, chamber sensor
-│   │   ├── calibration.cfg   ← Thermal compensation, [axiscope] switch calib (pin: ^PF2)
-│   │   ├── probe-mesh.cfg    ← Cartographer V3 probe & adaptive bed mesh parameters
-│   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & bucket cleaning macros (`CLEAN_NOZZLE`)
+│   │   ├── hardware.cfg      ← Steppers, MCU definitions, bed heater, sensors
+│   │   ├── calibration.cfg   ← Thermal compensation, retraction, PID
+│   │   ├── probe-mesh.cfg    ← Cartographer V3 probe & bed mesh parameters
+│   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & bucket cleaning macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
 │   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, and helper macros
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, stealthburner LEDs
 │   │   ├── input-shaper.cfg  ← Resonance tuning parameters
 │   │   ├── crash_detection_override.cfg ← Tool crash detection macro overrides
 │   │   └── tool_crash_cartographer.cfg  ← Cartographer tool crash protection
-│   │
 │   ├── toolchanger/          ← StealthChanger KTC-Easy config & tool definitions
-│   │   ├── toolchanger-config.cfg ← Main toolchanger configuration & switch coords
+│   │   ├── toolchanger-config.cfg ← Main toolchanger configuration
 │   │   ├── tools/            ← T0.cfg … T4.cfg (EBB36 extruders, offsets, fans)
 │   │   └── readonly-configs/ ← Managed by klipper-toolchanger-easy (DO NOT EDIT)
-│   │
-│   └── scripts/              ← Deployment & helper scripts
-│       ├── install.sh        ← First-time install script (auto-excludes *.md)
-│       ├── update.sh         ← Pull & apply updates (auto-backup & excludes *.md)
-│       └── cleanup-voron.sh  ← Clean up legacy backup directories
-│
+│   └── scripts/              ← Deployment & helper scripts (install.sh, update.sh)
 ├── Orca Config/              ← Custom OrcaSlicer profiles (machine, filament, process)
-│
 └── extras/                   ← Documentation, logs, backups, and media
-    ├── backups/              ← Timestamped configuration backups (synced on Git)
+    ├── backups/              ← Local timestamped config backups (gitignored)
     ├── Nhat-ky-chinh-sua/    ← Daily session update logs (Vietnamese)
     ├── pictures/             ← Hardware photos, pinout diagrams, and schematics
-    ├── gcode/                ← Test print G-code samples
+    ├── gcode/                ← Test print G-code samples (Voron Cube, PETG test files)
     ├── docs/                 ← StealthChanger guides and hardware user manuals
     ├── Orcasilcer setting/   ← Exported OrcaSlicer JSON profiles
     ├── axiscope-cartographer/← Cartographer axiscope visualizer & calibration data
-    └── logs/                 ← Klippy and Moonraker log archives for offline analysis
+    └── logs/                 ← Klippy and Moonraker log archives for analysis
 ```
 
 ---
@@ -97,9 +80,9 @@ The nozzle cleaning macro uses a **Bambu A1 silicone pad** and **Purge Bucket**:
 
 ### How to Call:
 ```gcode
-CLEAN_NOZZLE                             ; Wipe nozzle at 150°C (default in PRINT_START)
-CLEAN_NOZZLE WIPES=8 TEMP=160           ; Custom wipes and clean temperature
-PURGE_AND_CLEAN PURGE=15 PURGE_TEMP=240   ; Purge 15mm @ 240°C -> cool down -> wipe @ 150°C
+CLEAN_NOZZLE                           ; Wipe nozzle at 150°C (default in PRINT_START)
+CLEAN_NOZZLE WIPES=8 TEMP=160         ; Custom wipes and clean temperature
+PURGE_AND_CLEAN PURGE=15 PURGE_TEMP=240 ; Purge 15mm @ 240°C -> cool down -> wipe @ 150°C
 ```
 
 ---
@@ -108,13 +91,17 @@ PURGE_AND_CLEAN PURGE=15 PURGE_TEMP=240   ; Purge 15mm @ 240°C -> cool down -> 
 
 > [!WARNING]
 > Do not copy files directly into `~/printer_data/config`. Use the deployment scripts below.
-> The deployment scripts (`install.sh` and `update.sh`) automatically exclude all `README.md` and `*.md` files so that Klipper's config folder remains clean.
+>
+> This repository is a **full production config bundle**. On a fresh printer OS image, install the required external dependencies first before deploying this configuration:
+> - `klipper-toolchanger-easy`
+> - Cartographer plugin support (`cartographer3d-plugin`)
+> - `Klippain-ShakeTune`
 
 ### Required Dependencies
 
 Install these on a fresh Raspberry Pi / CM4 machine via SSH:
 
-| Component | Installation Command |
+| Component | Installation Command / Link |
 | :--- | :--- |
 | **`klipper-toolchanger-easy`** | `cd ~ && git clone https://github.com/jwellman80/klipper-toolchanger-easy.git && cd klipper-toolchanger-easy && ./install.sh` |
 | **`Klippain-ShakeTune`** | `wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh \| bash` |
@@ -123,29 +110,43 @@ Install these on a fresh Raspberry Pi / CM4 machine via SSH:
 ### First Install (Deploy Config to Printer)
 ```bash
 cd /tmp && git clone git@github.com:IDcrazy123/All-Config-Voron.git
-cd All-Config-Voron && bash "Voron 5 Tool/config/scripts/install.sh"
+cd All-Config-Voron && bash config/scripts/install.sh
 ```
+
+Recommended deployment order on a new printer:
+1. Flash base OS image and install Klipper / Moonraker / Mainsail.
+2. Install external dependencies listed above.
+3. Run `install.sh` to copy this repo's `config/` directory into `~/printer_data/config`.
+4. Restart Klipper (`FIRMWARE_RESTART`) and verify all MCU connections (`can0`), probes, and tools load cleanly.
 
 ### Pull Updates (After GitHub Push)
 ```bash
 cd ~/printer_data/config && bash scripts/update.sh
 ```
-*Creates a timestamped backup under `~/printer_data/config_backups/` before pulling and applying updates.*
+*Creates a timestamped backup under `~/printer_data/config_backups/` before applying updates.*
 
 ---
 
-## 📐 Calibration & Z-Offset Strategy
+## 📐 Calibration Workflows
 
-### A. Dual Strategy: Empirical Print Calibration + Hardware Switch Baseline
-- **Production Z-Offsets (`printer.cfg`):** Fine-tuned via first-layer test prints for optimal squish and adhesion:
-  - `T0`: Reference ($Z = 0.000$)
-  - `T1`: `gcode_z_offset = 0.228`
-  - `T2`: `gcode_z_offset = -0.295`
-  - `T3`: `gcode_z_offset = -0.268`
-  - `T4`: `gcode_z_offset = 0.086`
-- **Hardware Drift Baseline:** Automated microswitch probing on pin `PF2` ($X=68.0, Y=-10.0, Z=7.0$) allows quick hardware verification without reprinting test swatches after hotend maintenance.
+### A. Toolhead Offset Calibration (`CALIBRATE_ALL_OFFSETS`)
+Run after any mechanical change (hotend replacement, tool carriage adjustment):
 
-### B. Adaptive Bed Mesh
+> [!IMPORTANT]
+> **Insert the SexBolt/SexBall sensor into the M1-STOP port (`PF4`)** before starting. Remove it after calibration completes.
+
+```gcode
+G28
+QUAD_GANTRY_LEVEL
+CALIBRATE_ALL_OFFSETS    ; Probes T0–T4 sequentially on SexBolt, calculates XYZ offsets
+FIRMWARE_RESTART
+CHECK_OFFSETS            ; Verify saved offsets in printer.cfg
+```
+
+### B. First-Layer Fine-Tuning (Per Tool)
+Adjust `gcode_z_offset` for any individual tool directly from KlipperScreen (Live Adjust Z) during a first-layer test print. Values are saved to `#*# [tool Tn]` in `printer.cfg` via `SAVE_CONFIG`.
+
+### C. Adaptive Bed Mesh
 ```gcode
 G28
 QUAD_GANTRY_LEVEL
