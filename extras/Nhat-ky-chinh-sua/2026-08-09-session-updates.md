@@ -42,14 +42,25 @@ Người dùng đã đấu nối dây công tắc microswitch Z-offset vào cổ
 - [calibration.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-switch-pin-pf2-20260809-181000/calibration.cfg)
 - [toolchanger-config.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-switch-pin-pf2-20260809-181000/toolchanger-config.cfg)
 
-### Chi tiết thay đổi
-- Section `[axiscope]`:
-  - `pin: ^PF2` (Kích hoạt internal pull-up trên chân PF2 của Manta M8P V2).
-  - Tọa độ: X:68.0, Y:-10.0, Z:7.0.
+---
 
-### Lý do
-Thực tế phần cứng được cắm vào chân PF2 và G (GND) trên mainboard Manta M8P V2. Chân PF2 hoàn toàn trống và không bị trùng với bất kỳ stepper endstop nào khác.
+## 4. Phân tích 3 lần đo Z-Offset (Axiscope Switch) và Cập nhật Giá trị Trung bình
 
-### Kiểm tra
-- Cú pháp Klipper hợp lệ.
-- Pin `PF2` không bị trùng lặp trong toàn bộ cây thư mục `config/`.
+### Mục tiêu
+Tổng hợp kết quả đo từ 3 lần chạy hiệu chuẩn Z-offset tự động bằng công tắc Axiscope, so sánh với cấu hình gốc và cập nhật giá trị trung bình vào `printer.cfg`.
+
+### Bảng tổng hợp dữ liệu đo
+
+| Tool | Lần 1 (mm) | Lần 2 (mm) | Lần 3 (mm) | Trung bình mới (mm) | Bản gốc cũ (mm) | Độ lệch (Delta) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **T0 (Ref)** | 6.392 | 6.391 | 6.417 | **6.400** (Ref) | 0.000 (Ref) | — |
+| **T1** | +0.088 | +0.079 | +0.071 | **+0.079** | +0.228 | -0.149 mm |
+| **T2** | -0.294 | -0.316 | -0.310 | **-0.307** | -0.295 | -0.012 mm |
+| **T3** | -0.156 | -0.114 | -0.131 | **-0.134** | -0.268 | +0.134 mm |
+| **T4** | -0.064 | 0.000 | -0.039 | **-0.034** | +0.086 | -0.120 mm |
+
+### File đã sửa đổi
+- `config/printer.cfg` — Cập nhật `gcode_z_offset` cho `[tool T1]`, `[tool T2]`, `[tool T3]`, `[tool T4]` theo giá trị trung bình mới.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-apply-axiscope-avg-z-offsets-20260809-184500/printer.cfg)
