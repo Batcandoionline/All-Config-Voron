@@ -85,7 +85,7 @@ Tổng hợp kết quả đo từ 3 lần chạy hiệu chuẩn Z-offset tự đ
 Đọc lại từng phần của dự án, cập nhật và đồng bộ hóa toàn bộ các file hướng dẫn, sơ đồ phần cứng, quy tắc sao lưu đám mây, nhật ký quyết định và tài liệu kỹ thuật sau thời gian dài vận hành.
 
 ### File đã sửa đổi
-- `.agents/PROJECT.md` — Cập nhật chuẩn xác phần cứng: Manta M8P V2 + CM4 (thay cho thông tin Octopus Pro cũ), Cartographer V3 fw6.1.0, Axiscope microswitch trên chân PF2.
+- `.agents/PROJECT.md` — Cập nhật chuẩn xác phần cứng: Manta M8P V2 + CM4, Cartographer V3 fw6.1.0, Axiscope microswitch trên chân PF2.
 - `.agents/DIRECTORY.md` — Cập nhật cấu trúc thư mục, làm rõ cơ chế loại trừ markdown của script triển khai và chính sách lưu trữ backup trên Git.
 - `.agents/BACKUP.md` — Cập nhật chính sách đồng bộ sao lưu đám mây Git.
 - `.agents/GIT_RULE.md` — Cập nhật quy tắc commit, loại bỏ các file nhạy cảm.
@@ -97,3 +97,16 @@ Tổng hợp kết quả đo từ 3 lần chạy hiệu chuẩn Z-offset tự đ
 
 ### Sao lưu
 - [pre-doc-and-rules-refresh-20260809-202500](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-and-rules-refresh-20260809-202500/README.md)
+
+---
+
+## 7. Đại Tu Toàn Diện File README.md Chính Của Dự Án
+
+### Mục tiêu
+Nâng cấp file `Voron 5 Tool/README.md` thành một tài liệu kỹ thuật tổng thể, chuyên nghiệp và chuẩn xác 100% với toàn bộ phần cứng, sơ đồ mạng CAN bus, hệ thống StealthChanger 5 đầu in, hệ thống probe Cartographer V3, quy trình vệ sinh đầu phun Bambu A1 và chiến lược Z-offset 2 tầng.
+
+### File đã sửa đổi
+- `Voron 5 Tool/README.md` — Bổ sung sơ đồ kiến trúc Mermaid, bảng chi tiết 5 toolhead CAN UUID, tọa độ dock thực tế, quy trình QGL và Axis Twist Compensation, công thức Z-offset, và hướng dẫn OrcaSlicer.
+
+### Sao lưu
+- [pre-master-readme-overhaul-20260809-203000](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-master-readme-overhaul-20260809-203000/README.md)
