@@ -54,7 +54,7 @@ config/
 | **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
 | **Z Homing & Probe** | Cartographer V3 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Z-Offset Sensor** | SexBolt / SexBall (Calibration only) | Manta M8P `PF4` (M1-STOP port) |
+| **Z-Offset Sensor** | Z-Switch / Axiscope / SexBolt (Calibration only) | Manta M8P `PF2` (GND + PF2) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
 | **Bed Heater Thermistor** | NTC 100K MGB18-104F39050L32 | Manta M8P `PB0` / Heater `PA1` |
