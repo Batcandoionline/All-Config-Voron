@@ -72,3 +72,31 @@ So sánh và đồng bộ các thay đổi từ gói cấu hình máy in thực 
 ### Kết quả
 Toàn bộ repository đã được đồng bộ chuẩn xác với trạng thái máy in thực tế.
 
+---
+
+## 3. Tích hợp và tối ưu hóa quạt dưới bàn nhiệt (`bed_fan`) cho chu trình sấy nhựa
+
+### Mục tiêu
+Tối ưu hóa luồng khí đối lưu nhiệt bằng cách tích hợp trực tiếp quạt đặt dưới bàn in (`bed_fan` kết nối tại Fan3/PF8) vào tất cả các macro và preset sấy nhựa. Quạt dưới bàn nhiệt sẽ thổi luồng khí nóng từ mặt dưới mâm nhiệt silicone tuần hoàn ngược lên trên buồng sấy/hộp chụp, giúp nhiệt độ phân bố đều 360 độ xung quanh cuộn nhựa và đẩy hơi ẩm ra ngoài nhanh hơn.
+
+### File đã sửa đổi
+- [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/print-macros.cfg) — Tối ưu `START_DRYER`, bộ duy trì tốc độ quạt `_DRYER_STATUS`, lệnh tắt `STOP_DRYER` và điều chỉnh tốc độ quạt trong các preset `DRY_PLA` (40%), `DRY_PETG` (50%), `DRY_ABS`/`DRY_ASA` (60%), `DRY_TPU` (40%), `DRY_NYLON`/`DRY_PC` (70%).
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-optimize-dryer-bed-fan-airflow-20260814-161400/print-macros.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-optimize-dryer-bed-fan-airflow-20260814-161400/README.md)
+
+### Chi tiết thay đổi
+1. **Duy trì luồng gió liên tục trong `_DRYER_STATUS`**:
+   - Cứ mỗi chu kỳ 10 giây, bộ điều khiển kiểm tra và áp dụng lại lệnh `SET_FAN_SPEED FAN=bed_fan SPEED={fan_speed}`, đảm bảo quạt dưới bàn in không bao giờ bị tắt đột ngột bởi timeout hay các sự kiện hệ thống khác trong suốt nhiều giờ sấy.
+2. **Nâng cấp tốc độ quạt tối ưu cho từng loại nhựa**:
+   - Nhựa nhiệt độ thấp (PLA, TPU): Quạt chạy $40\%$ tạo gió êm dịu, không làm nguội bề mặt quá nhanh.
+   - Nhựa nhiệt độ trung bình (PETG): Quạt chạy $50\%$ giúp nhiệt độ trong hộp sấy đạt $\approx 45\text{-}50^\circ\text{C}$.
+   - Nhựa kỹ thuật cao (ABS, ASA, Nylon, PC): Quạt chạy $60\%\text{ - }70\%$ để đẩy tối đa luồng khí nóng từ mâm nhiệt công suất lớn lên cuộn nhựa, nâng nhiệt độ buồng sấy lên $\ge 60\text{-}70^\circ\text{C}$.
+3. **Hiển thị trạng thái quạt lên Console**:
+   - Bổ sung thông tin tốc độ `%` quạt `bed_fan` vào thông báo log định kỳ mỗi 10 phút.
+
+### Kết quả
+Hệ thống sấy nhựa bằng bàn in đạt hiệu suất truyền nhiệt và thoát ẩm tối ưu nhờ luồng gió đối lưu liên tục từ quạt dưới bàn in.
+
+
