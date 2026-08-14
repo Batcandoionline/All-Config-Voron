@@ -99,4 +99,34 @@ Tối ưu hóa luồng khí đối lưu nhiệt bằng cách tích hợp trực 
 ### Kết quả
 Hệ thống sấy nhựa bằng bàn in đạt hiệu suất truyền nhiệt và thoát ẩm tối ưu nhờ luồng gió đối lưu liên tục từ quạt dưới bàn in.
 
+---
+
+## 4. Tích hợp hiệu ứng đèn LED màu Cam / Hổ phách (Amber/Orange Glow) khi sấy nhựa
+
+### Mục tiêu
+Tạo hiệu ứng thị giác trực quan rõ ràng: Khi máy ở chế độ sấy nhựa, toàn bộ thanh LED buồng (`chamber_lights` 40 bóng WS2812B) và các đèn LED trên 5 đầu in (`T0`–`T4`) sẽ phát ánh sáng màu Cam / Hổ phách ấm áp (`Red: 85%, Green: 35%, Blue: 0%`), giúp người dùng nhìn từ xa nhận biết ngay máy đang thực hiện chu trình sấy nhiệt (khác biệt hoàn toàn với màu trắng khi rảnh, xanh khi in, xanh ngọc khi leveling hay đỏ khi lỗi).
+
+### File đã sửa đổi
+- [fans-leds.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/fans-leds.cfg) — Bổ sung macro `_SET_LED_STATUS_DRYING` và `_SET_LED_STATUS_DRYING_COMPLETE`.
+- [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/print-macros.cfg) — Tích hợp gọi `_SET_LED_STATUS_DRYING` trong `START_DRYER` và khôi phục đèn bằng `_SET_LED_STATUS_DRYING_COMPLETE` trong `STOP_DRYER`.
+
+### Sao lưu
+- [fans-leds.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-add-filament-dryer-led-status-20260814-161700/fans-leds.cfg)
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-add-filament-dryer-led-status-20260814-161700/print-macros.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-add-filament-dryer-led-status-20260814-161700/README.md)
+
+### Chi tiết thay đổi
+1. **Macro `_SET_LED_STATUS_DRYING`**:
+   - Chuyển `_PRINT_STATE` sang trạng thái `'drying'`.
+   - Đặt dải đèn LED buồng 40 bóng sang màu Cam Hổ phách ấm áp: `RED=0.85, GREEN=0.35, BLUE=0.00`.
+   - Đặt toàn bộ 5 đầu in `T0`–`T4` sang trạng thái `heating` (LED trước màu cam nổi bật).
+2. **Macro `_SET_LED_STATUS_DRYING_COMPLETE`**:
+   - Khôi phục `_PRINT_STATE` về `'idle'`.
+   - Đưa dải đèn buồng về màu trắng dịu nhẹ trung tính (`RED=0.30, GREEN=0.30, BLUE=0.30`).
+   - Đưa toàn bộ 5 đầu in về trạng thái `standby` (xanh dương dịu).
+
+### Kết quả
+Trạng thái sấy nhựa hiển thị đẹp mắt, trực quan và đồng bộ hoàn hảo với hệ thống LED Neopixel của toàn bộ máy Voron 2.4 StealthChanger.
+
+
 
