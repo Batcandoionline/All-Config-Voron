@@ -25,7 +25,7 @@ config/
 │   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
 │   ├── prime-lines.cfg           ← Per-tool prime line macros (T0–T4)
-│   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, Filament Dryer suite & presets
+│   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, idle timeout, exclude object
 │   ├── crash_detection_override.cfg ← Tool crash detection macro overrides
 │   └── tool_crash_cartographer.cfg  ← Cartographer-assisted tool crash protection
 │
@@ -57,9 +57,7 @@ config/
 | **Z-Offset Sensor** | Microswitch / Axiscope Z-Switch | Manta M8P `PF2` (GND + `^PF2`) at $X=68.0, Y=-10.0, Z=7.0$ |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
-| **Bed Heater & SSR** | AC Silicone 750W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
-| **Under-Bed Fan** | Chamber Circulation Fan (`bed_fan`) | Manta M8P `PF8` (Fan3) |
-| **Chamber Lighting** | 40× WS2812B Neopixel Strip | Manta M8P `PD15` (GRB order) |
+| **Bed Heater Thermistor** | NTC 100K MGB18-104F39050L32 | Manta M8P `PB0` / Heater `PA1` |
 | **X / Y Steppers** | 0.9° NEMA17 | `stepper_x` (PF0 endstop), `stepper_y` (PF1 endstop, `position_min: -10`) |
 | **Z Steppers (4×)** | CoreXY Z Drive (80:16 ratio) | `stepper_z` (PG9), `stepper_z1` (PB4), `stepper_z2` (PG13), `stepper_z3` (PB8) |
 

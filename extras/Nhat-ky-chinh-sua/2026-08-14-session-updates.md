@@ -128,5 +128,36 @@ Tạo hiệu ứng thị giác trực quan rõ ràng: Khi máy ở chế độ s
 ### Kết quả
 Trạng thái sấy nhựa hiển thị đẹp mắt, trực quan và đồng bộ hoàn hảo với hệ thống LED Neopixel của toàn bộ máy Voron 2.4 StealthChanger.
 
+---
+
+## 5. Rà soát toàn bộ hệ thống, chỉnh sửa chú thích cũ/sai sót và cập nhật README.md
+
+### Mục tiêu
+Kiểm tra toàn diện tất cả các file cấu hình và tài liệu của dự án; chỉnh sửa các chú thích đã cũ hoặc không chính xác; cập nhật các file `README.md` đảm bảo ngắn gọn, súc tích, mô tả chính xác 100% hiện trạng phần cứng và tính năng mới nhất (bao gồm chế độ sấy nhựa và quạt đối lưu).
+
+### File đã sửa đổi
+- [README.md (Master)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Cập nhật Z-offset thực tế cho T4 (`-0.014`), bổ sung phần tài liệu hệ thống sấy nhựa (`START_DRYER`, `STOP_DRYER`, bảng preset, under-bed fan, LED amber), làm rõ hành vi của Z stepper (`32mm rotation distance`).
+- [config/README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/README.md) — Cập nhật cây thư mục và bảng linh kiện phần cứng (thêm quạt dưới bàn `bed_fan` trên `PF8`, dải LED buồng `chamber_lights` trên `PD15`).
+- [hardware.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/hardware.cfg) — Sửa chú thích `cb1_fan` thành `cm4_fan` (khớp với host BTT CM4); sửa chú thích `T8 leadscrew` thành `Belted Z drive (80:16 gear ratio)`.
+- [calibration.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/calibration.cfg) — Xóa bỏ chú thích thừa về Octopus Pro, chỉ rõ bo mạch Manta M8P V2.0.
+- [nozzle-clean.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/nozzle-clean.cfg) — Sửa chú thích độ cao lau vòi phun từ `Z=2mm` thành `Z=1.2mm` (khớp chính xác với `clean_z`) và cập nhật dải tọa độ quét vòng tròn $X: 277.0 \rightarrow 309.0$.
+- [toolchanger-config.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/toolchanger/toolchanger-config.cfg) — Xóa bỏ chú thích thừa về Octopus Pro.
+
+### Sao lưu
+- [README.md.master (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/README.md.master)
+- [config-README.md (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/config-README.md)
+- [hardware.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/hardware.cfg)
+- [calibration.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/calibration.cfg)
+- [nozzle-clean.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/nozzle-clean.cfg)
+- [toolchanger-config.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/toolchanger-config.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-doc-refresh-and-comment-cleanup-20260814-162200/README.md)
+
+### Lý do
+Giữ cho tài liệu và chú thích code luôn sạch sẽ, chính xác 100% với cấu hình thực tế, giúp loại bỏ hoàn toàn các thông tin mơ hồ hoặc lỗi thời.
+
+### Kết quả
+Toàn bộ hệ thống cấu hình và tài liệu `README.md` đã được rà soát, tinh gọn và đạt tính nhất quán cao nhất.
+
+
 
 
