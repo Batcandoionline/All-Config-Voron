@@ -6,84 +6,84 @@
 [![WebUI](https://img.shields.io/badge/WebUI-Mainsail-red.svg)](https://docs.mainsail.xyz/)
 [![Slicer](https://img.shields.io/badge/Slicer-OrcaSlicer-purple.svg)](https://github.com/SoftFever/OrcaSlicer)
 
-Full production configuration repository for a **Voron 2.4 350mm** CoreXY printer equipped with a **5-Tool StealthChanger**, **BTT Manta M8P V2.0 + CM4**, **5× BTT EBB36 V1.2 (CAN)**, **Cartographer V3**, and a **1000W AC Heated Bed**.
+Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D printer running an automated **5-Tool StealthChanger** system powered by **Klipper**, **Manta M8P V2.0 + CM4**, **5× EBB36 CAN toolheads**, **Cartographer V3**, and a **1000W AC Heated Bed**.
 
 ---
 
-## 🛠️ System Specifications
+## 🛠️ 1. Master Hardware Specifications
 
-| Component | Specification | Details / Interface |
+| Component | Hardware Specification | Configuration Details / Port |
 | :--- | :--- | :--- |
-| **Printer Frame** | Voron 2.4 350mm CoreXY | Build volume: $350 \times 350 \times 345\text{ mm}$ |
-| **Mainboard & Host** | BTT Manta M8P V2.0 + BTT CM4 | MainsailOS (Debian 12 Bookworm, Linux 6.12) |
-| **Main CAN Bridge** | `mcu` (`19b203d75137`) | `can0` @ 1,000,000 baud |
-| **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0` to `EBB4`) |
-| **Hotends & Extruders**| 5× TZ V6 2.0 + 5× WW BMG | TMC2209 @ 0.6A per tool |
-| **Z-Probe / Z0** | Cartographer V3 Flat (fw6.1.0) | CAN `da13d909ce34` (Touch + 55×55 Scan Mesh) |
-| **Z-Offset Calibrator**| Microswitch / Axiscope Switch | Manta M8P `^PF2` + GND ($X=68.0, Y=-10.0, Z=7.0$) |
-| **Heated Bed** | 1000W 220V AC Silicone Pad | SSR control on `PA1`, NTC 100K on `PB0` |
-| **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Purge ($X=320, Y=-8$), Wipe ($X: 277 \rightarrow 312, Z=1.2$) |
-| **Thermal Chamber** | 100K NTC (DHT22 / AM2302 ready) | Port `THB` (`PB1`) + Under-bed fan (`bed_fan` on `PF8`) |
-| **Lighting** | 40× WS2812B Chamber + Tool LEDs | Chamber strip on `PD15` + individual tool NeoPixels |
+| **Motion Kinematics** | Voron 2.4 CoreXY ($350 \times 350 \times 345\text{ mm}$) | $V_{\text{max}} = 300\text{mm/s}, A = 4000\text{mm/s}^2$ |
+| **Controller & Host** | BTT Manta M8P V2.0 + BTT CM4 | MainsailOS (Debian 12 Bookworm, Linux 6.12) |
+| **CAN Bus Interface** | `can0` @ 1,000,000 baud | Master bridge UUID: `19b203d75137` |
+| **Tool Changing System** | StealthChanger (KTC-Easy) | 5 individual tools (T0–T4) docked at rear gantry |
+| **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
+| **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
+| **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
+| **Z-Offset Calibrator**| Stationary Microswitch (Axiscope) | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
+| **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
+| **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
+| **Chamber Feedback** | 100K NTC (DHT22 / AM2302 ready) | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
+| **Status Lighting** | 40× WS2812B Chamber + Tool LEDs | Chamber strip on `PD15` + 3× NeoPixel per toolhead |
 
 ---
 
-## 📡 CAN Bus Topology & Toolhead Mapping
+## 📡 2. CAN Bus Topology & Toolhead Mapping
 
-All toolheads and probes communicate via high-speed CAN bus (`can0`):
-
-| Device | Role | CAN UUID | Extruder / Fan Pins | Status Pin / LED |
+| Device | Node Role | CAN Bus UUID | Extruder & Fan Pinout | Tool Status Pin / LED |
 | :---: | :---: | :---: | :---: | :---: |
-| **`mcu`** | Manta M8P V2.0 | `19b203d75137` | Mainboard & Steppers | Chamber: `PD15` |
-| **`cartographer`** | Probe & Scan Mesh | `da13d909ce34` | $X=0, Y=35, Z=0$ Offset | — |
-| **`T0`** | Toolhead 0 | `441e1484ac41` | Extruder / Part `PA1` / Hotend `PA0` | Pin `^!EBB0:PB6` / LED `PD3` |
-| **`T1`** | Toolhead 1 | `6475b5b9e028` | Extruder / Part `PA1` / Hotend `PA0` | Pin `^!EBB1:PB6` / LED `PD3` |
-| **`T2`** | Toolhead 2 | `4ad9d622a836` | Extruder / Part `PA1` / Hotend `PA0` | Pin `^!EBB2:PB6` / LED `PD3` |
-| **`T3`** | Toolhead 3 | `c2465b7c36f8` | Extruder / Part `PA1` / Hotend `PA0` | Pin `^!EBB3:PB6` / LED `PD3` |
-| **`T4`** | Toolhead 4 | `28650279df58` | Extruder / Part `PA1` / Hotend `PA0` | Pin `^!EBB4:PB6` / LED `PD3` |
+| **`mcu`** | Manta M8P V2.0 | `19b203d75137` | Mainboard, Steppers, 1000W Bed | Chamber NeoPixel: `PD15` |
+| **`cartographer`**| Surface & Mesh Probe | `da13d909ce34` | Offsets: $X=0, Y=35.0, Z=0$ | — |
+| **`T0`** | Toolhead 0 | `441e1484ac41` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB0:PB6` / LED: `PD3` |
+| **`T1`** | Toolhead 1 | `6475b5b9e028` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB1:PB6` / LED: `PD3` |
+| **`T2`** | Toolhead 2 | `4ad9d622a836` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB2:PB6` / LED: `PD3` |
+| **`T3`** | Toolhead 3 | `c2465b7c36f8` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB3:PB6` / LED: `PD3` |
+| **`T4`** | Toolhead 4 | `28650279df58` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB4:PB6` / LED: `PD3` |
 
 ---
 
-## 🔧 StealthChanger Docks & Active Offsets
+## 🔧 3. StealthChanger Docks & Calibrated Offsets
 
-### 1. Rear Dock Coordinates ($Z = 343\text{ mm}$)
+### Rear Dock Positions ($Z = 343.0\text{ mm}$)
 ```
-Rear Frame:  [ T0: X=30.2, Y=1.3 ]  [ T1: X=104.0, Y=1.1 ]  [ T2: X=176.0, Y=1.6 ]  [ T3: X=249.5, Y=2.5 ]  [ T4: X=321.5, Y=2.6 ]
+Rear Frame:  [ T0: X=30.20, Y=1.30 ]  [ T1: X=104.00, Y=1.10 ]  [ T2: X=176.00, Y=1.60 ]  [ T3: X=249.50, Y=2.50 ]  [ T4: X=321.50, Y=2.60 ]
 ```
 
-### 2. Active Production Tool Offsets (`printer.cfg`)
-Calibrated for optimal first-layer squish across all 5 heads:
+### Active Production Tool Offsets (`printer.cfg` SAVE_CONFIG)
+Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 
-| Tool | X Offset (mm) | Y Offset (mm) | Z Offset (mm) | Description |
+| Tool | X Offset (mm) | Y Offset (mm) | Z Offset (mm) | Role / Status |
 | :---: | :---: | :---: | :---: | :--- |
-| **T0** | `0.000` | `0.000` | `0.000` | Master Reference Tool |
-| **T1** | `-0.243` | `-0.252` | **`+0.228`** | Calibrated squish offset |
-| **T2** | `+0.746` | `+0.086` | **`-0.295`** | Calibrated squish offset |
-| **T3** | `+0.304` | `+0.449` | **`-0.268`** | Calibrated squish offset |
-| **T4** | `+0.041` | `+0.352` | **`-0.014`** | Calibrated squish offset |
+| **T0** | `0.000` | `0.000` | `0.000` | Master Reference Datum |
+| **T1** | `-0.243` | `-0.252` | **`+0.228`** | Calibrated optimal squish |
+| **T2** | `+0.746` | `+0.086` | **`-0.295`** | Calibrated optimal squish |
+| **T3** | `+0.304` | `+0.449` | **`-0.268`** | Calibrated optimal squish |
+| **T4** | `+0.041` | `+0.352` | **`-0.014`** | Calibrated optimal squish |
 
 ---
 
-## 📐 Leveling & Nozzle Maintenance
+## 📐 4. Probing, Leveling & Nozzle Maintenance
 
-### 1. Bed Leveling Stack
-1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point gantry tramming ($50, 25 \rightarrow 300, 275$) with `0.0075mm` tolerance.
-2. **Axis Twist Compensation:** Corrects rail twist along X ($X: 20 \rightarrow 320\text{mm}$).
-3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 datum, followed by ultra-fast $55 \times 55$ adaptive bed scanning.
+### Multi-Layer Calibration Pipeline
+1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
+2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
+3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
+4. **Axiscope Hardware Reference Switch (`^PF2`):** Stationed at $(X=68.0, Y=-10.0, Z=7.0)$ for tracking nozzle wear and thermal expansion shifts (`AXISCOPE_CALIBRATE_Z`).
 
-### 2. Bambu A1 Nozzle Cleaning (`nozzle-clean.cfg`)
-- **Purge Bucket:** $X = 320.0, Y = -8.0$
-- **Silicone Brush Scrub Area:** $X: 277.0 \rightarrow 312.0$, $Y: -7.0 \rightarrow -10.0$ at $Z = 1.2\text{mm}$
-- **Cleaning Patterns:** High-speed snap-back flick ($225\text{mm/s}$) + 5-point alternating $360^\circ$ circular arcs ($R = 1.5\text{mm}$).
-- **Commands:** `CLEAN_NOZZLE` (Wipe @ 150°C), `PURGE_AND_CLEAN` (Purge @ 240°C into bucket $\rightarrow$ cool $\rightarrow$ scrub).
+### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
+* **Purge Bucket:** $X = 320.0, Y = -8.0$
+* **Silicone Pad Scrub Area:** $X: 277.0 \rightarrow 312.0$, $Y: -7.0 \rightarrow -10.0$ at $Z = 1.2\text{mm}$
+* **Scrubbing Motion:** $225\text{mm/s}$ flick snap-back + 5-point alternating $360^\circ$ circular arcs ($R = 1.5\text{mm}$).
+* **Quick Commands:** `CLEAN_NOZZLE` (Wipe @ 150°C), `PURGE_AND_CLEAN` (Purge @ 240°C into bucket $\rightarrow$ cool $\rightarrow$ scrub).
 
 ---
 
-## ☀️ Heated Bed Filament Dryer (`START_DRYER`)
+## ☀️ 5. Heated Bed Filament Drying System (`START_DRYER`)
 
-Dries filament spools directly on the 1000W heated bed under a cardboard cover with closed-loop chamber feedback, under-bed convection (`bed_fan`), and automatic Amber/Orange status lighting:
+Dries filament spools directly on the 1000W heated bed under a cardboard cover with closed-loop chamber feedback, forced convection (`bed_fan`), and Amber/Orange status lighting:
 
-| Preset | Material | Bed Temp | Target Chamber | Duration | Base Fan (`bed_fan`) | Airflow Strategy |
+| Preset | Material | Bed Temp | Target Chamber | Duration | Base Fan (`bed_fan`) | Airflow Profile |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **`DRY_PLA`** | PLA / PLA+ | **50°C** | **40°C** | 4 hours | **40%** | Multi-Zone + 20m Flush Pulse |
 | **`DRY_TPU`** | TPU / TPE | **60°C** | **45°C** | 5 hours | **40%** | Multi-Zone + 20m Flush Pulse |
@@ -93,31 +93,42 @@ Dries filament spools directly on the 1000W heated bed under a cardboard cover w
 | **`DRY_NYLON`** | PA / Nylon | **100°C** | **70°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
 | **`DRY_PC`** | Polycarbonate | **105°C** | **75°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
 
-- **Multi-Zone Airflow:** Fast cold warmup boost (65–85%), active convective drying window (40–50%), and overheat safety modulation.
-- **Periodic Moisture Flush:** Automatically boosts fan to 70% for 30s every 20 minutes to evacuate trapped humid air pockets.
-- **Telemetry & Stop:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). Type `STOP_DRYER` or `DRYER_STATUS` anytime.
+* **Multi-Zone Adaptive Airflow:** Automatic cold warmup boost (65–85%), active moisture evacuation window (40–50%), and overheat safety protection.
+* **Periodic Moisture Flush Pulse:** Automatically increases fan to 70% for 30 seconds every 20 minutes to flush trapped humid air.
+* **DHT22 / AM2302 Ready:** Automatically detects `.humidity` field to display `% RH` and support target humidity auto-stop (`TARGET_HUMIDITY=15`).
+* **Live Telemetry & Controls:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). Commands: `STOP_DRYER`, `DRYER_STATUS`.
 
 ---
 
-## 📁 Repository Structure & Deployment
+## 🎨 6. OrcaSlicer Multi-Color Integration
+
+Tuned profiles are located under [extras/Orcasilcer setting/](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/Orcasilcer%20setting/):
+* **G-Code Output Format:** `Klipper Toolchanger`
+* **Tool Change G-Code:** `T[next_extruder]` (KTC-Easy automatically handles dropoff/pickup, standby temperatures, and input shaper assignment).
+* **Purge / Wipe Tower:** Disabled or set to minimal volume (purge bucket + silicone scrub replaces prime towers).
+* **Tool Change Retraction:** $1.0\text{mm} \sim 2.0\text{mm}$ at $40\text{mm/s}$.
+
+---
+
+## 📁 7. Repository Layout & SSH Deployment
 
 ```
 Voron 5 Tool/
 ├── README.md                 ← Master system documentation (this file)
 │
 ├── config/                   ← Active Klipper configuration payload
-│   ├── README.md             ← Config payload notes & pinout mapping
-│   ├── printer.cfg           ← Main entry point & SAVE_CONFIG block
-│   ├── KlipperScreen.conf    ← KlipperScreen settings (Language: vi)
-│   ├── moonraker.conf        ← Moonraker API server configuration
-│   ├── crowsnest.conf        ← Camera WebRTC streaming configuration
+│   ├── README.md             ← Config payload notes & pinout reference
+│   ├── printer.cfg           ← Core entry point & SAVE_CONFIG block
+│   ├── KlipperScreen.conf    ← KlipperScreen touch UI configuration (Language: vi)
+│   ├── moonraker.conf        ← Moonraker API server & update manager config
+│   ├── crowsnest.conf        ← Camera streamer configuration (WebRTC)
 │   ├── mainsail.cfg          ← Mainsail web interface macro bundle
 │   │
 │   ├── Printer-Setup/        ← Modular printer configuration files
 │   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor / DHT22
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
 │   │   ├── calibration.cfg   ← Thermal calibration & [axiscope] switch (^PF2)
-│   │   ├── input-shaper.cfg  ← Input shaper defaults (per-tool overrides in T0–T4.cfg)
+│   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── probe-mesh.cfg    ← Cartographer V3 touch/scan & 55×55 bed mesh
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
@@ -133,11 +144,11 @@ Voron 5 Tool/
 │   └── scripts/              ← Deployment & maintenance scripts
 │       ├── install.sh        ← First-time install script (auto-excludes *.md)
 │       ├── update.sh         ← Auto-backup & update pull script (excludes *.md)
-│       └── cleanup-voron.sh  ← Maintenance & backup directory cleaner
+│       └── cleanup-voron.sh  ← Maintenance & backup cleaner
 │
 ├── Orca Config/              ← Custom OrcaSlicer machine & process profiles
 │
-└── extras/                   ← Documentation, backups, and engineering logs
+└── extras/                   ← Documentation, backups, and diagnostic archives
     ├── backups/              ← Timestamped configuration backups (Git tracked)
     ├── Nhat-ky-chinh-sua/    ← Daily engineering change logs (Vietnamese)
     ├── pictures/             ← Hardware photos and schematics
@@ -145,7 +156,7 @@ Voron 5 Tool/
     └── logs/                 ← Klippy and Moonraker runtime logs
 ```
 
-### Quick Commands (SSH)
+### SSH Commands
 
 * **First-Time Install:**
   ```bash
@@ -154,9 +165,9 @@ Voron 5 Tool/
   sudo systemctl restart moonraker klipper
   ```
 
-* **Pull Updates from GitHub:**
+* **Pull & Apply Updates from GitHub:**
   ```bash
   cd ~/printer_data/config && bash scripts/update.sh
   sudo systemctl restart moonraker klipper
   ```
-  *(Creates an automatic backup under `~/printer_data/config_backups/` before applying updates).*
+  *(Automatically creates a timestamped backup under `~/printer_data/config_backups/` before pulling changes).*

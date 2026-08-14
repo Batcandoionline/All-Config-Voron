@@ -310,6 +310,31 @@ Rà soát và viết lại toàn bộ tài liệu [README.md](file:///c:/Users/b
 ### Kết quả
 Tài liệu `README.md` đạt tính thẩm mỹ cao, xúc tích, logic và đồng bộ tuyệt đối với mã nguồn máy in.
 
+---
+
+## 11. Hoàn thiện tài liệu README.md Master ngắn gọn, súc tích và toàn diện 100%
+
+### Mục tiêu
+Chuẩn hóa toàn diện tài liệu [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) thành 7 chuyên mục tra cứu cốt lõi, loại bỏ toàn bộ các đoạn văn mô tả thừa, trình bày mạch lạc bằng bảng biểu và tham số kỹ thuật chính xác 100% với hệ thống thực tế.
+
+### File đã sửa đổi
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — 7 phần tinh gọn:
+  1. **Master Hardware Specifications:** Bảng chi tiết toàn bộ phần cứng (Khung Voron 2.4 350 CoreXY, Manta M8P V2 + CM4, 5 đầu StealthChanger, Cartographer V3 fw6.1.0, mâm nhiệt 1000W AC, cảm biến buồng/DHT22, Bambu A1 cleaner, Axiscope Z switch).
+  2. **CAN Bus Topology & Toolhead Mapping:** Bảng tra cứu UUID, pinout và LED Neopixel của T0–T4.
+  3. **StealthChanger Docks & Calibrated Offsets:** Tọa độ đỗ đài và bảng Z-Offsets thực tế đang chạy trong `printer.cfg`.
+  4. **Probing, Leveling & Nozzle Maintenance:** Tóm tắt 4 tầng cân bàn và thông số miếng silicon Bambu A1.
+  5. **Heated Bed Filament Drying System:** Bảng preset sấy nhựa chuẩn theo mâm 1000W và luồng gió Multi-Zone + Moisture Flush.
+  6. **OrcaSlicer Multi-Color Integration:** Cấu hình Toolchanger G-code và tối ưu không dùng tháp xả.
+  7. **Repository Layout & SSH Deployment:** Cây thư mục và lệnh SSH install/update.
+
+### Sao lưu
+- [README.md.bak (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-final-concise-readme-rewrite-20260814-194400/README.md.bak)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-final-concise-readme-rewrite-20260814-194400/README.md)
+
+### Kết quả
+Tài liệu `README.md` đã hoàn thiện ở mức cao nhất, đảm bảo tính súc tích, chuyên nghiệp và đầy đủ mọi thông số vận hành của hệ thống.
+
+
 
 
 
