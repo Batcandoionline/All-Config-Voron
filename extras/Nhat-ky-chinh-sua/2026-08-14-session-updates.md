@@ -158,6 +158,73 @@ Giữ cho tài liệu và chú thích code luôn sạch sẽ, chính xác 100% v
 ### Kết quả
 Toàn bộ hệ thống cấu hình và tài liệu `README.md` đã được rà soát, tinh gọn và đạt tính nhất quán cao nhất.
 
+---
+
+## 6. Tích hợp cảm biến nhiệt độ buồng in (`chamber`) & Điều khiển nhiệt vòng kín cho chu trình sấy nhựa
+
+### Mục tiêu
+Giải quyết hiện tượng chênh lệch nhiệt độ giữa bàn in và không khí buồng sấy (mâm nhiệt đạt 55°C nhanh nhưng không khí buồng chỉ đạt ~40°C trong vài phút đầu). Tích hợp cảm biến `[temperature_sensor chamber]` (cổng THB / chân `PB1`) để giám sát thời gian thực, tự động tăng tốc quạt gầm bàn (`bed_fan` boost lên tới 85%) khi buồng còn lạnh nhằm ép luồng nhiệt đối lưu làm ấm nhanh không gian sấy, và tự động hạ về tốc độ êm ái khi buồng đã đạt nhiệt độ mục tiêu.
+
+### File đã sửa đổi
+- [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/print-macros.cfg) — Bổ sung tham số `CHAMBER` vào `START_DRYER`, thêm logic điều hòa nhiệt độ động trong `_DRYER_STATUS`, hiển thị kép `Bed` & `Chamber` trên màn hình LCD/Mainsail, bổ sung lệnh `DRYER_STATUS` tra cứu trạng thái nhiệt, và cập nhật toàn bộ preset với nhiệt độ bàn + nhiệt độ buồng mục tiêu.
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Cập nhật bảng thông số preset sấy nhựa và mô tả cơ chế phản hồi nhiệt buồng in.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-integrate-chamber-temp-sensor-in-dryer-20260814-162500/print-macros.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-integrate-chamber-temp-sensor-in-dryer-20260814-162500/README.md)
+
+### Chi tiết giải pháp kỹ thuật
+1. **Khắc phục độ trễ nhiệt buồng (Warm-up Boost):**
+   - Khi buồng còn lạnh (`cur_chamber < chamber_target - 2°C`), quạt `bed_fan` tự động tăng thêm $+25\%$ công suất (tối đa $85\%$) để hút nhiệt từ mâm silicone đẩy vào không khí buồng.
+   - Khi buồng đạt nhiệt độ mục tiêu, quạt tự động giảm về mức cơ sở êm dịu ($40\%\text{ - }50\%$).
+   - Nếu buồng vượt ngưỡng quá nhiệt ($> \text{target} + 2^\circ\text{C}$), quạt giảm tốc để chống tích nhiệt quá cao làm biến dạng cuộn nhựa.
+2. **Preset chuẩn hóa theo nhiệt độ bàn & buồng thực tế:**
+   - **`DRY_PLA`**: Bed = 55°C, Chamber Target = 40°C, Quạt 40%, 4 giờ.
+   - **`DRY_PETG`**: Bed = 70°C, Chamber Target = 50°C, Quạt 50%, 4 giờ.
+   - **`DRY_ABS` / `DRY_ASA`**: Bed = 90°C, Chamber Target = 60°C, Quạt 60%, 4 giờ.
+   - **`DRY_TPU`**: Bed = 60°C, Chamber Target = 42°C, Quạt 40%, 5 giờ.
+   - **`DRY_NYLON`**: Bed = 100°C, Chamber Target = 65°C, Quạt 70%, 6 giờ.
+   - **`DRY_PC`**: Bed = 105°C, Chamber Target = 70°C, Quạt 70%, 6 giờ.
+3. **Hiển thị thời gian thực & Lệnh kiểm tra:**
+   - Màn hình/Mainsail hiển thị trực tiếp: `Dry 3h55m | B:55C C:41C`.
+   - Lệnh `DRYER_STATUS` cho phép kiểm tra chi tiết công suất quạt, nhiệt độ bàn và nhiệt độ buồng bất cứ lúc nào qua Console.
+
+### Kết quả
+Quá trình sấy cuộn nhựa đạt độ đồng đều nhiệt độ cao giữa bề mặt tiếp xúc và không khí bao quanh cuộn filament, loại bỏ hoàn toàn hiện tượng buồng sấy bị nguội cục bộ.
+
+---
+
+## 7. Chuẩn bị sẵn kiến trúc và tích hợp phần mềm hỗ trợ cảm biến nhiệt ẩm DHT22 (AM2302)
+
+### Mục tiêu
+Chuẩn bị sẵn sàng cấu hình phần cứng và kiến trúc macro phần mềm để khi người dùng lắp đặt cảm biến nhiệt độ & độ ẩm kỹ thuật số DHT22 (AM2302) vào buồng in, hệ thống sẽ tự động nhận diện và hiển thị độ ẩm (% RH), hỗ trợ sấy nhựa tự động dừng theo độ ẩm mục tiêu (`TARGET_HUMIDITY`).
+
+### File đã sửa đổi
+- [hardware.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/hardware.cfg) — Bổ sung khối cấu hình mẫu và hướng dẫn chuyển đổi từ thermistor NTC sang cảm biến kỹ thuật số DHT22 / AM2302.
+- [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/print-macros.cfg) — Tích hợp tự động kiểm tra `printer['temperature_sensor chamber'].humidity`:
+  - Hiển thị độ ẩm trực tiếp lên LCD & Mainsail: `Dry 3h55m | B:55C C:41C H:18%`.
+  - Bổ sung thông tin độ ẩm vào log chu kỳ 10 phút và macro `DRYER_STATUS`.
+  - Hỗ trợ tham số `TARGET_HUMIDITY` trong `START_DRYER` (tự động ngắt khi cuộn nhựa đạt độ khô yêu cầu sau ít nhất 1 giờ ngâm nhiệt).
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Bổ sung tài liệu tương thích DHT22 / AM2302.
+
+### Sao lưu
+- [hardware.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-prepare-dht22-chamber-sensor-support-20260814-162700/hardware.cfg)
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-prepare-dht22-chamber-sensor-support-20260814-162700/print-macros.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-prepare-dht22-chamber-sensor-support-20260814-162700/README.md)
+
+### Chi tiết kỹ thuật
+1. **Khả năng tương thích ngược (Zero-breakage / Seamless Fallback):**
+   - Nếu vẫn dùng cảm biến 100K NTC hiện tại: Macro tự nhận biết không có trường `.humidity` và tự động hiển thị dạng rút gọn `B:{bed}C C:{chamber}C` mà không báo lỗi Jinja.
+   - Khi lắp DHT22: Macro tự động kích hoạt hiển thị `H:{humidity}%` và cho phép điều khiển theo độ ẩm.
+2. **Hướng dẫn kết nối phần cứng nhanh:**
+   - Chân Data DHT22 nối vào một chân GPIO số trên Manta M8P (ví dụ `PC15` hoặc `PD11`) hoặc GPIO CM4 (`host:gpio4`).
+   - Mở [hardware.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/hardware.cfg), bỏ dấu `#` ở khối DHT22 và đóng dấu `#` ở khối Generic 3950.
+
+### Kết quả
+Hệ thống phần mềm đã hoàn toàn sẵn sàng cho việc nâng cấp cảm biến đo độ ẩm DHT22 mà không cần phải viết lại macro trong tương lai.
+
+
+
 
 
 

@@ -235,8 +235,7 @@ Dries filament spools directly on the heated bed under a cardboard cover with ch
 | **`DRY_PC`** | Polycarbonate | **105°C** | **70°C** | 6 hours | **70%** (Auto-boost when cold) | Amber / Orange Glow |
 
 - **Chamber Feedback & Warm-up Boost:** Monitors `[temperature_sensor chamber]`. If chamber is cold during warm-up, the under-bed fan boosts up to 85% to rapidly heat-soak the enclosure and equalize air temperature.
-- **DHT22 / AM2302 Ready:** Supports digital temperature & relative humidity (% RH) sensors. Macros automatically detect `.humidity` to display live moisture levels (`H:18%`) and support target humidity auto-completion (`TARGET_HUMIDITY=15`).
-- **Real-Time Display:** `M117` shows real-time countdown, live bed temp, live chamber temp, and humidity if available (e.g. `Dry 3h55m | B:55C C:41C H:18%`).
+- **Real-Time Display:** `M117` shows real-time countdown, live bed temp, and live chamber temp (e.g. `Dry 3h55m | B:55C C:41C`).
 - **Safe Auto-Park:** Automatically unselects active tool to dock and parks carriage at $Z \ge 200\text{mm}$, $X=175, Y=310$.
 - **Idle Timeout Protection:** Refreshes bed temperature and fan speed every 10 seconds.
 - **Stop Command:** `STOP_DRYER` immediately shuts off heaters and fans and restores neutral lighting.
