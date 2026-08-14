@@ -226,18 +226,17 @@ Dries filament spools directly on the heated bed under a cardboard cover with ch
 
 | Preset Macro | Filament | Bed Temp | Target Chamber | Duration | Under-bed Fan (`bed_fan`) | Visual Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **`DRY_PLA`** | PLA / PLA+ | **50°C** | **40°C** | 4 hours | **40%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_TPU`** | TPU / TPE | **60°C** | **45°C** | 5 hours | **40%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_PETG`** | PETG | **70°C** | **55°C** | 4 hours | **50%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_ABS`** | ABS | **90°C** | **65°C** | 4 hours | **60%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_ASA`** | ASA | **90°C** | **65°C** | 4 hours | **60%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_NYLON`** | PA / Nylon | **100°C** | **70°C** | 6 hours | **70%** (Auto-boost when cold) | Amber / Orange Glow |
-| **`DRY_PC`** | Polycarbonate | **105°C** | **75°C** | 6 hours | **70%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_PLA`** | PLA / PLA+ | **55°C** | **40°C** | 4 hours | **40%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_PETG`** | PETG | **70°C** | **50°C** | 4 hours | **50%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_ABS`** | ABS | **90°C** | **60°C** | 4 hours | **60%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_ASA`** | ASA | **90°C** | **60°C** | 4 hours | **60%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_TPU`** | TPU / TPE | **60°C** | **42°C** | 5 hours | **40%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_NYLON`** | PA / Nylon | **100°C** | **65°C** | 6 hours | **70%** (Auto-boost when cold) | Amber / Orange Glow |
+| **`DRY_PC`** | Polycarbonate | **105°C** | **70°C** | 6 hours | **70%** (Auto-boost when cold) | Amber / Orange Glow |
 
-- **Multi-Zone Dynamic Airflow:** Cold warmup boost (65–85%), active convective drying window (40–50%), and overheat safety modulation.
-- **Moisture Flush Pulse:** Automatically runs a 30-second high-airflow pulse every 20 minutes to evacuate humid air pockets.
+- **Chamber Feedback & Warm-up Boost:** Monitors `[temperature_sensor chamber]`. If chamber is cold during warm-up, the under-bed fan boosts up to 85% to rapidly heat-soak the enclosure and equalize air temperature.
 - **DHT22 / AM2302 Ready:** Supports digital temperature & relative humidity (% RH) sensors. Macros automatically detect `.humidity` to display live moisture levels (`H:18%`) and support target humidity auto-completion (`TARGET_HUMIDITY=15`).
-- **Real-Time Display:** `M117` shows real-time countdown, live bed temp, live chamber temp, and humidity if available (e.g. `Dry 3h55m | B:60C C:45C H:18%`).
+- **Real-Time Display:** `M117` shows real-time countdown, live bed temp, live chamber temp, and humidity if available (e.g. `Dry 3h55m | B:55C C:41C H:18%`).
 - **Safe Auto-Park:** Automatically unselects active tool to dock and parks carriage at $Z \ge 200\text{mm}$, $X=175, Y=310$.
 - **Idle Timeout Protection:** Refreshes bed temperature and fan speed every 10 seconds.
 - **Stop Command:** `STOP_DRYER` immediately shuts off heaters and fans and restores neutral lighting.

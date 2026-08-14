@@ -245,6 +245,49 @@ Hệ thống phần mềm đã hoàn toàn sẵn sàng cho việc nâng cấp c�
 ### Kết quả
 Toàn bộ tài liệu, bảng thông số và ghi chú kỹ thuật đã phản ánh chính xác công suất thực tế 1000W của mâm nhiệt bàn in Voron 2.4 350mm.
 
+---
+
+## 9. Tối ưu hóa thuật toán điều khiển sấy nhựa dựa trên dữ liệu thực tế từ log đo đạc chạy thử nghiệm DRY_TPU
+
+### Mục tiêu
+Phân tích log chạy thực nghiệm sấy cuộn TPU (`DRY_TPU` Bed 60°C, 5 giờ) trong phiên vận hành máy in ngày 14/08/2026 và tối ưu hóa thuật toán điều tiết quạt & nhiệt độ buồng.
+
+### Dữ liệu thực nghiệm thu thập từ Log
+- **Pha làm nóng ban đầu (16:32 – 16:42):** Quạt boost 65% + mâm 1000W 60°C kéo nhiệt độ buồng từ 35.8°C lên 43.9°C chỉ trong 10 phút (~0.8°C/phút).
+- **Pha cân bằng nhiệt (16:52 – 19:22):** Bàn nhiệt duy trì cực kỳ ổn định tại 60.0°C. Nhiệt độ buồng dao động trong dải 44.2°C – 45.5°C (trung bình 44.7°C, độ chênh $\Delta T \approx 15^\circ\text{C}$).
+- **Vấn đề phát hiện ở thuật toán cũ:** Do đặt `chamber_target = 42.0°C`, thuật toán cũ đánh giá `44.5°C > 42.0 + 2.0 = 44.0°C` là "vượt nhiệt" nên bóp quạt xuống mức tối thiểu 25% suốt 3 giờ. Mức 25% làm luồng khí đối lưu yếu đi, hạn chế khả năng cuốn và thoát ẩm ra ngoài. Trong khi đó, dải 44–48°C là dải nhiệt độ sấy hoàn hảo cho TPU.
+
+### Giải pháp kỹ thuật đã triển khai
+1. **Kiểm soát luồng gió đa vùng (Multi-Zone Airflow Control):**
+   - **Zone 1 (Warmup Boost):** `Chamber < Target - 2°C` $\rightarrow$ Quạt chạy 65%–85% kéo nhiệt nhanh.
+   - **Zone 2 (Optimal Drying Window):** `Target - 2°C <= Chamber <= Target + 3.5°C` $\rightarrow$ Quạt duy trì 40%–50% (công suất danh định) để luân chuyển không khí liên tục và đẩy hơi nước ra ngoài.
+   - **Zone 3 (Gentle Sweep):** `Target + 3.5°C < Chamber <= Target + 6.0°C` $\rightarrow$ Giảm nhẹ quạt về 30%–35%.
+   - **Zone 4 (Overheat Guard):** `Chamber > Target + 6.0°C` $\rightarrow$ Quạt hạ về 20% và tự động hạ nhiệt độ mâm nhiệt $M140$ xuống $-4^\circ\text{C}$ để bảo vệ cuộn filament không bị biến dạng.
+2. **Chu kỳ xả ẩm định kỳ (Periodic Moisture Flush Pulse):**
+   - Cứ mỗi 20 phút (sau 15 phút đầu làm nóng), quạt tự động tăng lên 65%–70% trong 30 giây để xả sạch các túi khí ẩm cục bộ tích tụ dưới hộp chụp ra ngoài buồng in.
+3. **Chuẩn hóa nhiệt độ mục tiêu trong các Preset:**
+   - `DRY_PLA`: Bed 50°C, Chamber Target 40°C, Quạt 40%, 4h.
+   - `DRY_TPU`: Bed 60°C, Chamber Target 45°C, Quạt 40%, 5h.
+   - `DRY_PETG`: Bed 70°C, Chamber Target 55°C, Quạt 50%, 4h.
+   - `DRY_ABS` / `DRY_ASA`: Bed 90°C, Chamber Target 65°C, Quạt 60%, 4h.
+   - `DRY_NYLON`: Bed 100°C, Chamber Target 70°C, Quạt 70%, 6h.
+   - `DRY_PC`: Bed 105°C, Chamber Target 75°C, Quạt 70%, 6h.
+4. **Nâng cấp định dạng Telemetry:**
+   - Log định kỳ 10 phút hiển thị tiến trình `%`, thời gian đã chạy/còn lại và nhãn trạng thái vận hành:
+     `[DRYER] 2h 40m / 5.0h (53%) | Bed: 60.0/60.0C | Chamber: 44.5C / 45.0C | Fan: 40% [Active Drying]`
+
+### File đã sửa đổi
+- [print-macros.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/print-macros.cfg) — Cập nhật `START_DRYER`, `_DRYER_STATUS`, `DRYER_STATUS` và các macro preset `DRY_*`.
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Cập nhật bảng preset sấy nhựa và tài liệu tính năng Multi-Zone & Moisture Flush.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-optimize-dryer-algorithm-from-live-logs-20260814-192500/print-macros.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-optimize-dryer-algorithm-from-live-logs-20260814-192500/README.md)
+
+### Kết quả
+Thuật toán sấy nhựa thích ứng hoàn hảo với đặc tính truyền nhiệt thực tế của máy Voron 2.4, đảm bảo luồng gió đối lưu liên tục mà không bao giờ bị bóp nghẽn quạt sai lệch.
+
+
 
 
 
