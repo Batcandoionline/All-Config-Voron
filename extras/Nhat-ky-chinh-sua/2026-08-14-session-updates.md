@@ -287,6 +287,30 @@ Phân tích log chạy thực nghiệm sấy cuộn TPU (`DRY_TPU` Bed 60°C, 5 
 ### Kết quả
 Thuật toán sấy nhựa thích ứng hoàn hảo với đặc tính truyền nhiệt thực tế của máy Voron 2.4, đảm bảo luồng gió đối lưu liên tục mà không bao giờ bị bóp nghẽn quạt sai lệch.
 
+---
+
+## 10. Tái cấu trúc và viết lại toàn diện tài liệu README.md
+
+### Mục tiêu
+Rà soát và viết lại toàn bộ tài liệu [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) của dự án nhằm đảm bảo phản ánh chính xác 100% hiện trạng phần cứng/phần mềm thực tế, cấu trúc dạng bảng tra cứu nhanh, ngắn gọn, súc tích, chuyên nghiệp và loại bỏ mọi đoạn văn rườm rà.
+
+### File đã sửa đổi
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Viết lại toàn diện 6 phần chính:
+  1. **System Specifications:** Bảng thông số linh kiện cốt lõi (Manta M8P V2 + CM4, 5 đầu StealthChanger, Cartographer V3 fw6.1.0, mâm nhiệt 1000W AC, cảm biến buồng / DHT22 ready, Bambu A1 cleaner, Axiscope Z switch `^PF2`).
+  2. **CAN Bus Topology & Toolhead Mapping:** Bảng tra cứu UUID, chân quạt/điện trở và LED Neopixel của T0–T4.
+  3. **StealthChanger Docks & Active Offsets:** Tọa độ đỗ đài và bảng Z-Offsets thực tế trong `printer.cfg`.
+  4. **Leveling & Nozzle Maintenance:** Tóm tắt 3 tầng cân bàn và thông số miếng silicon Bambu A1.
+  5. **Heated Bed Filament Dryer:** Bảng preset chuẩn hóa nhiệt độ bàn/buồng và tính năng Multi-Zone Airflow & Moisture Flush.
+  6. **Repository Structure & Quick Commands:** Cây thư mục tinh gọn và lệnh deploy nhanh qua SSH.
+
+### Sao lưu
+- [README.md.old (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-rewrite-clean-readme-20260814-194000/README.md.old)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-rewrite-clean-readme-20260814-194000/README.md)
+
+### Kết quả
+Tài liệu `README.md` đạt tính thẩm mỹ cao, xúc tích, logic và đồng bộ tuyệt đối với mã nguồn máy in.
+
+
 
 
 
