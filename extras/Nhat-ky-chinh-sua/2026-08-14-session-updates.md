@@ -39,3 +39,36 @@ Giải pháp sấy cuộn nhựa bằng bàn nhiệt kết hợp hộp chụp (c
 
 ### Kết quả
 Tạo thành công hệ thống macro sấy nhựa hoàn chỉnh, sẵn sàng hiển thị trên giao diện Mainsail.
+
+---
+
+## 2. Đồng bộ cấu hình thực tế từ máy in (`config-20260814-160642`)
+
+### Mục tiêu
+So sánh và đồng bộ các thay đổi từ gói cấu hình máy in thực tế vừa tải về (`config-20260814-160642`) vào repository PC để đảm bảo tính nhất quán 100% giữa máy in và máy tính.
+
+### File đã sửa đổi
+- [printer.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/printer.cfg) — Cập nhật Z-offset cho `[tool T4]` và điểm bù lưới bàn in `[bed_mesh default]`.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-sync-downloaded-machine-config-20260814-161000/printer.cfg)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-sync-downloaded-machine-config-20260814-161000/README.md)
+
+### Chi tiết thay đổi
+1. **`[tool T4]` trong khối `SAVE_CONFIG`**:
+   - `gcode_z_offset`: `0.086` → `-0.014` (giá trị thực tế lưu trên máy in).
+2. **`[bed_mesh default]`**:
+   - Cập nhật điểm lưới dòng 85: `0.027074` → `0.02074` theo đúng dữ liệu scan thực tế của máy.
+3. **Các cấu hình khác**:
+   - Toàn bộ các file cấu hình hardware, toolchanger, T0-T4, fans-leds, calibration, sensor đều hoàn toàn trùng khớp 100%.
+   - Giữ lại các cải tiến tài liệu `README.md`, cờ loại trừ file `*.md` trong `install.sh`/`update.sh` và macro sấy nhựa mới thêm ở Section 1.
+
+### Lý do
+Đảm bảo thông số Z-offset thực tế của T4 và dữ liệu bed mesh trên máy in được lưu trữ chính xác trong repo Git, tránh bị ghi đè sai lệch khi chạy script cập nhật từ xa.
+
+### Kiểm tra
+- Kiểm tra `git diff --no-index` giữa `extras/Config download/config-20260814-160642/config/printer.cfg` và `config/printer.cfg`: Khớp 100% không còn sai lệch.
+
+### Kết quả
+Toàn bộ repository đã được đồng bộ chuẩn xác với trạng thái máy in thực tế.
+
