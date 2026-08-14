@@ -223,6 +223,29 @@ Chuẩn bị sẵn sàng cấu hình phần cứng và kiến trúc macro phần
 ### Kết quả
 Hệ thống phần mềm đã hoàn toàn sẵn sàng cho việc nâng cấp cảm biến đo độ ẩm DHT22 mà không cần phải viết lại macro trong tương lai.
 
+---
+
+## 8. Cập nhật thông số công suất mâm nhiệt bàn in (AC Silicone Bed Heater) thành 1000W
+
+### Mục tiêu
+Đồng bộ hóa chính xác thông số phần cứng thực tế của mâm nhiệt bàn in (tấm nhiệt silicone 220V AC công suất 1000W điều khiển qua SSR trên chân `PA1`) trên toàn bộ tài liệu dự án và chú thích cấu hình Klipper.
+
+### File đã sửa đổi
+- [hardware.cfg](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/Printer-Setup/hardware.cfg) — Bổ sung chú thích rõ ràng mâm nhiệt AC Silicone 1000W 220V + SSR tại khối `[heater_bed]`.
+- [config/README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/config/README.md) — Sửa công suất mâm nhiệt trong bảng linh kiện từ 750W thành **1000W**.
+- [README.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/README.md) — Cập nhật thông số mâm nhiệt thành **AC Silicone 1000W Pad with SSR**.
+- [PROJECT.md](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/.agents/PROJECT.md) — Bổ sung mục mâm nhiệt 1000W vào bảng thông số phần cứng cốt lõi.
+
+### Sao lưu
+- [hardware.cfg (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-bed-heater-1000w-specs-20260814-162900/hardware.cfg)
+- [config-README.md (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-bed-heater-1000w-specs-20260814-162900/config-README.md)
+- [README.md.master (Backup)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-bed-heater-1000w-specs-20260814-162900/README.md.master)
+- [README.md (Backup Record)](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-bed-heater-1000w-specs-20260814-162900/README.md)
+
+### Kết quả
+Toàn bộ tài liệu, bảng thông số và ghi chú kỹ thuật đã phản ánh chính xác công suất thực tế 1000W của mâm nhiệt bàn in Voron 2.4 350mm.
+
+
 
 
 

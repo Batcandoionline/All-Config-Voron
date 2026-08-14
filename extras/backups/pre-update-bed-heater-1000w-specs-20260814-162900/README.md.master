@@ -66,7 +66,7 @@ graph TD
 - **Y Endstop:** `PF1` (Physical microswitch at $Y=350$, min travel: $Y=-10$)
 - **Z Steppers:** 4× NEMA17 (80:16 gear ratio) on drivers `PG9`, `PB4`, `PG13`, `PB8`
 - **Chamber Sensor:** Generic 3950 100K NTC on port `THB` (`PB1`)
-- **Bed Heater:** AC Silicone 1000W Pad with SSR on `PA1`, Thermistor on `PB0` (NTC 100K MGB18)
+- **Bed Heater:** AC Silicone Pad with SSR on `PA1`, Thermistor on `PB0` (NTC 100K MGB18)
 - **Bed Fans:** Dual 5015 / 4020 fans on `PF8` (`Fan3`) for chamber circulation
 - **Z-Offset Calibrator:** Microswitch on `^PF2` + GND at $X=68.0, Y=-10.0, Z=7.0$
 
