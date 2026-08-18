@@ -28,21 +28,18 @@ Người dùng xác nhận Y thực tế của công tắc là -1, không phải
 ### Vấn đề còn lại
 - Chờ người dùng lắp xong camera và gọi lệnh include để kích hoạt macro.
 
-## 2. Tạo dự án độc lập Voron Tool Vision (VTV)
+## 2. Xóa bỏ bản sao chép, lập trình lại dự án "Tool Vision" từ đầu
 
 ### Mục tiêu
-Hợp nhất Axiscope và kTAMV thành một dự án tự chủ duy nhất, loại bỏ hoàn toàn sự phụ thuộc vào các repository bên ngoài.
+Người dùng yêu cầu xóa bỏ cách làm sao chép/chỉnh sửa mã nguồn cũ (Voron-Tool-Vision). Thay vào đó, yêu cầu đập đi xây lại toàn bộ, lập trình bằng Python từ con số 0 một Klipper Extension hoàn chỉnh tên là **Tool Vision**, kế thừa logic toán học gốc nhưng hiện đại và tối ưu hơn.
 
 ### File và Thư mục đã thay đổi
-- Tạo mới toàn bộ dự án tại `extras/Voron-Tool-Vision/`
-- Trích xuất và dọn dẹp mã nguồn OpenCV từ kTAMV vào `vision_server/`
-- Trích xuất mã nguồn Axiscope và kTAMV vào `klippy/extras/` (`vtv_z_probe.py` và `vtv_xy_vision.py`)
-- Tạo file cài đặt tự động `install.sh` và `README.md`
-- Xóa file macro `ktamv_auto_calibration.cfg` cũ, thay bằng `macros/vtv_auto_calibration.cfg` tích hợp lệnh mới.
-
-### Chi tiết thay đổi
-- Chuyển đổi tên class và reference để tránh xung đột với Klipper.
-- Chuyển lệnh GCode từ `KTAMV_` thành `VTV_XY_` và module Z thành `VTV_Z`.
+- **XÓA:** Toàn bộ thư mục `extras/Voron-Tool-Vision` (bản làm trước đó).
+- **TẠO MỚI:** Thư mục `extras/Tool-Vision` với cấu trúc chuẩn.
+- **Klipper Extension (`tool_vision.py`):** Lập trình mới hoàn toàn Klipper Plugin kế thừa `probe_multi_axis` để đo Z, tích hợp tự động HTTP Request tới máy chủ ảnh, và tính toán mm/pixel tự động bằng GCode thay vì bằng numpy phức tạp.
+- **Vision Server (`vision_server.py`):** Viết lại máy chủ OpenCV cực nhẹ bằng Flask. Giữ nguyên thuật toán BlobDetector của kTAMV gốc nhưng tinh giản và nhanh hơn.
+- **File Cấu hình (`tool_vision.cfg`):** Tạo file `.cfg` độc lập, tập trung toàn bộ tọa độ Z, Camera, URLs để dễ dàng tùy biến thay vì sửa code.
+- **Cài đặt:** Viết `install.sh` và `tool_vision.service` cho Systemd.
 
 ### Kết quả
-Hệ thống hiện tại đã sở hữu mã nguồn lõi 100%. Người dùng chỉ cần chạy `install.sh` để kích hoạt toàn bộ hệ thống Vision Server và Klipper Plugin khi sẵn sàng.
+Hệ thống hiện tại có 1 lệnh duy nhất là `TOOL_VISION_CALIBRATE_ALL`. Khi gọi lệnh, máy sẽ tự động đo Z và dò Camera đồng thời một cách mượt mà nhất. Đã commit toàn bộ lên Git.
