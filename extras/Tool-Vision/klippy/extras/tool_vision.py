@@ -49,15 +49,30 @@ class ToolVision:
     def handle_ready(self):
         self.toolchanger = self.printer.lookup_object('toolchanger')
 
-    def _fetch_nozzle_pos(self):
+    def _fetch_nozzle_pos(self, wiggle=False):
         url = f"{self.server_url}/detect?camera_url={urllib.parse.quote(self.camera_stream, safe='')}"
-        try:
-            req = urllib.request.urlopen(url, timeout=5)
-            res = json.loads(req.read())
-            if res.get('status') == 'ok':
-                return res['x'], res['y']
-        except Exception as e:
-            pass
+        
+        for attempt in range(5):
+            try:
+                req = urllib.request.urlopen(url, timeout=5)
+                res = json.loads(req.read())
+                if res.get('status') == 'ok':
+                    return res['x'], res['y']
+            except Exception as e:
+                pass
+                
+            if wiggle:
+                self.gcode.respond_info(f"Không thấy kim phun, tiến hành lắc (wiggle) lần {attempt + 1}/5...")
+                pos = self.toolhead.get_position()
+                # Di chuyển nhích qua nhích lại 0.5mm
+                wiggle_offset = 0.5 if attempt % 2 == 0 else -0.5
+                self._move_absolute(pos[0] + wiggle_offset, pos[1] + wiggle_offset, pos[2], self.move_speed)
+                time.sleep(0.5)
+                self._move_absolute(pos[0], pos[1], pos[2], self.move_speed)
+                time.sleep(0.5)
+            else:
+                break
+                
         return None, None
 
     def _move_absolute(self, x, y, z, speed):
@@ -82,13 +97,13 @@ class ToolVision:
         gcmd.respond_info("Đang tính toán tỷ lệ mm/pixel của Camera...")
         self._move_absolute(self.cam_x, self.cam_y, self.toolhead.get_position()[2], self.move_speed)
         
-        px1, py1 = self._fetch_nozzle_pos()
+        px1, py1 = self._fetch_nozzle_pos(wiggle=True)
         if px1 is None:
             raise self.gcode.error("Không tìm thấy kim phun ở tâm Camera.")
             
         # Di chuyển X thêm 1mm
         self._move_absolute(self.cam_x + 1.0, self.cam_y, self.toolhead.get_position()[2], self.move_speed)
-        px2, py2 = self._fetch_nozzle_pos()
+        px2, py2 = self._fetch_nozzle_pos(wiggle=True)
         if px2 is None:
             raise self.gcode.error("Mất dấu kim phun khi di chuyển X.")
             
@@ -96,7 +111,7 @@ class ToolVision:
         
         # Di chuyển Y thêm 1mm
         self._move_absolute(self.cam_x, self.cam_y + 1.0, self.toolhead.get_position()[2], self.move_speed)
-        px3, py3 = self._fetch_nozzle_pos()
+        px3, py3 = self._fetch_nozzle_pos(wiggle=True)
         if px3 is None:
             raise self.gcode.error("Mất dấu kim phun khi di chuyển Y.")
             
@@ -111,7 +126,7 @@ class ToolVision:
         """ Di chuyển kim phun vào chính giữa camera (320, 240) """
         target_px_x, target_px_y = 320, 240
         for _ in range(5):
-            px, py = self._fetch_nozzle_pos()
+            px, py = self._fetch_nozzle_pos(wiggle=True)
             if px is None:
                 raise self.gcode.error("Không tìm thấy kim phun khi căn chỉnh tâm.")
                 

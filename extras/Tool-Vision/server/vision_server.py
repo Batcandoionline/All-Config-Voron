@@ -1,84 +1,86 @@
 import cv2
 import numpy as np
-import copy
 import urllib.request
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 import logging
+import threading
+import time
+from vision_detector import VisionDetector
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
-class NozzleDetector:
-    def __init__(self):
-        # Setup OpenCV SimpleBlobDetector parameters just like kTAMV
-        self.stdParams = cv2.SimpleBlobDetector_Params()
-        self.stdParams.minThreshold = 1
-        self.stdParams.maxThreshold = 50
-        self.stdParams.thresholdStep = 1
-        self.stdParams.filterByArea = True
-        self.stdParams.minArea = 400
-        self.stdParams.maxArea = 900
-        self.stdParams.filterByCircularity = True
-        self.stdParams.minCircularity = 0.8
-        self.stdParams.maxCircularity = 1
-        self.stdParams.filterByConvexity = True
-        self.stdParams.minConvexity = 0.3
-        self.stdParams.maxConvexity = 1
-        self.stdParams.filterByInertia = True
-        self.stdParams.minInertiaRatio = 0.3
-        
-        self.detector = cv2.SimpleBlobDetector_create(self.stdParams)
+# Global states
+detector = VisionDetector(log_func=logging.info)
+current_frame = None
+latest_result_center = None
+camera_url = ""
+stream_running = False
 
-    def fetch_image(self, url):
-        try:
-            req = urllib.request.urlopen(url, timeout=2)
-            arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
-            img = cv2.imdecode(arr, -1)
-            return img
-        except Exception as e:
-            logging.error(f"Error fetching image: {e}")
-            return None
+def fetch_image(url):
+    try:
+        req = urllib.request.urlopen(url, timeout=2)
+        arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+        img = cv2.imdecode(arr, -1)
+        return img
+    except Exception as e:
+        logging.error(f"Error fetching image: {e}")
+        return None
 
-    def preprocess(self, img):
-        # algorithm 1 from kTAMV
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_TRIANGLE)
-        blurred = cv2.GaussianBlur(thresh, (7, 7), 6)
-        return cv2.cvtColor(blurred, cv2.COLOR_GRAY2BGR)
+def background_stream():
+    global current_frame, latest_result_center
+    while stream_running:
+        if camera_url:
+            img = fetch_image(camera_url)
+            if img is not None:
+                center, processed_img = detector.nozzleDetection(img)
+                latest_result_center = center
+                
+                # Encode the frame in JPEG format
+                ret, buffer = cv2.imencode('.jpg', processed_img)
+                if ret:
+                    current_frame = buffer.tobytes()
+        time.sleep(0.1) # 10 FPS to save CPU
 
-    def detect(self, img):
-        processed = self.preprocess(img)
-        keypoints = self.detector.detect(processed)
-        if not keypoints:
-            return None
-            
-        # Find closest to center (320, 240)
-        target = np.array([320, 240])
-        closest_kp = min(keypoints, key=lambda kp: np.linalg.norm(np.array(kp.pt) - target))
-        x, y = int(closest_kp.pt[0]), int(closest_kp.pt[1])
-        return (x, y)
+def generate_mjpeg():
+    global current_frame
+    while True:
+        if current_frame is not None:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + current_frame + b'\r\n')
+        time.sleep(0.1)
 
-detector = NozzleDetector()
+@app.route('/stream', methods=['GET'])
+def stream():
+    return Response(generate_mjpeg(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/detect', methods=['GET'])
 def detect_nozzle():
-    camera_url = request.args.get('camera_url')
-    if not camera_url:
+    global camera_url, stream_running
+    cam = request.args.get('camera_url')
+    
+    if not cam:
         return jsonify({"status": "error", "message": "Missing camera_url"}), 400
         
-    img = detector.fetch_image(camera_url)
-    if img is None:
-        return jsonify({"status": "error", "message": "Could not fetch image"}), 502
+    if camera_url != cam:
+        camera_url = cam
         
-    center = detector.detect(img)
-    if center is None:
-        return jsonify({"status": "not_found", "message": "Nozzle not detected"}), 404
+    # Start stream thread if not running
+    if not stream_running:
+        stream_running = True
+        threading.Thread(target=background_stream, daemon=True).start()
         
-    return jsonify({
-        "status": "ok",
-        "x": center[0],
-        "y": center[1]
-    })
+    # Wait up to 2 seconds for a frame
+    for _ in range(20):
+        if latest_result_center is not None:
+            return jsonify({
+                "status": "ok",
+                "x": latest_result_center[0],
+                "y": latest_result_center[1]
+            })
+        time.sleep(0.1)
+        
+    return jsonify({"status": "not_found", "message": "Nozzle not detected"}), 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8085)
+    app.run(host='0.0.0.0', port=8085, threaded=True)
