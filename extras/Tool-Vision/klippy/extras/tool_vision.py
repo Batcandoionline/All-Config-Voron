@@ -1529,8 +1529,16 @@ class ToolVision:
     # ═══════════════════════════════════════════════════════════
 
     def get_status(self, eventtime=None):
-        """Return current status for use in GCode templates."""
+        """Return current status for use in GCode templates.
+
+        Includes backward-compatible aliases for kTAMV macros:
+          - travel_speed: move_speed converted to mm/min (for G0/G1 F param)
+          - last_nozzle_center_successful: alias of last_nozzle_center_ok
+          - mm_per_pixels: alias of mm_per_pixel
+          - last_calculated_offset: alias of last_xy_offset
+        """
         return {
+            # ── Tool Vision keys ──
             "last_xy_offset": self.last_xy_offset,
             "mm_per_pixel": self.mpp,
             "is_calibrated": self.is_calibrated,
@@ -1543,6 +1551,11 @@ class ToolVision:
             "endstop_x": self.z_x_pos,
             "endstop_y": self.z_y_pos,
             "endstop_z": self.z_z_pos,
+            # ── kTAMV backward-compatible aliases ──
+            "travel_speed": self.move_speed * 60,  # mm/s → mm/min for F param
+            "last_nozzle_center_successful": self.last_nozzle_center_ok,
+            "mm_per_pixels": self.mpp,
+            "last_calculated_offset": self.last_xy_offset,
         }
 
 
