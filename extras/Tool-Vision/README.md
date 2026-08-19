@@ -1,6 +1,6 @@
 # Tool Vision
 
-Unified XYZ tool alignment system for Klipper multi-tool 3D printers.  
+Unified XYZ tool alignment system for Klipper multi-tool 3D printers.
 Rebuilt from [kTAMV](https://github.com/TypQxQ/kTAMV) (XY camera vision) and [Axiscope](https://github.com/nic335/Axiscope) (Z probe) into a single, self-contained module.
 
 ## Architecture
@@ -14,7 +14,7 @@ Tool-Vision/
 │   ├── vision_dm.py         # Detection Manager (5-combo blob detection)
 │   ├── vision_io.py         # Camera I/O (MJPEG stream reader)
 │   └── tool_vision.service  # Systemd service
-├── tool_vision.cfg          # Klipper config (Z switch + camera + templates)
+├── tool_vision.cfg          # Klipper config
 ├── install.sh               # One-command installation
 └── README.md
 ```
@@ -23,7 +23,7 @@ Tool-Vision/
 
 ### From kTAMV
 - 10-point radial camera calibration (mm/pixel)
-- Camera-to-space transformation matrix (least squares)
+- Camera-to-space transformation matrix (polynomial least-squares)
 - Iterative nozzle centering with wiggle fallback
 - 5-combo nozzle detection (Standard / Relaxed / Super Relaxed × 3 preprocessors)
 - Async request/result pattern for detection
@@ -41,6 +41,8 @@ Tool-Vision/
 - `TV_CALIBRATE_ALL` — Full XYZ calibration in one command
 - `TV_CALIBRATE_ALL_XY` — XY-only calibration for all tools
 - Unified status reporting
+- Conflict check with `[axiscope]` section
+- All speeds in mm/s with internal conversion
 
 ## GCode Commands
 
@@ -63,162 +65,131 @@ Tool-Vision/
 | `TV_CALIBRATE_ALL_XY` | XY calibration for all tools | **New** |
 | `TV_CALIBRATE_ALL` | Full XYZ calibration | **New** |
 
-## Usage Guide — Hướng dẫn Sử dụng
+## Usage Guide
 
-### Bước 0: Chuẩn bị phần cứng
+### Step 0: Hardware Setup
 
-Trước khi sử dụng Tool Vision, bạn cần:
-- ✅ Lắp **công tắc Z (microswitch)** vào vị trí cố định trên khung máy
-- ✅ Lắp **camera USB** hướng lên (nhìn thấy đầu nozzle từ dưới lên)
-- ✅ Đảm bảo camera đã hoạt động qua Crowsnest (mở trình duyệt kiểm tra stream)
-- ✅ Home máy in (G28)
+- ✅ Mount **Z microswitch** at a fixed position on the frame
+- ✅ Mount **USB camera** facing up (nozzle view from below)
+- ✅ Verify camera stream works via Crowsnest
+- ✅ Home printer (G28)
 
-### Bước 1: Cấu hình tọa độ
+### Step 1: Configuration
 
-Mở file `tool_vision.cfg` và điền tọa độ thực tế:
+Edit `tool_vision.cfg` with your actual coordinates:
 
 ```ini
 [tool_vision]
-# Tọa độ công tắc Z — di chuyển T0 đến đúng trên công tắc rồi ghi lại XYZ
-zswitch_x_pos: 68.0      # X của công tắc
-zswitch_y_pos: -10.0      # Y của công tắc
-zswitch_z_pos: 7.0        # Z an toàn (phía trên công tắc vài mm)
+# Z Switch — move T0 directly above the switch, record XYZ
+zswitch_x_pos: 68.0      # X of switch
+zswitch_y_pos: -10.0      # Y of switch
+zswitch_z_pos: 7.0        # Z safe height (a few mm above switch)
 
-# URL camera — lấy từ Crowsnest config
+# Camera URL — from Crowsnest config
 nozzle_cam_url: http://127.0.0.1:8080/?action=stream
 server_url: http://127.0.0.1:8085
+
+# Speeds (all in mm/s)
+move_speed: 50            # Camera calibration moves
+travel_speed: 100         # XY travel to Z switch
+z_move_speed: 10          # Z probing
 ```
 
-### Bước 2: Gửi cấu hình Camera cho Server
+### Step 2: Send Camera Config
 
-Mỗi lần khởi động Klipper, chạy lệnh này **một lần** để server biết camera ở đâu:
+Run once after each Klipper startup:
 
 ```
 TV_SEND_SERVER_CFG
 ```
 
-### Bước 3: Xem trước Camera (tùy chọn)
-
-Để kiểm tra camera có nhìn thấy nozzle không:
+### Step 3: Preview Camera (optional)
 
 ```
 TV_START_PREVIEW
 ```
-→ Mở trình duyệt vào `http://[IP-máy-in]:8085/image` để xem hình ảnh trực tiếp.  
-→ Nếu thấy vòng tròn bao quanh nozzle = camera hoạt động tốt.
+→ Open browser: `http://[printer-IP]:8085/image`
+→ Circle around nozzle = camera working
 
 ```
 TV_STOP_PREVIEW
 ```
 
-### Bước 4: Chạy đo đạc
+### Step 4: Run Calibration
 
-#### Kịch bản A: Đo đồng thời XYZ cho tất cả Tool (khuyên dùng)
+#### Scenario A: Full XYZ for all tools (recommended)
 
 ```
 TV_CALIBRATE_ALL
 ```
 
-Hệ thống sẽ tự động:
-1. Chọn T0 → Calibrate camera (10 điểm) → Đo Z → Đo XY → Lưu làm mốc
-2. Chọn T1 → Đo Z → Đo XY → Tính offset so với T0
-3. Chọn T2 → ... (lặp lại cho tất cả tool)
-4. Quay về T0 → In bảng tổng kết
+The system will automatically:
+1. T0 → Calibrate camera → Probe Z → Center XY → Set as reference
+2. T1 → Probe Z → Center XY → Calculate offset vs T0
+3. T2 → ... (repeat for all tools)
+4. Return to T0 → Print summary
 
-#### Kịch bản B: Chỉ đo Z cho tất cả Tool
+#### Scenario B: Z-only for all tools
 
 ```
 TV_CALIBRATE_ALL_Z
 ```
 
-#### Kịch bản C: Chỉ đo XY cho tất cả Tool
+#### Scenario C: XY-only for all tools
 
 ```
 TV_CALIBRATE_ALL_XY
 ```
 
-#### Kịch bản D: Đo từng bước thủ công
+#### Scenario D: Manual step-by-step
 
 ```gcode
-; 1. Gửi config camera
 TV_SEND_SERVER_CFG
-
-; 2. Chọn T0, di chuyển nozzle đến vùng camera nhìn thấy
 T0
-G0 X... Y... F3000
+G0 X... Y... F3000        ; Move nozzle above camera
+TV_CALIB_CAMERA            ; Calibrate mm/pixel
+TV_FIND_NOZZLE_CENTER      ; Center T0 nozzle
+TV_SET_ORIGIN              ; Save T0 as reference
 
-; 3. Calibrate camera (tính mm/pixel)
-TV_CALIB_CAMERA
-
-; 4. Đưa nozzle T0 vào chính giữa camera
-TV_FIND_NOZZLE_CENTER
-
-; 5. Lưu vị trí T0 làm mốc
-TV_SET_ORIGIN
-
-; 6. Đổi sang T1
 T1
+TV_FIND_NOZZLE_CENTER      ; Center T1 nozzle
+TV_GET_OFFSET              ; -> "Offset from origin: X:0.123 Y:-0.045"
 
-; 7. Đưa nozzle T1 vào giữa camera
-TV_FIND_NOZZLE_CENTER
-
-; 8. Tính offset XY so với T0
-TV_GET_OFFSET
-; -> Kết quả: "Offset from origin: X:0.123 Y:-0.045"
-
-; 9. Đo Z offset
 TV_MOVE_TO_ZSWITCH
 TV_PROBE_ZSWITCH SAMPLES=10
 ```
 
-### Bước 5: Lưu kết quả
-
-Sau khi đo xong, lưu offset vào file cấu hình:
+### Step 5: Save Results
 
 ```gcode
-; Lưu offset 1 tool
 TV_SAVE_TOOL_OFFSET TOOL_NAME="tool T1" OFFSETS="[0.123, -0.045, 0.031]"
 
-; Lưu offset nhiều tool cùng lúc
 TV_SAVE_MULTIPLE_TOOL_OFFSETS TOOLS="['tool T1', 'tool T2']" OFFSETS="[[0.12, -0.04, 0.03], [0.05, 0.02, -0.01]]"
 ```
 
-### Bước 6: Thiết lập vị trí Z Switch linh hoạt (tùy chọn)
-
-Nếu muốn thay đổi tọa độ công tắc Z mà không cần sửa file:
+### Step 6: Dynamic Z Switch Position (optional)
 
 ```gcode
-; Đặt tọa độ cụ thể
 TV_SET_ENDSTOP_POSITION X=68.0 Y=-10.0 Z=7.0
-
-; Hoặc dùng vị trí hiện tại của đầu in
-TV_SET_ENDSTOP_POSITION CURRENT=1
+TV_SET_ENDSTOP_POSITION CURRENT=1       ; Use current toolhead position
 ```
 
-### Bước 7: Tùy chỉnh GCode Templates (nâng cao)
-
-Thêm vào `tool_vision.cfg` nếu muốn chạy macro trước/sau khi đo:
+### Step 7: Custom GCode Templates (advanced)
 
 ```ini
 [tool_vision]
-# ... (các config khác) ...
-
-# Chạy trước khi bắt đầu đo
 start_gcode:
-    G28          ; Home lại cho chắc
-    G0 Z20 F600  ; Nâng Z an toàn
+    G28
+    G0 Z20 F600
 
-# Chạy trước khi đổi tool
 before_pickup_gcode:
-    G0 Z30 F600  ; Nâng Z cao để tránh va chạm
+    G0 Z30 F600
 
-# Chạy sau khi đổi tool
 after_pickup_gcode:
-    G4 P500      ; Đợi 0.5s cho ổn định
+    G4 P500
 
-# Chạy khi hoàn tất toàn bộ
 finish_gcode:
-    G0 X0 Y0 F3000  ; Về góc
+    G0 X0 Y0 F3000
     M118 Tool Vision: Calibration done!
 ```
 
@@ -237,37 +208,21 @@ Then add to `printer.cfg`:
 [include Voron 5 Tool/extras/Tool-Vision/tool_vision.cfg]
 ```
 
-## Configuration
+> **Important:** Remove `[axiscope]` section from your config if present.
+> Tool Vision replaces Axiscope's functionality entirely.
 
-Edit `tool_vision.cfg` to match your hardware:
+## Troubleshooting
 
-```ini
-[tool_vision]
-# Z Switch
-pin: ^PF2
-zswitch_x_pos: 68.0
-zswitch_y_pos: -10.0
-zswitch_z_pos: 7.0
-
-# Camera
-nozzle_cam_url: http://127.0.0.1:8080/?action=stream
-server_url: http://127.0.0.1:8085
-
-# Offsets file
-config_file_path: ~/printer_data/config/tool_vision.offsets
-```
-
-## Troubleshooting — Xử lý lỗi
-
-| Vấn đề | Nguyên nhân | Giải pháp |
-|--------|------------|-----------|
-| "Nozzle not found" | Camera không thấy nozzle | Kiểm tra ánh sáng, lau sạch nozzle, chạy `TV_START_PREVIEW` để xem camera |
-| "Camera URL not set" | Chưa gửi config | Chạy `TV_SEND_SERVER_CFG` |
-| "Camera not calibrated" | Chưa calibrate mm/pixel | Chạy `TV_CALIB_CAMERA` trước |
-| "Must home first" | Máy chưa home | Chạy `G28` |
-| "More than 25% failed" | Quá nhiều điểm calibrate lỗi | Lau sạch nozzle, kiểm tra ánh sáng, thử lại |
-| "Offset outside frame" | mm/pixel sai | Chạy lại `TV_CALIB_CAMERA` |
-| Server không phản hồi | Service chưa chạy | `sudo systemctl restart tool_vision` |
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Nozzle not found" | Camera can't see nozzle | Check lighting, clean nozzle, run `TV_START_PREVIEW` |
+| "Camera URL not set" | Config not sent | Run `TV_SEND_SERVER_CFG` |
+| "Camera not calibrated" | Missing mm/pixel data | Run `TV_CALIB_CAMERA` first |
+| "Must home first" | Axes not homed | Run `G28` |
+| "More than 25% failed" | Too many calibration failures | Clean nozzle, check lighting |
+| "Offset outside frame" | mm/pixel value wrong | Re-run `TV_CALIB_CAMERA` |
+| Server not responding | Service not running | `sudo systemctl restart tool_vision` |
+| "[axiscope] conflict" | Both sections active | Remove `[axiscope]` from config |
 
 ## Credits
 
