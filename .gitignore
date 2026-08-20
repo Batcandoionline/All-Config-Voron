@@ -8,3 +8,7 @@ wpa_supplicant.conf
 *.key
 *.pem
 *.env
+
+# Python build/test artifacts
+__pycache__/
+*.py[cod]

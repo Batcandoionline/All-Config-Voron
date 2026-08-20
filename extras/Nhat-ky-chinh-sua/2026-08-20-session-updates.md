@@ -303,3 +303,72 @@ thái `ready/standby`, các extension tùy chỉnh và toàn bộ CAN MCU vẫn 
   changes và update vẫn bảo toàn chúng, nhưng cần giữ backup trước mỗi lần update.
 - Cần test cơ khí có giám sát: G28, lấy/trả một tool, Cartographer touch và một
   bed mesh nhỏ trước bản in sản xuất tiếp theo.
+
+## 5. Tách Tool Vision thành repository độc lập
+
+### Mục tiêu
+Di chuyển implementation Tool Vision 2 ra khỏi repository cấu hình Voron, đặt
+repository phát triển độc lập trên PC, giữ Axiscope và kTAMV chỉ làm nguồn tham
+khảo, đồng thời chuẩn bị luồng cài đặt không cần clone Git trên Raspberry Pi.
+
+### Repository độc lập
+- Local PC: `D:\Desktop\Tool-Vision`.
+- GitHub: `https://github.com/IDcrazy123/Tool-Vision`.
+- Commit khởi tạo: `edee31e` (`Initial independent Tool Vision release`).
+- Commit installer no-clone: `634e8ae` (`Persist printer runtime without cloning`).
+- Axiscope là submodule tham khảo, ghim tại
+  `9a1a9efe3cfa6dc1e816acaaea87f8ac513282f6`.
+- kTAMV là submodule tham khảo, ghim tại
+  `72421f2d54da0de8701c4f84449c6e6b7d060301`.
+- Hai submodule chỉ tồn tại trên PC/GitHub và không thuộc runtime máy in.
+
+### Luồng cài đặt trên Pi
+- `install.sh` không gọi `git clone`.
+- Khi chạy standalone, script tải source archive tạm thời từ GitHub, kiểm tra đủ
+  file bắt buộc, rồi lưu runtime tối thiểu vào
+  `~/printer_data/tool-vision`.
+- Runtime chỉ gồm Klipper extension, host service, requirements, installer,
+  uninstaller và mẫu cấu hình; không copy test, tài liệu, Axiscope, kTAMV hoặc
+  metadata Git.
+- Klipper symlink và systemd service trỏ tới runtime đã lưu trên Pi, không phụ
+  thuộc thư mục tải tạm.
+- Cấu hình hiện có được bảo toàn; installer không tự sửa `printer.cfg`.
+
+### Máy thật `192.168.1.43`
+- Mainsail Config chỉ còn
+  `config/Tool-Vision/tool_vision.cfg` (5,722 bytes).
+- Đã xóa snapshot Axiscope, kTAMV, `.gitmodules`, source backend, test và tài
+  liệu khỏi thư mục hiển thị trên máy in.
+- Chưa chạy installer, chưa tạo service/symlink, chưa include `[tool_vision]` và
+  không restart Klipper vì tọa độ camera/switch chưa được commissioning.
+- Không có config đang hoạt động tham chiếu `Tool-Vision`; máy vẫn `ready` sau
+  khi thu gọn thư mục.
+
+### Tách khỏi dự án Voron gốc
+- Đã xóa implementation được track tại `extras/Tool-Vision/` sau khi xác nhận
+  cả bản PC và GitHub độc lập tồn tại.
+- Đã xóa `.gitattributes` cũ vì file chỉ áp dụng cho đường dẫn Tool Vision đã
+  di chuyển.
+- Bổ sung ignore chung cho `__pycache__/` và `*.py[cod]`.
+- Các snapshot trong `extras/backups/` được giữ lại theo chính sách backup và
+  chỉ có giá trị lịch sử, không phải source đang hoạt động.
+
+### Kiểm tra
+- Unit tests repository mới: 23/23 đạt.
+- Python compileall, Bash syntax và `git diff --check`: đạt.
+- GitHub raw installer khớp SHA256 với local; archive có đủ runtime bắt buộc và
+  không chứa entry Axiscope/kTAMV.
+- GitHub `main` trỏ đúng commit `634e8ae`.
+- Không có thao tác G-code, chuyển động, heater, toolchange hoặc probing trong
+  quá trình tách repository.
+
+### Sao lưu
+Không ghi đè target cũ: repository GitHub ban đầu trống, thư mục Desktop mới và
+thư mục `config/Tool-Vision` trên máy in đều chưa tồn tại. Trước khi xóa bản
+trùng trong dự án gốc, source đã tồn tại ở cả PC độc lập và GitHub; lịch sử Git
+của dự án gốc cùng các snapshot backup vẫn cho phép phục hồi.
+
+### Kết quả
+Tool Vision hiện có một nguồn chính thức độc lập trên PC/GitHub. Máy in chỉ hiển
+thị file cấu hình cần chỉnh; runtime sau này sẽ được installer tự lưu trực tiếp
+trên Pi mà không cần clone repository.

@@ -1,6 +1,0 @@
-extras/Tool-Vision/*.cfg text eol=lf
-extras/Tool-Vision/*.md text eol=lf
-extras/Tool-Vision/*.sh text eol=lf
-extras/Tool-Vision/**/*.in text eol=lf
-extras/Tool-Vision/**/*.py text eol=lf
-extras/Tool-Vision/**/*.txt text eol=lf
