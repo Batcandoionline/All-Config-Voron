@@ -792,3 +792,42 @@ khi homing Z với tool đang active.
   policy thống nhất rồi kiểm nghiệm cơ khí có người giám sát.
 - Chưa kiểm nghiệm home, dock/pickup, Cartographer, camera, switch hoặc first
   layer theo yêu cầu không chạy thực tế trong lượt này.
+
+## 11. Sửa URL camera Tool Vision bị từ chối truy cập
+
+### Triệu chứng
+- Mở `127.0.0.1:8080` từ PC trả connection refused.
+
+### Phân tích nhật ký
+- Crowsnest live log:
+  [crowsnest.log](http://192.168.1.43/server/files/logs/crowsnest.log).
+- Crowsnest đang chạy `camera-streamer`, camera MF-500 tại 1280x720/30 fps,
+  `port: 8080` và `no_proxy: false`.
+- Raw LAN URL `192.168.1.43:8080` không nhận kết nối, đúng với việc không mở
+  raw camera port ra LAN.
+- Moonraker webcam database công bố `/webcam/stream`; snapshot reverse proxy
+  trả HTTP 200 JPEG và stream reverse proxy trả HTTP 200 multipart MJPEG.
+
+### Nguyên nhân gốc
+- `127.0.0.1` trong trình duyệt trên PC là loopback của PC, không phải CM4 của
+  máy in. Cấu hình cũ cũng dùng raw port 8080 thay vì route reverse proxy đã
+  được xác minh từ mạng thực tế.
+
+### Hướng khắc phục đã thực hiện
+- Backup PC và Pi tại
+  [pre-fix-toolvision-camera-url-20260820-205334](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-fix-toolvision-camera-url-20260820-205334/).
+- Đổi `camera_source` trong `config/Tool-Vision/tool_vision.cfg`:
+  - Cũ: `http://127.0.0.1:8080/?action=stream`
+  - Mới: `http://192.168.1.43/webcam/stream`
+- Giữ `server_url: http://127.0.0.1:8085`; đây là API Tool Vision dự kiến chạy
+  trên cùng Pi, không phải URL camera dành cho trình duyệt.
+
+### Kiểm tra
+- Strict INI parse: đạt, chỉ có một section `[tool_vision]`.
+- URL mới: HTTP 200, `multipart/x-mixed-replace`.
+- Upload Pi và xác minh SHA-256 PC/Pi: khớp.
+- Không restart Klipper vì Tool Vision vẫn đang stage và include chưa bật.
+
+### Kết quả
+- URL xem/thử camera từ PC là `http://192.168.1.43/webcam/stream`.
+- Không mở cổng raw 8080 ra LAN và không thay đổi cấu hình Crowsnest production.
