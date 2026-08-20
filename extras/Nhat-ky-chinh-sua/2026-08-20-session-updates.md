@@ -198,3 +198,108 @@ mọi chuyển động park XYZ tự động sau sự cố.
   còn nguyên, vị trí cơ khí đúng và nozzle không mắc vào chi tiết in.
 - Nên chạy một test giám sát ở tốc độ thấp, toolhead cách xa bàn/chi tiết, rồi
   kiểm tra trạng thái `paused` và quy trình RESUME/CANCEL trước khi tin cậy hoàn toàn.
+
+## 4. Audit tương thích và cập nhật software máy in
+
+### Mục tiêu
+Đối chiếu các phiên bản được Mainsail Update Manager đề xuất với cấu hình Voron
+5 Tool, xử lý trước breaking change có thể ảnh hưởng startup rồi cập nhật máy
+thật `192.168.1.43` trong trạng thái an toàn.
+
+### Audit trước cập nhật
+- Máy `standby`, không pause, không có active tool và toàn bộ heater target bằng 0.
+- Klipper từ `v0.13.0-700` lên `v0.13.0-740`; 40 commit mới không đổi chữ ký
+  `reactor.register_callback`, `register_timer` hoặc `unregister_timer` mà
+  `tool_crash.py` đang sử dụng.
+- KTC-Easy từ `v0.0.0-252` lên `v0.0.0-258`; thay đổi Python chủ yếu cập nhật
+  `tool_probe` theo probe API mới và cải thiện output `tools_calibrate`.
+- KTC-Easy v258 xóa `_ADJUST_Z_HOME_FOR_TOOL_OFFSET` và
+  `TOOL_BED_MESH_CALIBRATE` khỏi readonly `homing.cfg` vì logic offset cũ bị áp
+  hai lần. Máy này dùng Cartographer cố định và không khai báo
+  `[tool_probe_endstop]`, nên không cần phép hiệu chỉnh đó.
+- Cấu hình user trước đây chỉ khai báo `description` cho
+  `TOOL_BED_MESH_CALIBRATE` và phụ thuộc vào phần `gcode` readonly. Nếu readonly
+  mới được áp dụng nguyên trạng, macro user có thể thiếu option `gcode`.
+- Mainsail `v2.18.1`/`v2.18.2` chỉ có các bugfix giao diện, file download,
+  webcam, console sanitization và frontend loader; không thay `mainsail.cfg`.
+- KlipperScreen update là các sửa lỗi UI/network/mesh/reconnect, dependency và
+  localization; không thay Klipper config hoặc toolchanger API.
+
+### File đã sửa đổi
+- `config/toolchanger/toolchanger-config.cfg` — biến
+  `TOOL_BED_MESH_CALIBRATE` thành wrapper độc lập gọi
+  `BED_MESH_CALIBRATE {rawparams}` cho Cartographer cố định.
+- `extras/backups/pre-software-update-20260820-172054/` — snapshot cấu hình user,
+  readonly KTC và tool_crash trước cập nhật.
+
+### Sao lưu
+- Local: `extras/backups/pre-software-update-20260820-172054/`.
+- Máy in:
+  `config/.codex-backups/pre-software-update-20260820-172054/`.
+- Wrapper tương thích được upload với SHA256
+  `614EFE1FDD8CE023E209BB454D3619A21DACF3C1AD3C8238190ED19F6CE36AA2`.
+- Đã RESTART và xác nhận wrapper cùng safe tool-crash load được trên Klipper cũ
+  trước khi bắt đầu software update.
+
+### Cách cập nhật
+- Dùng Moonraker full-upgrade thay vì update Klipper/KTC riêng lẻ. Trong full
+  update, service restart do KTC yêu cầu được hoãn; KTC được update trước,
+  Klipper update sau và service Klipper chỉ restart khi cả hai repo đã đổi xong.
+- Refresh phát hiện thêm 78 OS packages gồm kernel, Python 3.11, nginx, curl,
+  Mesa và security/runtime packages. Package manager được để chạy hoàn tất,
+  không ngắt giữa chừng.
+- Sau update, package count về 0. Host được reboot khi máy standby, active tool
+  `-1` và sáu heater target đều bằng 0 để kích hoạt kernel mới.
+
+### Phiên bản sau cập nhật
+- Klipper: `v0.13.0-740`, commit
+  `60fc7aa67a8da9abb43a2bad825d4992294ebf3f`.
+- klipper-toolchanger-easy: `v0.0.0-258`, commit
+  `e881fe40949a3999b0d63f59c22df589474eae9b`.
+- KlipperScreen: `v0.4.7-157`.
+- Mainsail: `v2.18.2`.
+- Linux kernel: `6.12.87+rpt-rpi-v8` -> `6.12.96+rpt-rpi-v8` sau reboot.
+
+### Kiểm tra sau reboot
+- Klipper, Moonraker, KlipperScreen và Axiscope: `active/running`.
+- Klipper: `ready`; print: `standby`; pause: `False`; active tool: `-1`.
+- CAN interface: 1,000,000 bit/s, tx queue 128.
+- Đủ object main MCU, EBB0, EBB1, EBB2, EBB3, EBB4 và Cartographer MCU.
+- Cartographer, toolchanger và Axiscope object đều load.
+- Các lệnh `INITIALIZE_TOOLCHANGER`, `CARTOGRAPHER_TOUCH`, `MOVE_TO_ZSWITCH`,
+  `PROBE_ZSWITCH`, `CALIBRATE_ALL_Z_OFFSETS`, START/STOP tool_crash,
+  `_TOOL_CRASH_SAFE_PAUSE` và `TOOL_BED_MESH_CALIBRATE` đều tồn tại.
+- Live `[tool_crash]` vẫn trỏ tới `_TOOL_CRASH_SAFE_PAUSE`,
+  `crash_mintime=0.1`; wrapper bed mesh parse thành
+  `BED_MESH_CALIBRATE {rawparams}`.
+- Không có config warning, không có SAVE_CONFIG pending, system package count 0.
+- Không tìm thấy traceback, config error, MCU communication error, unknown
+  command hoặc update error trong log của phiên boot mới.
+- Không chạy G28, toolchange, probe hoặc bed mesh tự động trong lượt kiểm tra này
+  để tránh tạo chuyển động cơ khí ngoài yêu cầu.
+
+### Trạng thái readonly KTC
+- Repo KTC đã cập nhật; Klipper tiếp tục nạp các Python extension KTC từ
+  `klippy/extras` và không báo import/config error.
+- Live `toolchanger/readonly-configs/homing.cfg` vẫn có SHA256
+  `BDC3351AF750F3A9CE99A9D2DCBEFB518D4963D5E6B1401497D3FC9E403E3C6B`, là
+  snapshot cũ và không khớp file v258
+  `4DEB257CF25ED85CAB1F39E08048E039B5F1707A5BCC94167F77946A2B01201E`.
+- Không sửa trực tiếp vùng readonly theo quy tắc dự án. Snapshot cũ hiện không
+  ảnh hưởng startup/homing vì `[tool_probe_endstop]` không tồn tại; wrapper user
+  mới cũng override an toàn macro bed mesh cũ.
+
+### Kết quả
+Software và OS đã được cập nhật hoàn tất, breaking change duy nhất liên quan
+cấu hình đã được tách khỏi readonly bằng wrapper Cartographer. Máy trở lại trạng
+thái `ready/standby`, các extension tùy chỉnh và toàn bộ CAN MCU vẫn hoạt động.
+
+### Vấn đề còn lại
+- Các file readonly trên máy không tự đổi theo repo KTC. Khi có SSH hợp lệ, nên
+  audit lại link do `install.sh` tạo và tái lập symlink bằng installer chính thức
+  trong một phiên bảo trì riêng; không copy/chỉnh tay readonly production.
+- Klipper Update Manager tiếp tục báo anomaly về các untracked custom extension
+  (`axiscope.py`, `tool_crash.py`, KTC files, v.v.). Đây không phải dirty tracked
+  changes và update vẫn bảo toàn chúng, nhưng cần giữ backup trước mỗi lần update.
+- Cần test cơ khí có giám sát: G28, lấy/trả một tool, Cartographer touch và một
+  bed mesh nhỏ trước bản in sản xuất tiếp theo.
