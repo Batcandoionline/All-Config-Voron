@@ -683,3 +683,108 @@ khi homing Z với tool đang active.
 - Production trên PC và Pi đã trở về đúng mốc trước 18:13. Tool Vision độc lập
   cũng trở về bản trước yêu cầu; các backup và lịch sử sau mốc được bảo toàn để
   truy vết hoặc phục hồi lại nếu cần.
+
+## 10. Gộp cấu hình, rà soát logic và stage Tool Vision
+
+### Mục tiêu
+- Gộp hai lớp cấu hình crash thành một file dễ hiểu.
+- Gộp calibration và Cartographer/mesh thành một file theo đúng bối cảnh.
+- Stage cấu hình Tool Vision trên PC và Pi, chưa chạy hiệu chuẩn cơ khí.
+- Đọc lại comment/logic, sửa lỗi có thể chứng minh mà không thay đổi dữ liệu
+  phần cứng.
+
+### Backup trước thay đổi
+- Local:
+  `extras/backups/pre-config-merge-toolvision-20260820-201907/`.
+- Backup gồm cấu hình PC, 34 file cấu hình live và source Tool Vision tại commit
+  `cad935b377e6f1d6f6750e84f4dfb322d16a5f02`.
+- Pi:
+  `config/.codex-backups/pre-config-merge-toolvision-20260820-201907/config/`.
+- Đã upload và xác minh đủ 34/34 file trong backup trên Pi.
+
+### Đối chiếu nguồn
+- `cekim-git/tool_crash` commit
+  `5cb00ad9e0216db97b8139a627b41407c86c88a9`: plugin tự tắt detector/watchdog
+  trước khi gọi `crash_gcode`; thiếu `crash_gcode` mới gọi
+  `printer.invoke_shutdown()`.
+- KTC-Easy commit
+  `e881fe40949a3999b0d63f59c22df589474eae9b`: readonly hiện tại trên máy là
+  bản copy cũ, chưa phải symlink do installer mới quản lý.
+- Klipper Config Reference: mesh giữ tọa độ probe hiện tại; Klipper native
+  không có `sensor_type: DHT22`.
+- Tool Vision độc lập: 23/23 test đạt, không resize/fix cứng 640x480, station
+  camera vẫn để trống để buộc người dùng đo thủ công.
+
+### Thay đổi cấu hình
+- Tạo `Printer-Setup/tool-crash.cfg`, gộp:
+  - `[tool_crash]`;
+  - adapter KTC `START_CRASH_DETECTION`/`STOP_CRASH_DETECTION`;
+  - `_TOOL_CRASH_SAFE_PAUSE`.
+- Tạo `Printer-Setup/calibration-probe.cfg`, gộp:
+  - Cartographer, bed mesh, ADXL345, axis twist;
+  - Axiscope PF2 đang active;
+  - trạng thái backend và báo cáo XYZ offset;
+  - guard cho macro SexBolt/tools_calibrate cũ.
+- Bốn file cũ được giữ tại
+  `extras/retired-configs/2026-08-20-config-merge/` và trên Pi tại
+  `config/.codex-backups/retired-configs/2026-08-20-config-merge/`.
+- Thêm `config/Tool-Vision/tool_vision.cfg` ở trạng thái stage. Include vẫn
+  comment, Axiscope vẫn active, camera X/Y/Z/safe-Z vẫn để trống.
+- Sửa comment sai về PF4/X257/Y327, DHT22 native, vai trò Cartographer trong
+  tool crash, hành vi shutdown/pause và thứ tự override.
+- `update.sh` dùng archive tạm, không giữ clone Git trên Pi. `install.sh` quản
+  lý riêng một file `.cfg` của Tool Vision nhưng bảo vệ runtime/result cục bộ và
+  KTC readonly. `cleanup-voron.sh` kiểm tra realpath trước khi xóa.
+
+### Lỗi logic đã sửa
+- `PRINT_START` sai tool/nhiệt nay dùng `action_raise_error`; không còn gọi
+  `CANCEL_PRINT` rồi vô tình chạy cleanup/toolchange.
+- `PRIME_LINES` đếm đúng initial tool dùng `TOOL_TEMP` khi đồng thời có Tn_TEMP.
+- Runout của tool active chỉ pause khi `print_stats.state == printing`.
+- `PRINT_END` sau `UNSELECT_TOOL` nay đặt LED complete cho toàn bộ tool thay vì
+  tìm active tool không còn tồn tại.
+- Moisture flush đổi `max` thành `min`, giới hạn 70%, đúng cửa sổ 30 giây; fan
+  luôn nhận cả target 0 để không giữ tốc độ cũ.
+
+### Kiểm tra tĩnh
+- 22 file active, 189 section; 119/119 template Jinja parse thành công.
+- 112 khai báo pin, không có pin trùng trong đồ thị active.
+- `SAVE_CONFIG` giống backup từng byte.
+- Hardware option, T0-T4, Cartographer/mesh, PF2 Axiscope và tham số tool_crash
+  giữ nguyên.
+- 22/22 Orca JSON parse thành công.
+- Bash syntax của ba script đạt; `git diff --check` đạt.
+- Tool Vision độc lập: Python compile đạt, unit test 23/23.
+
+### Đồng bộ và trạng thái máy thật
+- Trước deploy: Klipper ready, print standby, pause false, T0 active/detected,
+  sáu heater target đều 0.
+- Upload 14 file thay đổi; hash 14/14 khớp. Kiểm tra toàn payload sau đó:
+  31/31 file triển khai khớp SHA-256 giữa PC và Pi.
+- Chỉ gọi Klipper `RESTART` để parse; không G28, probe, QGL, toolchange, heat
+  hoặc calibration.
+- Sau restart: Klipper ready, warning 0, failed component 0, print standby,
+  pause false, T0 được cảm biến phát hiện, sáu heater target 0.
+- Runtime xác nhận `tool_crash` dùng safe pause, `crash_mintime=0.1`, Axiscope
+  vẫn ở PF2/X68/Y-10/Z7; `tool_vision` chưa load đúng trạng thái stage.
+
+### Vấn đề còn lại sau audit
+- Chưa thể cài runtime/service Tool Vision vì SSH tới `voron@192.168.1.43`
+  trả `Permission denied (publickey,password)` và Moonraker không cung cấp API
+  cài arbitrary systemd/Klipper extra. Không dùng đường thực thi tạm thiếu an
+  toàn để lách quyền này.
+- Tool Vision hiện tại chưa có khóa arm thủ công dành riêng cho camera tháo lắp;
+  station trống và include comment đang chặn chuyển động. Phải thêm/kiểm tra lớp
+  khóa này trước cutover production.
+- KTC readonly trên Pi là copy cũ, không phải symlink của installer v258. Script
+  deploy mới ngừng ghi đè nhưng cần chạy lại installer KTC khi có SSH.
+- Hai gitlink legacy `extras/Axiscope-reference` và `extras/kTAMV` không có entry
+  tương ứng trong `.gitmodules`; source tham khảo đúng hiện nằm trong repo Tool
+  Vision độc lập. Chưa xóa trong lượt này để tránh lặp lại thay đổi rollback.
+- Dryer vẫn chưa clamp toàn bộ tham số nhập và chưa chặn gọi START_DRYER lần hai.
+- Nozzle-clean chưa clamp tham số và lệnh wipe thủ công có thể chạy khi nozzle
+  cao hơn nhiệt độ làm sạch mặc định.
+- Cancel cleanup để T0 active, trong khi PRINT_END để shuttle rỗng; cần chọn một
+  policy thống nhất rồi kiểm nghiệm cơ khí có người giám sát.
+- Chưa kiểm nghiệm home, dock/pickup, Cartographer, camera, switch hoặc first
+  layer theo yêu cầu không chạy thực tế trong lượt này.

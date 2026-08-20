@@ -24,9 +24,10 @@ File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
 
 1. `mainsail.cfg`: macro Mainsail chuẩn như `PAUSE`, `RESUME`, `CANCEL_PRINT`.
 2. `toolchanger/readonly-configs/toolchanger-include.cfg`: nạp KTC-Easy readonly, homing, toolchanger, macro M104/M109, calibration, crash detection gốc và toàn bộ `T*.cfg`.
-3. `Printer-Setup/crash_detection_override.cfg`: override `START_CRASH_DETECTION` và `STOP_CRASH_DETECTION`.
-4. Các file trong `Printer-Setup/`: calibration, hardware, Cartographer/mesh, fan/LED, input shaper, nozzle clean, prime line, print macro.
-5. `Printer-Setup/tool_crash_cartographer.cfg`: cấu hình plugin `tool_crash`.
+3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, Axiscope PF2 và các macro trạng thái calibration.
+4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
+5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
+6. `Tool-Vision/tool_vision.cfg` chỉ được stage; include vẫn comment khi Axiscope đang active.
 
 Nguyên tắc quan trọng:
 
@@ -238,10 +239,7 @@ Luồng mỗi tool:
 
 Hệ này dùng plugin `tool_crash` vì Cartographer là probe chính và mỗi tool có `detection_pin`.
 
-File liên quan:
-
-- `Printer-Setup/tool_crash_cartographer.cfg`
-- `Printer-Setup/crash_detection_override.cfg`
+File liên quan: `Printer-Setup/tool-crash.cfg`.
 
 Ý tưởng:
 
@@ -287,19 +285,16 @@ Các state chính:
 
 File:
 
-- `Printer-Setup/calibration.cfg`
+- `Printer-Setup/calibration-probe.cfg`
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Luồng calibration chính:
-
-1. Chạy `G28`.
-2. Chạy `QUAD_GANTRY_LEVEL`.
-3. Chạy `CALIBRATE_ALL_OFFSETS`.
-4. T0 được dùng làm reference.
-5. T1-T4 lần lượt được đo bằng SexBall/SexBolt probe tại PF4.
-6. `_SAVE_TOOL_OFFSET` ghi `gcode_x_offset`, `gcode_y_offset`, `gcode_z_offset` bằng `SAVE_TOOL_PARAMETER`.
-7. Sau calibration, chạy `FIRMWARE_RESTART`.
+Backend production hiện tại là Axiscope tại PF2, X=68, Y=-10, Z=7. Các macro
+SexBolt/tools_calibrate cũ bị chặn vì PF4/X257/Y327 không còn là phần cứng active.
+Tool Vision đã có cấu hình stage để sau này thay Axiscope: camera MF-500 được
+tháo khỏi vị trí soi buồng, đặt lên gá nam châm có định vị, rồi người dùng tự jog
+T0 và nhập X/Y/Z/safe-Z. Không bật đồng thời `axiscope`, `tools_calibrate` và
+`tool_vision` vì cả ba cùng sở hữu `probe_multi_axis`.
 
 Kiểm tra offset:
 
@@ -327,13 +322,13 @@ sudo systemctl restart moonraker
 
 `update.sh` làm các việc:
 
-1. Nếu `~/All-Config-Voron` đã là git repo thì `git pull --ff-only`.
-2. Nếu chưa có thì clone từ GitHub.
-3. Backup config hiện tại vào `~/printer_data/config_backups/config-YYYYMMDD-HHMMSS`.
-4. Copy `~/All-Config-Voron/config/` vào `~/printer_data/config/`.
-5. Xóa file/thư mục không còn trong source nhờ `rsync --delete`.
-6. Loại trừ `Nhat-ky-chinh-sua/` để máy Voron gọn.
-7. Giữ mặc định 10 backup mới nhất.
+1. Tạo thư mục tạm bằng `mktemp` và tải archive nhánh `main` từ GitHub.
+2. Giải nén source tạm, không tạo Git repository trên Pi.
+3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
+4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ backup máy-local,
+   KTC readonly và dữ liệu Tool Vision.
+5. Đồng bộ riêng `Tool-Vision/tool_vision.cfg` mà không xóa kết quả cục bộ.
+6. Xóa toàn bộ source/archive tạm khi kết thúc.
 
 Khôi phục backup:
 
@@ -406,7 +401,7 @@ Cần kiểm chứng sau khi máy rảnh:
 - LED phải về trạng thái printing.
 - Nếu nozzle chưa đủ nóng, resume phải bị chặn như logic Mainsail.
 
-### R3 - Tài liệu crash detection trong `tool_crash_cartographer.cfg` đang lệch với logic thật
+### R3 - Tài liệu crash detection trong `tool-crash.cfg`
 
 Mức nguy hiểm: Thấp đến trung bình.
 
@@ -420,7 +415,7 @@ Rủi ro:
 
 Sửa đã áp dụng:
 
-- Comment trong `tool_crash_cartographer.cfg` đã được cập nhật theo logic hiện tại:
+- Comment trong `tool-crash.cfg` được cập nhật theo logic hiện tại:
   - Stop trong homing/clean/QGL/mesh/prime.
   - Start sau `PRIME_LINES`.
   - Stop khi dropoff/cancel/end.

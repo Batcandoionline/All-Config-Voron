@@ -21,10 +21,10 @@ Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D pri
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
 | **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
 | **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
-| **Z-Offset Calibrator**| Stationary Microswitch (Axiscope) | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
+| **Tool-Offset Calibrator**| PF2 microswitch; Axiscope active, Tool Vision staged | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
 | **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
-| **Chamber Feedback** | 100K NTC (DHT22 / AM2302 ready) | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
+| **Chamber Feedback** | Generic 3950 100K NTC | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
 | **Status Lighting** | 40× WS2812B Chamber + Tool LEDs | Chamber strip on `PD15` + 3× NeoPixel per toolhead |
 
 ---
@@ -69,7 +69,7 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
 2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
 3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
-4. **Axiscope Hardware Reference Switch (`^PF2`):** Stationed at $(X=68.0, Y=-10.0, Z=7.0)$ for tracking nozzle wear and thermal expansion shifts (`AXISCOPE_CALIBRATE_Z`).
+4. **Tool-offset station (`^PF2`):** Axiscope currently uses the switch at $(X=68.0, Y=-10.0, Z=7.0)$. Tool Vision is staged for camera XY plus switch Z, but remains disabled until the removable magnetic camera station is measured and commissioned.
 
 ### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
 * **Purge Bucket:** $X = 320.0, Y = -8.0$
@@ -95,7 +95,7 @@ Dries filament spools directly on the 1000W heated bed under a cardboard cover w
 
 * **Multi-Zone Adaptive Airflow:** Automatic cold warmup boost (65–85%), active moisture evacuation window (40–50%), and overheat safety protection.
 * **Periodic Moisture Flush Pulse:** Automatically increases fan to 70% for 30 seconds every 20 minutes to flush trapped humid air.
-* **DHT22 / AM2302 Ready:** Automatically detects `.humidity` field to display `% RH` and support target humidity auto-stop (`TARGET_HUMIDITY=15`).
+* **Optional humidity input:** Dryer macros use `.humidity` only when a separately installed sensor extension exposes that field. Native Klipper does not provide `sensor_type: DHT22`.
 * **Live Telemetry & Controls:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). Commands: `STOP_DRYER`, `DRYER_STATUS`.
 
 ---
@@ -125,21 +125,21 @@ Voron 5 Tool/
 │   ├── mainsail.cfg          ← Mainsail web interface macro bundle
 │   │
 │   ├── Printer-Setup/        ← Modular printer configuration files
-│   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor / DHT22
+│   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
-│   │   ├── calibration.cfg   ← Thermal calibration & [axiscope] switch (^PF2)
+│   │   ├── calibration-probe.cfg ← Cartographer/mesh and active Axiscope switch (^PF2)
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
-│   │   ├── probe-mesh.cfg    ← Cartographer V3 touch/scan & 55×55 bed mesh
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
 │   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, Filament Dryer suite & presets
-│   │   ├── crash_detection_override.cfg ← Tool crash detection overrides
-│   │   └── tool_crash_cartographer.cfg  ← Cartographer crash safety
+│   │   └── tool-crash.cfg    ← Tool presence detector, KTC routing, safe pause
 │   │
 │   ├── toolchanger/          ← StealthChanger KTC-Easy toolchanger config
 │   │   ├── toolchanger-config.cfg ← Dropoff/pickup paths & park coords
 │   │   ├── tools/ (T0–T4.cfg)     ← Individual tool definitions (EBB36 pins, offsets)
 │   │   └── readonly-configs/      ← Managed by KTC-Easy (DO NOT EDIT)
+│   │
+│   ├── Tool-Vision/tool_vision.cfg ← Staged machine config; include is disabled
 │   │
 │   └── scripts/              ← Deployment & maintenance scripts
 │       ├── install.sh        ← First-time install script (auto-excludes *.md)
@@ -156,18 +156,23 @@ Voron 5 Tool/
     └── logs/                 ← Klippy and Moonraker runtime logs
 ```
 
-### SSH Commands
+### Deployment Commands
 
-* **First-Time Install:**
+* **First-Time Install Without a Persistent Clone:**
   ```bash
-  cd /tmp && git clone git@github.com:IDcrazy123/All-Config-Voron.git
-  cd All-Config-Voron && bash "Voron 5 Tool/config/scripts/install.sh"
+  tmp_dir="$(mktemp -d /tmp/all-config-voron.XXXXXX)"
+  curl -fsSL https://github.com/IDcrazy123/All-Config-Voron/archive/refs/heads/main.tar.gz \
+    | tar -xz -C "${tmp_dir}" --strip-components=1
+  bash "${tmp_dir}/config/scripts/install.sh"
+  rm -rf -- "${tmp_dir}"
   sudo systemctl restart moonraker klipper
   ```
 
 * **Pull & Apply Updates from GitHub:**
   ```bash
-  cd ~/printer_data/config && bash scripts/update.sh
+  cd ~/printer_data/config
+  bash scripts/update.sh
   sudo systemctl restart moonraker klipper
   ```
-  *(Automatically creates a timestamped backup under `~/printer_data/config_backups/` before pulling changes).*
+  *(Downloads a temporary archive, creates a timestamped backup, deploys it,
+  then removes the archive; no Git clone remains on the Pi.)*
