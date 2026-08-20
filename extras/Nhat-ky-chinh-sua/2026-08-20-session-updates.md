@@ -767,6 +767,10 @@ khi homing Z với tool đang active.
   pause false, T0 được cảm biến phát hiện, sáu heater target 0.
 - Runtime xác nhận `tool_crash` dùng safe pause, `crash_mintime=0.1`, Axiscope
   vẫn ở PF2/X68/Y-10/Z7; `tool_vision` chưa load đúng trạng thái stage.
+- Sau khi chuẩn hóa EOF, upload lại ba file gộp/stage; SHA-256 PC/Pi khớp
+  3/3. Lần `RESTART` cuối trở lại `ready`, `standby`, không pause, detected T0,
+  active tool -1 do KTC chưa initialize lại và sáu heater target đều 0.
+- Commit cấu hình `8e5b34d` đã push lên `origin/main`.
 
 ### Vấn đề còn lại sau audit
 - Chưa thể cài runtime/service Tool Vision vì SSH tới `voron@192.168.1.43`
