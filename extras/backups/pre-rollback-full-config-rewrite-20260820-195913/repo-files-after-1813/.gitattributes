@@ -1,0 +1,2 @@
+# Immutable recovery snapshots must remain byte-for-byte identical.
+/extras/backups/** -text -diff -whitespace

@@ -1,162 +1,173 @@
-# Voron 2.4 350 — Five-Tool StealthChanger
+# Voron 2.4 StealthChanger (5-Tool Production)
 
-Production Klipper configuration for one Voron 2.4 350 with five automatic
-StealthChanger tools. Hardware values in this repository are measured machine
-data: do not copy them to another printer without re-measuring, and do not
-change them during a software cleanup.
+[![Klipper](https://img.shields.io/badge/Klipper-v0.13.0-green.svg)](https://www.klipper3d.org/)
+[![Toolchanger](https://img.shields.io/badge/StealthChanger-KTC--Easy-blue.svg)](https://stealthchanger.com/)
+[![Cartographer3D](https://img.shields.io/badge/Cartographer-V3%20fw6.1.0-orange.svg)](https://cartographer3d.com/)
+[![WebUI](https://img.shields.io/badge/WebUI-Mainsail-red.svg)](https://docs.mainsail.xyz/)
+[![Slicer](https://img.shields.io/badge/Slicer-OrcaSlicer-purple.svg)](https://github.com/SoftFever/OrcaSlicer)
 
-## Current production state
+Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D printer running an automated **5-Tool StealthChanger** system powered by **Klipper**, **Manta M8P V2.0 + CM4**, **5× EBB36 CAN toolheads**, **Cartographer V3**, and a **1000W AC Heated Bed**.
 
-| Area | Active implementation |
-|---|---|
-| Host/controller | Manta M8P V2 + CM4, Debian 12/MainsailOS |
-| Motion | Klipper `v0.13.0-740`, CoreXY, five EBB36 V1.2 CAN toolheads |
-| Toolchanger | KTC-Easy `v0.0.0-258` |
-| Bed probe | Fixed Cartographer V3, Touch + Scan |
-| Tool XYZ calibration | Axiscope is the temporary production backend |
-| Future calibration | Tool Vision camera XY + PF2 switch Z, staged only |
-| Crash handling | `tool_crash` detection pins; safe pause without XYZ park |
-| Camera | One MF-500 at 1280x720/30 MJPEG through crowsnest |
+---
 
-Tool Vision is developed separately at
-[IDcrazy123/Tool-Vision](https://github.com/IDcrazy123/Tool-Vision). Axiscope and
-kTAMV are reference-only dependencies in that PC repository; they are not
-copied to the printer as Tool Vision runtime.
+## 🛠️ 1. Master Hardware Specifications
 
-## Locked hardware inventory
+| Component | Hardware Specification | Configuration Details / Port |
+| :--- | :--- | :--- |
+| **Motion Kinematics** | Voron 2.4 CoreXY ($350 \times 350 \times 345\text{ mm}$) | $V_{\text{max}} = 300\text{mm/s}, A = 4000\text{mm/s}^2$ |
+| **Controller & Host** | BTT Manta M8P V2.0 + BTT CM4 | MainsailOS (Debian 12 Bookworm, Linux 6.12) |
+| **CAN Bus Interface** | `can0` @ 1,000,000 baud | Master bridge UUID: `19b203d75137` |
+| **Tool Changing System** | StealthChanger (KTC-Easy) | 5 individual tools (T0–T4) docked at rear gantry |
+| **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
+| **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
+| **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
+| **Z-Offset Calibrator**| Stationary Microswitch (Axiscope) | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
+| **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
+| **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
+| **Chamber Feedback** | 100K NTC (DHT22 / AM2302 ready) | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
+| **Status Lighting** | 40× WS2812B Chamber + Tool LEDs | Chamber strip on `PD15` + 3× NeoPixel per toolhead |
 
-| Device | Measured production value |
-|---|---|
-| Main MCU | `19b203d75137` |
-| Cartographer | `da13d909ce34`, firmware 6.1.0 |
-| T0 EBB36 | `441e1484ac41` |
-| T1 EBB36 | `6475b5b9e028` |
-| T2 EBB36 | `4ad9d622a836` |
-| T3 EBB36 | `c2465b7c36f8` |
-| T4 EBB36 | `28650279df58` |
-| Hotends/extruders | 5x TZ V6 2.0 + 5x WW BMG |
-| Bed | 1000 W AC pad, SSR control `PA1`, MGB18 NTC on `PB0` |
-| Chamber | Generic 3950 100K NTC on `PB1` |
-| Tool calibration switch | `^PF2`; current measured station X=68, Y=-10, Z=7 |
+---
 
-The full preservation contract is in
-[hardware-invariants.md](extras/docs/hardware-invariants.md).
+## 📡 2. CAN Bus Topology & Toolhead Mapping
 
-## Tool map
+| Device | Node Role | CAN Bus UUID | Extruder & Fan Pinout | Tool Status Pin / LED |
+| :---: | :---: | :---: | :---: | :---: |
+| **`mcu`** | Manta M8P V2.0 | `19b203d75137` | Mainboard, Steppers, 1000W Bed | Chamber NeoPixel: `PD15` |
+| **`cartographer`**| Surface & Mesh Probe | `da13d909ce34` | Offsets: $X=0, Y=35.0, Z=0$ | — |
+| **`T0`** | Toolhead 0 | `441e1484ac41` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB0:PB6` / LED: `PD3` |
+| **`T1`** | Toolhead 1 | `6475b5b9e028` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB1:PB6` / LED: `PD3` |
+| **`T2`** | Toolhead 2 | `4ad9d622a836` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB2:PB6` / LED: `PD3` |
+| **`T3`** | Toolhead 3 | `c2465b7c36f8` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB3:PB6` / LED: `PD3` |
+| **`T4`** | Toolhead 4 | `28650279df58` | Extruder / Part `PA1` / Hotend `PA0` | Sensor: `^!EBB4:PB6` / LED: `PD3` |
 
-| Tool | Dock X/Y/Z (mm) | Production X/Y/Z offset (mm) |
-|---|---|---|
-| T0 | `30.20 / 1.30 / 343` | `0 / 0 / 0` reference |
-| T1 | `104.00 / 1.10 / 343` | `-0.243 / -0.252 / +0.228` |
-| T2 | `176.00 / 1.60 / 343` | `+0.746 / +0.086 / -0.295` |
-| T3 | `249.50 / 2.50 / 343` | `+0.304 / +0.449 / -0.268` |
-| T4 | `321.50 / 2.60 / 343` | `+0.041 / +0.352 / -0.014` |
+---
 
-Offsets in `printer.cfg` are production values validated by first-layer
-results. A camera/switch measurement is a new candidate, not permission to
-overwrite these values automatically.
+## 🔧 3. StealthChanger Docks & Calibrated Offsets
 
-## Calibration architecture
-
-Cartographer is fixed to the shuttle and remains responsible for Z homing,
-gantry leveling, and bed mesh. Relative tool offsets use a separate backend.
-Only one of the following may exist in a loaded Klipper configuration because
-each can allocate `probe_multi_axis`:
-
-```ini
-[axiscope]        # active today
-[tool_vision]     # planned replacement
-[tools_calibrate] # inactive legacy SexBolt backend
+### Rear Dock Positions ($Z = 343.0\text{ mm}$)
+```
+Rear Frame:  [ T0: X=30.20, Y=1.30 ]  [ T1: X=104.00, Y=1.10 ]  [ T2: X=176.00, Y=1.60 ]  [ T3: X=249.50, Y=2.50 ]  [ T4: X=321.50, Y=2.60 ]
 ```
 
-The MF-500 normally monitors the chamber. When offset calibration is required,
-the user removes it and seats it on the keyed magnetic bed mount as an
-upward-facing nozzle camera. The magnetic mount controls position and vibration,
-but the user must still manually determine the camera station and confirm the
-image each time. Switch coordinates are measured and configured the same way.
-Neither project code nor an image estimate may invent station coordinates.
+### Active Production Tool Offsets (`printer.cfg` SAVE_CONFIG)
+Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 
-The controlled Tool Vision cutover and rollback sequence is documented in
-[toolvision-integration-plan.md](extras/docs/toolvision-integration-plan.md).
+| Tool | X Offset (mm) | Y Offset (mm) | Z Offset (mm) | Role / Status |
+| :---: | :---: | :---: | :---: | :--- |
+| **T0** | `0.000` | `0.000` | `0.000` | Master Reference Datum |
+| **T1** | `-0.243` | `-0.252` | **`+0.228`** | Calibrated optimal squish |
+| **T2** | `+0.746` | `+0.086` | **`-0.295`** | Calibrated optimal squish |
+| **T3** | `+0.304` | `+0.449` | **`-0.268`** | Calibrated optimal squish |
+| **T4** | `+0.041` | `+0.352` | **`-0.014`** | Calibrated optimal squish |
 
-## Crash behavior
+---
 
-Each `[tool]` supplies a `detection_pin`. The `tool_crash` plugin watches those
-pins while printing. On a failure it calls `_TOOL_CRASH_SAFE_PAUSE`:
+## 📐 4. Probing, Leveling & Nozzle Maintenance
 
-- the virtual-SD print is paused;
-- no automatic X/Y/Z park move is requested;
-- a normal resume/cancel decision remains available after manual inspection;
-- outside an active print, the handler reports the event without shutdown or
-  motion.
+### Multi-Layer Calibration Pipeline
+1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
+2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
+3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
+4. **Axiscope Hardware Reference Switch (`^PF2`):** Stationed at $(X=68.0, Y=-10.0, Z=7.0)$ for tracking nozzle wear and thermal expansion shifts (`AXISCOPE_CALIBRATE_Z`).
 
-`crash_detection_override.cfg` is required. It routes KTC-Easy's generic
-`START_CRASH_DETECTION`/`STOP_CRASH_DETECTION` macros to `tool_crash`.
-`tool_crash_cartographer.cfg` configures the detector and pause handler. Despite
-its historical filename, Cartographer is not a crash-detector input.
+### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
+* **Purge Bucket:** $X = 320.0, Y = -8.0$
+* **Silicone Pad Scrub Area:** $X: 277.0 \rightarrow 312.0$, $Y: -7.0 \rightarrow -10.0$ at $Z = 1.2\text{mm}$
+* **Scrubbing Motion:** $225\text{mm/s}$ flick snap-back + 5-point alternating $360^\circ$ circular arcs ($R = 1.5\text{mm}$).
+* **Quick Commands:** `CLEAN_NOZZLE` (Wipe @ 150°C), `PURGE_AND_CLEAN` (Purge @ 240°C into bucket $\rightarrow$ cool $\rightarrow$ scrub).
 
-Custom crash G-code is processed behind motion already queued by Klipper; it is
-not equivalent to an immediate hardware emergency stop.
+---
 
-## Repository layout
+## ☀️ 5. Heated Bed Filament Drying System (`START_DRYER`)
 
-```text
+Dries filament spools directly on the 1000W heated bed under a cardboard cover with closed-loop chamber feedback, forced convection (`bed_fan`), and Amber/Orange status lighting:
+
+| Preset | Material | Bed Temp | Target Chamber | Duration | Base Fan (`bed_fan`) | Airflow Profile |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`DRY_PLA`** | PLA / PLA+ | **50°C** | **40°C** | 4 hours | **40%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_TPU`** | TPU / TPE | **60°C** | **45°C** | 5 hours | **40%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_PETG`** | PETG | **70°C** | **55°C** | 4 hours | **50%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_ABS`** | ABS | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_ASA`** | ASA | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_NYLON`** | PA / Nylon | **100°C** | **70°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
+| **`DRY_PC`** | Polycarbonate | **105°C** | **75°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
+
+* **Multi-Zone Adaptive Airflow:** Automatic cold warmup boost (65–85%), active moisture evacuation window (40–50%), and overheat safety protection.
+* **Periodic Moisture Flush Pulse:** Automatically increases fan to 70% for 30 seconds every 20 minutes to flush trapped humid air.
+* **DHT22 / AM2302 Ready:** Automatically detects `.humidity` field to display `% RH` and support target humidity auto-stop (`TARGET_HUMIDITY=15`).
+* **Live Telemetry & Controls:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). Commands: `STOP_DRYER`, `DRYER_STATUS`.
+
+---
+
+## 🎨 6. OrcaSlicer Multi-Color Integration
+
+Tuned profiles are located under [extras/Orcasilcer setting/](file:///c:/Users/batca/OneDrive/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/Orcasilcer%20setting/):
+* **G-Code Output Format:** `Klipper Toolchanger`
+* **Tool Change G-Code:** `T[next_extruder]` (KTC-Easy automatically handles dropoff/pickup, standby temperatures, and input shaper assignment).
+* **Purge / Wipe Tower:** Disabled or set to minimal volume (purge bucket + silicone scrub replaces prime towers).
+* **Tool Change Retraction:** $1.0\text{mm} \sim 2.0\text{mm}$ at $40\text{mm/s}$.
+
+---
+
+## 📁 7. Repository Layout & SSH Deployment
+
+```
 Voron 5 Tool/
-├── config/                         Deployed Klipper/Moonraker payload
-│   ├── printer.cfg                 Main include graph and SAVE_CONFIG
-│   ├── Printer-Setup/              Hardware, probe, safety, print macros
-│   ├── toolchanger/
-│   │   ├── tools/T0.cfg ... T4.cfg User-owned tool definitions
-│   │   ├── toolchanger-config.cfg  User-owned KTC overrides and motion paths
-│   │   └── readonly-configs/       KTC-Easy installer-managed; never edit
-│   └── scripts/                    Backup/install/update scripts
-├── Orca Config/                    Slicer profiles
-└── extras/
-    ├── backups/                    Timestamped recovery snapshots
-    ├── docs/                       Hardware and integration documents
-    └── Nhat-ky-chinh-sua/          Daily engineering log
+├── README.md                 ← Master system documentation (this file)
+│
+├── config/                   ← Active Klipper configuration payload
+│   ├── README.md             ← Config payload notes & pinout reference
+│   ├── printer.cfg           ← Core entry point & SAVE_CONFIG block
+│   ├── KlipperScreen.conf    ← KlipperScreen touch UI configuration (Language: vi)
+│   ├── moonraker.conf        ← Moonraker API server & update manager config
+│   ├── crowsnest.conf        ← Camera streamer configuration (WebRTC)
+│   ├── mainsail.cfg          ← Mainsail web interface macro bundle
+│   │
+│   ├── Printer-Setup/        ← Modular printer configuration files
+│   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor / DHT22
+│   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
+│   │   ├── calibration.cfg   ← Thermal calibration & [axiscope] switch (^PF2)
+│   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
+│   │   ├── probe-mesh.cfg    ← Cartographer V3 touch/scan & 55×55 bed mesh
+│   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
+│   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
+│   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, Filament Dryer suite & presets
+│   │   ├── crash_detection_override.cfg ← Tool crash detection overrides
+│   │   └── tool_crash_cartographer.cfg  ← Cartographer crash safety
+│   │
+│   ├── toolchanger/          ← StealthChanger KTC-Easy toolchanger config
+│   │   ├── toolchanger-config.cfg ← Dropoff/pickup paths & park coords
+│   │   ├── tools/ (T0–T4.cfg)     ← Individual tool definitions (EBB36 pins, offsets)
+│   │   └── readonly-configs/      ← Managed by KTC-Easy (DO NOT EDIT)
+│   │
+│   └── scripts/              ← Deployment & maintenance scripts
+│       ├── install.sh        ← First-time install script (auto-excludes *.md)
+│       ├── update.sh         ← Auto-backup & update pull script (excludes *.md)
+│       └── cleanup-voron.sh  ← Maintenance & backup cleaner
+│
+├── Orca Config/              ← Custom OrcaSlicer machine & process profiles
+│
+└── extras/                   ← Documentation, backups, and diagnostic archives
+    ├── backups/              ← Timestamped configuration backups (Git tracked)
+    ├── Nhat-ky-chinh-sua/    ← Daily engineering change logs (Vietnamese)
+    ├── pictures/             ← Hardware photos and schematics
+    ├── axiscope-cartographer/← Axiscope & Cartographer calibration logs
+    └── logs/                 ← Klippy and Moonraker runtime logs
 ```
 
-## Deployment
+### SSH Commands
 
-Both scripts create a timestamped backup before changing the printer payload.
-They preserve machine-local Tool Vision files, Codex backups, Moonraker-generated
-files, Markdown, and KTC-Easy `readonly-configs`.
+* **First-Time Install:**
+  ```bash
+  cd /tmp && git clone git@github.com:IDcrazy123/All-Config-Voron.git
+  cd All-Config-Voron && bash "Voron 5 Tool/config/scripts/install.sh"
+  sudo systemctl restart moonraker klipper
+  ```
 
-```bash
-# First installation from a checked-out repository
-bash "Voron 5 Tool/config/scripts/install.sh"
-
-# Update an existing printer checkout
-cd ~/printer_data/config
-bash scripts/update.sh
-```
-
-If the script warns that KTC readonly files are not installer-managed symlinks,
-run the official KTC-Easy installer during a supervised maintenance window:
-
-```bash
-bash ~/klipper-toolchanger-easy/install.sh
-```
-
-Do not copy or edit files in `toolchanger/readonly-configs` to silence the
-warning. User-owned compatibility guards keep the current machine safe until
-the official installer can restore those links.
-
-## Safe validation order
-
-1. Confirm Klipper is `ready`, print state is `standby`, heaters are off, and no
-   tool is active.
-2. Parse/restart Klipper without homing or moving.
-3. Run `CALIBRATION_STATUS` and `CHECK_OFFSETS` (read-only).
-4. Test homing and one tool pickup/dropoff under direct supervision.
-5. Test Cartographer Touch/QGL and a small calibration print.
-6. Commission Tool Vision only through the separate staged plan.
-
-Official references used for the current logic:
-
-- [Klipper configuration reference](https://www.klipper3d.org/Config_Reference.html)
-- [KTC-Easy](https://github.com/jwellman80/klipper-toolchanger-easy)
-- [Cartographer Klipper setup](https://docs.cartographer3d.com/cartographer-probe/installation-and-setup/software-configuration/klipper-setup)
-- [crowsnest camera configuration](https://github.com/mainsail-crew/gb-crowsnest/blob/main/configuration/cam-section.md)
-- [tool_crash](https://github.com/cekim-git/tool_crash)
+* **Pull & Apply Updates from GitHub:**
+  ```bash
+  cd ~/printer_data/config && bash scripts/update.sh
+  sudo systemctl restart moonraker klipper
+  ```
+  *(Automatically creates a timestamped backup under `~/printer_data/config_backups/` before pulling changes).*

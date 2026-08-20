@@ -1,129 +1,101 @@
-# Production configuration payload
+# Config — Voron 2.4 StealthChanger (5-Tool)
 
-This directory is deployed to `~/printer_data/config` for the Voron 2.4 350
-five-tool printer. Values describe the real machine; templates for other
-hardware belong in the independent Tool Vision project, not in this payload.
+This directory is the **active Klipper configuration payload**. Its contents are deployed directly to `~/printer_data/config` on the printer via `scripts/install.sh` and `scripts/update.sh`.
 
-## Include order
+> [!NOTE]
+> When deployed via `install.sh` or `update.sh`, markdown files (including this `README.md`) are automatically excluded to keep Klipper's configuration environment clean.
 
-`printer.cfg` loads configuration in this order:
+---
 
-1. `mainsail.cfg`.
-2. KTC-Easy `toolchanger/readonly-configs/toolchanger-include.cfg`.
-3. `Printer-Setup/crash_detection_override.cfg`.
-4. Calibration and installed hardware modules.
-5. Probe, fan/LED, input-shaper, cleaning, prime, and print macros.
-6. `Printer-Setup/tool_crash_cartographer.cfg` after all tool sections.
+## 📂 Directory Structure
 
-The Tool Vision include is commented. It must not be enabled while `[axiscope]`
-is active.
+```
+config/
+├── printer.cfg                   ← Main entry point (includes sub-configs, kinematics, SAVE_CONFIG block)
+├── KlipperScreen.conf            ← KlipperScreen settings (language: vi, screen blanking)
+├── moonraker.conf                ← Moonraker API server & update manager config
+├── crowsnest.conf                ← Camera streaming config (WebRTC)
+├── mainsail.cfg                  ← Mainsail web interface macros
+│
+├── Printer-Setup/                ← Hardware, probe, fans, input shaper & macros
+│   ├── hardware.cfg              ← MCU definitions (Manta M8P V2 + Cartographer), X/Y/Z steppers, bed heater, chamber sensor
+│   ├── probe-mesh.cfg            ← Cartographer V3 touch/scan probe parameters, adaptive bed mesh (55×55)
+│   ├── calibration.cfg           ← Thermal calibration parameters, [axiscope] switch calib (pin: ^PF2)
+│   ├── fans-leds.cfg             ← Enclosure/CM4 fans, toolhead NeoPixels, LED status macros
+│   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
+│   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
+│   ├── prime-lines.cfg           ← Per-tool prime line macros (T0–T4)
+│   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, Filament Dryer suite & presets
+│   ├── crash_detection_override.cfg ← Tool crash detection macro overrides
+│   └── tool_crash_cartographer.cfg  ← Cartographer-assisted tool crash protection
+│
+├── toolchanger/                  ← StealthChanger KTC-Easy config & tool definitions
+│   ├── toolchanger-config.cfg    ← StealthChanger motion paths, switch position, toolchanger logic
+│   ├── tools/
+│   │   ├── T0.cfg                ← EBB36 V1.2 (EBB0), extruder, fans, dock coords, input shaper
+│   │   ├── T1.cfg                ← EBB36 V1.2 (EBB1)
+│   │   ├── T2.cfg                ← EBB36 V1.2 (EBB2)
+│   │   ├── T3.cfg                ← EBB36 V1.2 (EBB3)
+│   │   └── T4.cfg                ← EBB36 V1.2 (EBB4)
+│   └── readonly-configs/         ← Auto-managed by klipper-toolchanger-easy (DO NOT EDIT)
+│
+└── scripts/                      ← Deployment and maintenance scripts
+    ├── install.sh                ← First-time install script (excludes *.md)
+    ├── update.sh                 ← Pull & apply updates (auto-backup & excludes *.md)
+    └── cleanup-voron.sh          ← Clean up legacy backup directories
+```
 
-## Maintenance comments
+---
 
-Configuration comments are intentionally kept beside the sections they govern.
-They identify measured values, ownership, safe adjustment points, and motion
-preconditions. Historical trial values and old `BUG/FIX` narratives are kept in
-the project journal or backups, not beside production numbers where they can be
-mistaken for valid alternatives.
+## 🛠️ Hardware Specification & Pinout Reference
 
-## Ownership boundaries
+| Component | Specification | Interface / Pin Assignment |
+| :--- | :--- | :--- |
+| **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
+| **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
+| **Z Homing & Probe** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
+| **Z-Offset Sensor** | Microswitch / Axiscope Z-Switch | Manta M8P `PF2` (GND + `^PF2`) at $X=68.0, Y=-10.0, Z=7.0$ |
+| **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
+| **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
+| **Bed Heater & SSR** | AC Silicone 1000W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
+| **Under-Bed Fan** | Chamber Circulation Fan (`bed_fan`) | Manta M8P `PF8` (Fan3) |
+| **Chamber Lighting** | 40× WS2812B Neopixel Strip | Manta M8P `PD15` (GRB order) |
+| **X / Y Steppers** | 0.9° NEMA17 | `stepper_x` (PF0 endstop), `stepper_y` (PF1 endstop, `position_min: -10`) |
+| **Z Steppers (4×)** | CoreXY Z Drive (80:16 ratio) | `stepper_z` (PG9), `stepper_z1` (PB4), `stepper_z2` (PG13), `stepper_z3` (PB8) |
 
-| Path | Owner | Rule |
-|---|---|---|
-| `Printer-Setup/*.cfg` | This repository | Back up, review, deploy |
-| `toolchanger/tools/T0.cfg` ... `T4.cfg` | This repository | Preserve measured pins/docks |
-| `toolchanger/toolchanger-config.cfg` | This repository | User overrides only |
-| `toolchanger/readonly-configs/` | KTC-Easy installer | Never edit or overwrite |
-| `Tool-Vision/` on the Pi | Tool Vision installer/user | Preserved by deploy scripts |
-| `printer.cfg` SAVE_CONFIG | Klipper | Preserve calibrated values |
+---
 
-The install/update scripts exclude `readonly-configs/` because current KTC-Easy
-uses installer-managed links. A warning means the official KTC installer must
-repair those links; copying tracked snapshots over them is not a repair.
+## 🧼 Nozzle Cleaner Macro Parameters (`nozzle-clean.cfg`)
 
-Five tracked readonly files match KTC-Easy v258. The tracked `homing.cfg` is an
-older snapshot; user-owned no-op overrides reproduce the current fixed-shuttle
-behavior without editing installer-owned content. Run the official KTC installer
-when interactive SSH is available so all readonly files become current symlinks.
-
-## Measured hardware
-
-| Component | Production configuration |
-|---|---|
-| Manta M8P V2 MCU | CAN `19b203d75137` |
-| Cartographer V3 | CAN `da13d909ce34`, Touch threshold 1819 |
-| Toolheads | EBB0..EBB4 UUIDs in `toolchanger/tools/T*.cfg` |
-| X/Y limits | X `0..348`, Y `-10..336` |
-| Bed | Heater `PA1`, MGB18 thermistor `PB0`, max 120 C |
-| Chamber | Generic 3950 NTC `PB1` |
-| Calibration switch | `^PF2`, measured X=68, Y=-10, Z=7 |
-| Cartographer reference | Nozzle position `174,168` |
-| Nozzle cleaner | Bucket X=320/Y=-8; brush X=277..312 near Y=-8 |
-
-Klipper has no native `sensor_type: DHT22`; any future humidity sensor needs a
-separately installed integration. Dryer macros only display humidity when an
-existing runtime object actually exposes a `.humidity` field.
-
-## Calibration backend
-
-`Printer-Setup/calibration.cfg` currently enables Axiscope as a temporary
-fallback. Tool Vision is staged, and legacy `tools_calibrate` is disabled.
-The macros `CALIBRATE_ALL_OFFSETS`, `CALIBRATE_MOVE_OVER_PROBE`, and
-`CALIBRATE_NOZZLE_PROBE_OFFSET` intentionally reject execution while the legacy
-backend is absent instead of accessing undefined Klipper objects.
-
-Read-only checks:
+- **Purge Bucket:** $X = 320.0$, $Y = -8.0$
+- **Silicone Brush Range:** $X: 277.0 \rightarrow 312.0$, $Y: -7.0 \rightarrow -10.0$ (Center $Y = -8.0$)
+- **Cleaning Contact Height:** $Z = 1.2\text{mm}$
+- **Circle Arc Radius (`circle_r`):** $1.5\text{mm}$ (Min Y = $-9.5\text{mm}$, safely above `position_min: -10`)
 
 ```gcode
-CALIBRATION_STATUS
-CHECK_OFFSETS
+CLEAN_NOZZLE                             ; Wipe nozzle at 150°C (default in PRINT_START)
+PURGE_AND_CLEAN PURGE=15 PURGE_TEMP=240   ; Purge 15mm @ 240°C into bucket -> cool down -> wipe
 ```
 
-For Tool Vision, users manually measure both station coordinate sets and store
-them in `Tool-Vision/tool_vision.cfg`. Camera coordinates must be measured after
-placing the MF-500 on its keyed magnetic bed mount; switch coordinates are
-measured by manually jogging T0 to the switch center/contact. No value is
-derived from camera resolution, and native frames are not forced to 640x480.
+---
 
-## Crash detection
+## 🚀 Deployment & Updates
 
-- `tool_crash_cartographer.cfg` configures `tool_crash` and its safe pause.
-- `crash_detection_override.cfg` routes KTC-Easy start/stop calls to that plugin.
-- The detector reads each tool's `detection_pin`, not Cartographer.
-- A detected failure during a virtual-SD print pauses without an XYZ park move.
-- Do not remove the override merely because the detector file exists; they have
-  different responsibilities.
-
-## Deploy
-
+### First-Time Install
 ```bash
-bash scripts/update.sh
+cd /tmp && git clone git@github.com:IDcrazy123/All-Config-Voron.git
+cd All-Config-Voron && bash "Voron 5 Tool/config/scripts/install.sh"
+sudo systemctl restart moonraker klipper
 ```
 
-`update.sh` downloads the GitHub `main` archive into a temporary directory,
-calls the backup-first installer, and removes the archive. It does not leave an
-`All-Config-Voron` clone on the Pi.
+### Pull & Apply Updates
+```bash
+cd ~/printer_data/config && bash scripts/update.sh
+sudo systemctl restart moonraker klipper
+```
 
-Protected from rsync deletion/copy:
+---
 
-- `.codex-backups/`
-- `.moonraker.conf.bkp`
-- `Tool-Vision/`
-- `Nhat-ky-chinh-sua/`
-- `toolchanger/readonly-configs/`
-- `README.md` and all `*.md`
-
-After deployment, restart only when the machine is idle and heaters are off.
-Parse success is not permission to home, probe, or toolchange unattended.
-
-## Official references
-
-- Klipper configuration: <https://www.klipper3d.org/Config_Reference.html>
-- Klipper bed mesh: <https://www.klipper3d.org/Bed_Mesh.html>
-- Moonraker configuration: <https://moonraker.readthedocs.io/en/latest/configuration/>
-- Mainsail client macros: <https://github.com/mainsail-crew/mainsail-config>
-- crowsnest camera configuration: <https://crowsnest.mainsail.xyz/configuration/cam-section>
-- KlipperScreen configuration: <https://github.com/KlipperScreen/KlipperScreen/blob/master/docs/Configuration.md>
-- Cartographer configuration: <https://docs.cartographer3d.com/cartographer-probe/reference/configuration-reference>
-- KTC-Easy: <https://github.com/jwellman80/klipper-toolchanger-easy>
-- tool_crash: <https://github.com/cekim-git/tool_crash>
+## ⚠️ Dev Guidelines
+- Always create a backup in `extras/backups/pre-[task]-[YYYYMMDD]-[HHmmss]/` before modifying configuration files.
+- Do **not** edit files inside `toolchanger/readonly-configs/` — they are managed by the `klipper-toolchanger-easy` plugin.

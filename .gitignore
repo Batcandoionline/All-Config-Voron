@@ -12,7 +12,3 @@ wpa_supplicant.conf
 # Python build/test artifacts
 __pycache__/
 *.py[cod]
-
-# Legacy reference checkouts moved to the independent Tool-Vision repository.
-/extras/Axiscope-reference/
-/extras/kTAMV/

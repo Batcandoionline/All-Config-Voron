@@ -622,3 +622,64 @@ khi homing Z với tool đang active.
   `Rewrite production configuration and deployment flow`.
 - Đã push thành công nhánh `main` lên
   `git@github.com:IDcrazy123/All-Config-Voron.git`.
+
+## 9. Hoàn nguyên về đúng mốc trước yêu cầu lúc 18:13
+
+### Mục tiêu
+- Đưa All-Config, Tool Vision độc lập và cấu hình live trên Pi về trạng thái
+  ngay trước tin nhắn “viết lại dự án để 5tool hoạt động...” lúc 18:13.
+- Giữ toàn bộ backup và lịch sử Git để mọi bước rollback vẫn có thể đảo ngược.
+
+### Xác định đúng mốc từ lịch sử chat và Git
+- Commit cuối trước yêu cầu là `2f04bfa`, thời gian
+  `2026-08-20 18:12:28 +07:00`.
+- `e39b26f` có thời gian `18:57:47` và là kết quả của chính yêu cầu trong ảnh;
+  `8b5a170` và `9fa38a8` là hai lượt tiếp theo.
+- Backup `pre-five-tool-rewrite-20260820-181903` ghi rõ baseline `2f04bfa`.
+- 33/33 file `pc-config/` khớp Git blob của `2f04bfa`; 21/21 file Tool Vision
+  trong backup khớp commit `634e8ae` lúc 17:58:46.
+
+### Sao lưu trước rollback
+- Backup hiện trạng sau các lượt tái cấu trúc:
+  `extras/backups/pre-rollback-full-config-rewrite-20260820-195913/`.
+- Nội dung gồm 33 file config PC, 34 file live, các tài liệu repo bị ảnh hưởng
+  và source Tool Vision tại commit `16ff1b2`.
+- Máy in giữ thêm 34/34 file tại
+  `config/.codex-backups/pre-rollback-full-config-rewrite-20260820-195913/`.
+- `.venv` và hai checkout Axiscope/kTAMV trong snapshot Tool Vision chỉ được
+  giữ local; Git backup lưu source và commit ghim, không đẩy 230 MB môi trường
+  dựng lại được lên GitHub.
+
+### Khôi phục All-Config
+- Toàn bộ 33 file trong `config/` khớp byte với cây Git `2f04bfa`.
+- Khôi phục root README, `.gitignore` và hướng dẫn StealthChanger về bản 18:12.
+- Loại hai tài liệu được tạo sau yêu cầu: `hardware-invariants.md` và
+  `toolvision-integration-plan.md`.
+- Khôi phục hai gitlink tham khảo về đúng commit:
+  Axiscope `9a1a9ef`, kTAMV `72421f2`.
+- Giữ `.gitattributes` chỉ để các backup timestamped không bị `core.autocrlf`
+  thay đổi byte; giữ toàn bộ backup, snapshot zip và nhật ký đã có.
+
+### Khôi phục Tool Vision độc lập
+- Khôi phục 9 file thay đổi bởi commit `16ff1b2` về commit `634e8ae`.
+- So sánh toàn bộ tracked tree: khớp `634e8ae`.
+- Python compile đạt; `unittest discover` đạt 23/23 test.
+- Commit rollback mới `cad935b` đã push lên `IDcrazy123/Tool-Vision`.
+
+### Khôi phục và kiểm tra máy in
+- Khôi phục bản live `pre-five-tool-rewrite-20260820-181903/live-config/`.
+- Lượt đầu đưa 24 file về `e39b26f`; sau khi đối chiếu timestamp phát hiện mốc
+  đó vẫn nằm sau yêu cầu, tiếp tục khôi phục 15 file của lớp `2f04bfa`.
+- Kiểm tra cuối 34/34 file live khớp SHA-256 với backup mục tiêu; không sửa 6
+  file KTC readonly vì chúng vốn không thay đổi.
+- Chạy `FIRMWARE_RESTART`; không home, probe, QGL, pickup/dropoff, gia nhiệt
+  hoặc chuyển động.
+- Gọi `INITIALIZE_TOOLCHANGER` không có `RECOVER` để đồng bộ cảm biến T0; mã KTC
+  xác nhận đường lệnh này không thực hiện chuyển động.
+- Trạng thái cuối: Klipper `ready`, Moonraker 0 warning/0 failed component,
+  print `standby`, pause `false`, active T0 = detected T0 và 6 heater target 0.
+
+### Kết quả
+- Production trên PC và Pi đã trở về đúng mốc trước 18:13. Tool Vision độc lập
+  cũng trở về bản trước yêu cầu; các backup và lịch sử sau mốc được bảo toàn để
+  truy vết hoặc phục hồi lại nếu cần.
