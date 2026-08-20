@@ -1,231 +1,273 @@
-# Tool Vision
+# Tool Vision 2
 
-Unified XYZ tool alignment system for Klipper multi-tool 3D printers.
-Rebuilt from [kTAMV](https://github.com/TypQxQ/kTAMV) (XY camera vision) and [Axiscope](https://github.com/nic335/Axiscope) (Z probe) into a single, self-contained module.
+Tool Vision measures relative **X, Y, and Z tool offsets** on Klipper
+toolchanger printers by combining an upward-facing nozzle camera with a fixed
+microswitch.
+
+The project keeps the strongest ideas from kTAMV and Axiscope while removing
+their hardware assumptions:
+
+- kTAMV-style multi-strategy image processing, multi-frame stability checks,
+  radial pixel-to-motion calibration, and iterative nozzle centering.
+- Axiscope-style `PrinterProbeMultiAxis` switch probing, dynamic tool lists,
+  reference-tool deltas, and configurable G-code workflow hooks.
+- Native camera frames: no 640x480 constant and no forced resize.
+- Resolution-relative target, ROI, and blob-area settings.
+- Safe station travel: Z is lifted before every XY move to the camera or switch.
+- Report-only output by default; production tool configs are never rewritten.
+
+## Scope and safety
+
+Tool Vision is a measurement system, not a first-layer compensation model.
+A switch can produce repeatable mechanical deltas that still differ from the
+best printing offsets because of switch force, nozzle temperature, bed
+temperature, frame expansion, and measurement location. Validate every result
+with a controlled first-layer print before applying it.
+
+This repository's production printer still uses `[axiscope]`. Do not enable
+Tool Vision until the camera station coordinates are measured and Axiscope is
+disabled.
+
+Never configure more than one of these sections at the same time:
+
+```ini
+[tool_vision]
+[axiscope]
+[tools_calibrate]
+```
+
+All three can allocate the same `probe_multi_axis` resource.
 
 ## Architecture
 
-```
+```text
 Tool-Vision/
-├── klippy/extras/
-│   └── tool_vision.py      # Klipper extension (XY + Z + combined commands)
+├── klippy/extras/tool_vision.py   Klipper motion and XYZ orchestration
 ├── server/
-│   ├── vision_server.py     # HTTP server (Flask + Waitress)
-│   ├── vision_dm.py         # Detection Manager (5-combo blob detection)
-│   ├── vision_io.py         # Camera I/O (MJPEG stream reader)
-│   └── tool_vision.service  # Systemd service
-├── tool_vision.cfg          # Klipper config
-├── install.sh               # One-command installation
-└── README.md
+│   ├── app.py                     Versioned HTTP API and single-job worker
+│   ├── camera.py                  HTTP/OpenCV native-frame acquisition
+│   ├── detection.py               Multi-strategy stable nozzle detection
+│   ├── transform.py               Affine/quadratic pixel-motion fit
+│   ├── requirements.txt           Host-only Python dependencies
+│   └── tool-vision.service.in     Installer-populated systemd template
+├── tests/                         Host-side deterministic tests
+├── tool_vision.cfg                Portable Klipper configuration example
+├── install.sh                     User/path-aware installer
+└── uninstall.sh                   Service and symlink removal
 ```
 
-## Features
+OpenCV and NumPy run in an isolated host service. Klipper uses only Python's
+standard library to exchange short JSON messages, so the Klipper environment
+does not need computer-vision packages.
 
-### From kTAMV
-- 10-point radial camera calibration (mm/pixel)
-- Camera-to-space transformation matrix (polynomial least-squares)
-- Iterative nozzle centering with wiggle fallback
-- 5-combo nozzle detection (Standard / Relaxed / Super Relaxed × 3 preprocessors)
-- Async request/result pattern for detection
-- Camera preview stream
-- Cloud frame upload (optional)
+## Camera compatibility
 
-### From Axiscope
-- Z switch probing via `tools_calibrate.PrinterProbeMultiAxis`
-- Automatic Z offset calculation for all tools
-- Config file offset saving (reads/writes `.cfg` or `.offsets` files)
-- Custom GCode template support (`start_gcode`, `before_pickup_gcode`, etc.)
-- Dynamic endstop position setting
+`camera_source` supports:
 
-### New (Combined)
-- `TV_CALIBRATE_ALL` — Full XYZ calibration in one command
-- `TV_CALIBRATE_ALL_XY` — XY-only calibration for all tools
-- Unified status reporting
-- Conflict check with `[axiscope]` section
-- All speeds in mm/s with internal conversion
+- Crowsnest MJPEG stream or snapshot URLs.
+- Other HTTP JPEG/MJPEG camera servers.
+- RTSP streams through OpenCV.
+- V4L2 paths such as `/dev/video0`.
+- OpenCV numeric camera indexes such as `0`.
 
-## GCode Commands
+With `camera_mode: auto`, HTTP/HTTPS uses the HTTP JPEG reader and every other
+source uses OpenCV. `camera_width`, `camera_height`, and `camera_fps` default to
+`0`, which means the device/native default. They are optional requests for
+direct OpenCV devices; they are not processing dimensions.
 
-| Command | Description | Origin |
-|---------|-------------|--------|
-| `TV_CALIB_CAMERA` | Calibrate camera mm/pixel | kTAMV |
-| `TV_FIND_NOZZLE_CENTER` | Center nozzle in camera view | kTAMV |
-| `TV_SET_ORIGIN` | Save position as reference origin | kTAMV |
-| `TV_GET_OFFSET` | Get XY offset from origin | kTAMV |
-| `TV_SIMPLE_NOZZLE_POSITION` | Check if nozzle is visible | kTAMV |
-| `TV_SEND_SERVER_CFG` | Send camera config to server | kTAMV |
-| `TV_START_PREVIEW` | Start camera preview | kTAMV |
-| `TV_STOP_PREVIEW` | Stop camera preview | kTAMV |
-| `TV_MOVE_TO_ZSWITCH` | Move above Z switch | Axiscope |
-| `TV_PROBE_ZSWITCH` | Probe Z switch | Axiscope |
-| `TV_SET_ENDSTOP_POSITION` | Set endstop position | Axiscope |
-| `TV_CALIBRATE_ALL_Z` | Z calibration for all tools | Axiscope |
-| `TV_SAVE_TOOL_OFFSET` | Save offsets to config file | Axiscope |
-| `TV_SAVE_MULTIPLE_TOOL_OFFSETS` | Save multiple offsets | Axiscope |
-| `TV_CALIBRATE_ALL_XY` | XY calibration for all tools | **New** |
-| `TV_CALIBRATE_ALL` | Full XYZ calibration | **New** |
+After optional rotation and flipping, the detector reads the actual
+`frame.shape`. The model stores that frame size and forces recalibration if it
+changes.
 
-## Usage Guide
+## Detection model
 
-### Step 0: Hardware Setup
+Each frame is processed through dark/light adaptive and Otsu masks. Strict and
+relaxed contour profiles filter candidates by:
 
-- ✅ Mount **Z microswitch** at a fixed position on the frame
-- ✅ Mount **USB camera** facing up (nozzle view from below)
-- ✅ Verify camera stream works via Crowsnest
-- ✅ Home printer (G28)
+- area as a ratio of the full native frame;
+- circularity;
+- convexity;
+- inertia/aspect ratio;
+- distance to the configured target.
 
-### Step 1: Configuration
+The detector accepts a position only after `detection_stable_frames`
+consecutive samples cluster within the configured tolerance. Results include
+the native frame size, confidence, chosen strategy, diameter, and X/Y sample
+standard deviation.
 
-Edit `tool_vision.cfg` with your actual coordinates:
+Important tuning groups in `tool_vision.cfg`:
 
-```ini
-[tool_vision]
-# Z Switch — move T0 directly above the switch, record XYZ
-zswitch_x_pos: 68.0      # X of switch
-zswitch_y_pos: -10.0      # Y of switch
-zswitch_z_pos: 7.0        # Z safe height (a few mm above switch)
+| Goal | Parameters |
+|---|---|
+| Crop unrelated objects | `camera_roi_*` ratios |
+| Move the optical target | `camera_target_*_ratio` |
+| Detect dark or bright openings | `detector_polarity` |
+| Globally relax/tighten | `detector_sensitivity` |
+| Match nozzle apparent size | `detector_min/max_area_ratio` |
+| Reject irregular blobs | circularity/convexity/inertia |
+| Reject camera jitter | stable frames and stability tolerance |
+| Compensate lighting | gamma, adaptive C, blur size |
 
-# Camera URL — from Crowsnest config
-nozzle_cam_url: http://127.0.0.1:8080/?action=stream
-server_url: http://127.0.0.1:8085
+Change one group at a time and use `TV_CAMERA_CHECK` plus
+`/api/v1/frame` to evaluate the result.
 
-# Speeds (all in mm/s)
-move_speed: 50            # Camera calibration moves
-travel_speed: 100         # XY travel to Z switch
-z_move_speed: 10          # Z probing
+## Camera calibration model
+
+The reference tool moves through a configurable radial pattern. Each sample
+contains a measured machine delta and observed pixel delta. The service fits:
+
+```text
+machine_delta = transform(pixel_delta)
 ```
 
-### Step 2: Send Camera Config
+`affine` is recommended. `quadratic` is available for visibly distorted optics
+and requires at least eight useful points. Calibration is rejected when the
+design matrix is rank-deficient, ill-conditioned, or exceeds
+`camera_max_rms_error`.
 
-Run once after each Klipper startup:
-
-```
-TV_SEND_SERVER_CFG
-```
-
-### Step 3: Preview Camera (optional)
-
-```
-TV_START_PREVIEW
-```
-→ Open browser: `http://[printer-IP]:8085/image`
-→ Circle around nozzle = camera working
-
-```
-TV_STOP_PREVIEW
-```
-
-### Step 4: Run Calibration
-
-#### Scenario A: Full XYZ for all tools (recommended)
-
-```
-TV_CALIBRATE_ALL
-```
-
-The system will automatically:
-1. T0 → Calibrate camera → Probe Z → Center XY → Set as reference
-2. T1 → Probe Z → Center XY → Calculate offset vs T0
-3. T2 → ... (repeat for all tools)
-4. Return to T0 → Print summary
-
-#### Scenario B: Z-only for all tools
-
-```
-TV_CALIBRATE_ALL_Z
-```
-
-#### Scenario C: XY-only for all tools
-
-```
-TV_CALIBRATE_ALL_XY
-```
-
-#### Scenario D: Manual step-by-step
-
-```gcode
-TV_SEND_SERVER_CFG
-T0
-G0 X... Y... F3000        ; Move nozzle above camera
-TV_CALIB_CAMERA            ; Calibrate mm/pixel
-TV_FIND_NOZZLE_CENTER      ; Center T0 nozzle
-TV_SET_ORIGIN              ; Save T0 as reference
-
-T1
-TV_FIND_NOZZLE_CENTER      ; Center T1 nozzle
-TV_GET_OFFSET              ; -> "Offset from origin: X:0.123 Y:-0.045"
-
-TV_MOVE_TO_ZSWITCH
-TV_PROBE_ZSWITCH SAMPLES=10
-```
-
-### Step 5: Save Results
-
-```gcode
-TV_SAVE_TOOL_OFFSET TOOL_NAME="tool T1" OFFSETS="[0.123, -0.045, 0.031]"
-
-TV_SAVE_MULTIPLE_TOOL_OFFSETS TOOLS="['tool T1', 'tool T2']" OFFSETS="[[0.12, -0.04, 0.03], [0.05, 0.02, -0.01]]"
-```
-
-### Step 6: Dynamic Z Switch Position (optional)
-
-```gcode
-TV_SET_ENDSTOP_POSITION X=68.0 Y=-10.0 Z=7.0
-TV_SET_ENDSTOP_POSITION CURRENT=1       ; Use current toolhead position
-```
-
-### Step 7: Custom GCode Templates (advanced)
-
-```ini
-[tool_vision]
-start_gcode:
-    G28
-    G0 Z20 F600
-
-before_pickup_gcode:
-    G0 Z30 F600
-
-after_pickup_gcode:
-    G4 P500
-
-finish_gcode:
-    G0 X0 Y0 F3000
-    M118 Tool Vision: Calibration done!
-```
-
----
+Unlike the legacy implementation, there is no hard-coded damping constant in
+the fitted matrix. Damping and maximum step size are explicit centering safety
+parameters in the Klipper config.
 
 ## Installation
 
+Run on the Klipper host from this directory:
+
 ```bash
-cd ~/printer_data/config/Voron\ 5\ Tool/extras/Tool-Vision
-chmod +x install.sh
+chmod +x install.sh uninstall.sh
 ./install.sh
 ```
 
-Then add to `printer.cfg`:
-```ini
-[include Voron 5 Tool/extras/Tool-Vision/tool_vision.cfg]
+The installer discovers the actual login user, home directory, project path,
+Klipper path, and virtual-environment path. Override when needed:
+
+```bash
+KLIPPER_DIR=/opt/klipper \
+TOOL_VISION_VENV=/opt/tool-vision-env \
+TOOL_VISION_HOST=127.0.0.1 \
+TOOL_VISION_PORT=8085 \
+./install.sh
 ```
 
-> **Important:** Remove `[axiscope]` section from your config if present.
-> Tool Vision replaces Axiscope's functionality entirely.
+It installs an isolated venv, links the Klipper extension, generates a systemd
+unit from the real paths, replaces the legacy `tool_vision.service`, and
+restarts Klipper. It does **not** edit `printer.cfg`.
 
-## Troubleshooting
+## Required hardware configuration
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| "Nozzle not found" | Camera can't see nozzle | Check lighting, clean nozzle, run `TV_START_PREVIEW` |
-| "Camera URL not set" | Config not sent | Run `TV_SEND_SERVER_CFG` |
-| "Camera not calibrated" | Missing mm/pixel data | Run `TV_CALIB_CAMERA` first |
-| "Must home first" | Axes not homed | Run `G28` |
-| "More than 25% failed" | Too many calibration failures | Clean nozzle, check lighting |
-| "Offset outside frame" | mm/pixel value wrong | Re-run `TV_CALIB_CAMERA` |
-| Server not responding | Service not running | `sudo systemctl restart tool_vision` |
-| "[axiscope] conflict" | Both sections active | Remove `[axiscope]` from config |
+1. Mount and configure an upward-facing nozzle camera.
+2. With T0 active, manually place the nozzle at the intended optical focus.
+3. Record `camera_x_pos`, `camera_y_pos`, and `camera_z_pos`.
+4. Choose `camera_safe_z` high enough to clear all stationary hardware before
+   XY station travel.
+5. Measure the Z-switch X/Y/contact Z and choose `zswitch_safe_z`.
+6. Verify switch pin polarity with a read-only endstop query before probing.
+7. Set all motion speeds conservatively for the target machine.
+
+Camera station values are intentionally commented in the example config. Tool
+Vision refuses movement until all four values exist.
+
+## Enable on Klipper
+
+First disable the production `[axiscope]` section and keep
+`[tools_calibrate]` disabled. Then include the configured file from a location
+deployed on the printer:
+
+```ini
+[include path/to/tool_vision.cfg]
+```
+
+Run `FIRMWARE_RESTART` and verify:
+
+```gcode
+TV_STATUS
+TV_SERVER_CONFIGURE
+TV_CAMERA_CHECK
+```
+
+The processed frame is available locally at:
+
+```text
+http://127.0.0.1:8085/api/v1/frame
+```
+
+Bind the service to `0.0.0.0` only when LAN access is required and protected by
+the local network/firewall.
+
+## Progressive commissioning
+
+Do not begin with a full five-tool run. Commission in this order:
+
+1. `TV_CAMERA_CHECK` while the clean T0 nozzle is manually visible.
+2. `TV_MOVE_TO_CAMERA` at low speeds; confirm safe-Z-before-XY motion.
+3. `TV_CALIBRATE_CAMERA TOOL=0`; inspect RMS and condition values.
+4. `TV_MEASURE_XY TOOL=0 REFERENCE=1` twice; confirm repeatability.
+5. `TV_MOVE_TO_ZSWITCH`; confirm approach height without probing.
+6. `TV_MEASURE_Z TOOL=0 REFERENCE=1`; repeat and compare trigger Z.
+7. Measure one non-reference tool.
+8. Only then run `TV_CALIBRATE_ALL MODE=XYZ`.
+
+## G-code commands
+
+| Command | Purpose |
+|---|---|
+| `TV_STATUS` | Klipper/server status and last error |
+| `TV_SERVER_CONFIGURE` | Send current `.cfg` camera/detector values |
+| `TV_CAMERA_CHECK` | Detect at the current position without motion |
+| `TV_MOVE_TO_CAMERA` | Safe move to the camera station |
+| `TV_MOVE_TO_ZSWITCH` | Safe move to the switch approach point |
+| `TV_CALIBRATE_CAMERA [TOOL=0]` | Fit pixel-to-machine movement |
+| `TV_MEASURE_XY TOOL=n [REFERENCE=1]` | Center and measure XY |
+| `TV_MEASURE_Z TOOL=n [REFERENCE=1]` | Probe and measure Z |
+| `TV_CALIBRATE_ALL MODE=XYZ` | Measure all configured tools |
+| `TV_REPORT` | Reprint the current report |
+
+`MODE` may be `XYZ`, `XY`, or `Z`. Tool discovery uses
+`printer.toolchanger.tool_numbers` unless `tool_numbers` is explicitly set.
+
+## Results and applying offsets
+
+Results are written atomically to `result_file`, separate from all Klipper
+configuration files. The console prints measured values and suggested
+`SET_TOOL_PARAMETER` commands. Tool Vision never executes those commands and
+never calls `SAVE_TOOL_PARAMETER` or `SAVE_CONFIG`.
+
+Before applying anything:
+
+- repeat the measurement at least three times;
+- compare spread and confidence;
+- keep the production offset backup;
+- validate XY with a multi-tool alignment print;
+- validate Z with a controlled first-layer test at real print temperatures.
+
+## Service diagnostics
+
+```bash
+systemctl status tool-vision.service
+journalctl -u tool-vision.service -n 100 --no-pager
+curl http://127.0.0.1:8085/api/v1/health
+```
+
+The JSON health response reports whether the server is configured, whether a
+job is active, the last native frame size, and transform quality.
+
+## Uninstall
+
+```bash
+./uninstall.sh
+```
+
+This removes the service and Klipper symlink. It preserves the project, venv,
+measurement results, and any installer-created backup. Use
+`./uninstall.sh --purge-venv` only when the isolated environment should also be
+removed.
 
 ## Credits
 
-This project is a clean-room rewrite combining the best of:
-- **kTAMV** by TypQxQ — XY nozzle alignment via camera vision
-- **Axiscope** by nic335 — Z offset calibration via microswitch probe
+- [kTAMV](https://github.com/TypQxQ/kTAMV) by TypQxQ for the original camera
+  calibration, multi-strategy detection, stability, and centering concepts.
+- [Axiscope](https://github.com/nic335/Axiscope) / N3MI-DG for the original
+  camera alignment workflow and multi-axis Z-switch integration.
+
+Tool Vision 2 is a new implementation adapted for configurable hardware,
+native camera resolutions, explicit quality metrics, and safer Klipper motion.

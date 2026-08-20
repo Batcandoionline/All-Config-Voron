@@ -1,398 +1,25 @@
-# Tool Vision - Klipper Extension for XYZ Tool Alignment
-#
-# Written from scratch based on:
-#   - kTAMV (ktamv.py + ktamv_utl.py): XY nozzle alignment via camera vision
-#   - Axiscope (axiscope.py): Z offset calibration via microswitch probe
-#
-# All GCode commands use TV_ prefix for namespace clarity.
-# All speeds in config use mm/s; converted to mm/min internally for G1 F.
+"""Portable XYZ tool-offset measurement for Klipper toolchangers.
 
-import os
-import ast
+The host service owns camera I/O, OpenCV detection, and NumPy fitting. This
+Klipper extension owns motion, switch probing, tool selection, and reporting.
+No production tool offset is modified automatically.
+"""
+
 import json
+import math
+import os
 import time
-import logging
-from math import sqrt
-from statistics import mean, stdev
-
-import typing
 import urllib.error
-import urllib.parse
 import urllib.request
-from email.message import Message
 
 
-# ═══════════════════════════════════════════════════════════════
-#  EXCEPTIONS
-# ═══════════════════════════════════════════════════════════════
+class ToolVisionError(RuntimeError):
+    """User-facing Tool Vision failure."""
 
-class NozzleNotFoundException(Exception):
-    """Raised when nozzle detection fails after timeout."""
-    pass
-
-
-# ═══════════════════════════════════════════════════════════════
-#  HTTP CLIENT (from ktamv_utl.py)
-# ═══════════════════════════════════════════════════════════════
-
-class ServerResponse(typing.NamedTuple):
-    """HTTP response wrapper (from kTAMV's Server_Response)."""
-    body: str
-    headers: Message
-    status: int
-
-    def json(self) -> typing.Any:
-        try:
-            return json.loads(self.body)
-        except json.JSONDecodeError:
-            return ""
-
-
-def _http_request(url, data=None, params=None, headers=None,
-                  method="GET", timeout=2):
-    """Send an HTTP request and return ServerResponse.
-
-    From kTAMV's server_request(). Uses urllib (no external deps)
-    since this runs inside Klipper's Python environment.
-    """
-    if not url.casefold().startswith("http"):
-        raise urllib.error.URLError("URL must start with http:// or https://")
-
-    method = method.upper()
-    request_data = None
-    headers = headers or {}
-    data = data or {}
-    params = params or {}
-    headers = {"Accept": "application/json", **headers}
-
-    if method == "GET":
-        params = {**params, **data}
-        data = None
-
-    if params:
-        url += "?" + urllib.parse.urlencode(params, doseq=True, safe="/")
-
-    if data:
-        request_data = json.dumps(data).encode()
-        headers["Content-Type"] = "application/json; charset=UTF-8"
-
-    httprequest = urllib.request.Request(
-        url, data=request_data, headers=headers, method=method
-    )
-    try:
-        with urllib.request.urlopen(httprequest, timeout=timeout) as resp:
-            return ServerResponse(
-                headers=resp.headers,
-                status=resp.status,
-                body=resp.read().decode(
-                    resp.headers.get_content_charset("utf-8")
-                ),
-            )
-    except Exception as e:
-        raise e.with_traceback(e.__traceback__)
-
-
-# ═══════════════════════════════════════════════════════════════
-#  SERVER COMMUNICATION (from ktamv_utl.py)
-# ═══════════════════════════════════════════════════════════════
-
-def _send_server_command(server_url, command, **data):
-    """Send a POST command to the vision server.
-
-    From kTAMV's send_srv_command().
-    """
-    rr = _http_request(server_url + command, data=data, method="POST")
-    if rr.status != 200:
-        raise Exception("Server responded %s: %s" % (rr.status, rr.body))
-    return rr.body
-
-
-def _get_nozzle_position(server_url, reactor):
-    """Request nozzle detection and wait for result.
-
-    From kTAMV's get_nozzle_position(). Uses the async request/result
-    pattern: sends GET /getNozzlePosition, gets a request_id back,
-    then polls GET /getRequest?request_id=N until result is ready.
-
-    Args:
-        server_url: base URL of vision server
-        reactor: Klipper reactor for pausing between polls
-
-    Returns:
-        dict with keys: request_id, data, runtime, statuscode, statusmessage
-
-    Raises:
-        NozzleNotFoundException: if detection fails or times out
-    """
-    logging.debug("tool_vision: _get_nozzle_position called")
-
-    # Start detection
-    response = _http_request(
-        server_url + "/getNozzlePosition", timeout=2
-    )
-    if response.status != 200:
-        raise Exception(
-            "Server error %s: %s" % (response.status, response.body)
-        )
-
-    result = json.loads(response.body)
-    if not (result["statuscode"] == 202 or result["statuscode"] == 200):
-        raise Exception(
-            "Server error %s: %s"
-            % (result["statuscode"], result["statusmessage"])
-        )
-
-    request_id = result["request_id"]
-    start_time = time.time()
-
-    # Poll for result
-    while True:
-        response = _http_request(
-            "%s/getRequest?request_id=%s" % (server_url, request_id),
-            timeout=2,
-        )
-        if response.status != 200:
-            raise Exception(
-                "Server error %s: %s" % (response.status, response.body)
-            )
-        result = json.loads(response.body)
-
-        if result["statuscode"] == 202:
-            # Still processing
-            if time.time() - start_time >= 60:
-                raise NozzleNotFoundException(
-                    "Nozzle detection timed out after 60 seconds."
-                )
-            _ = reactor.pause(reactor.monotonic() + 0.200)
-            continue
-
-        elif result["statuscode"] == 200:
-            return result
-
-        elif result["statuscode"] == 404:
-            raise NozzleNotFoundException(
-                "Server did not find nozzle (%s: %s). "
-                "Try cleaning the nozzle or adjust Z height."
-                % (result["statuscode"], result["statusmessage"])
-            )
-        else:
-            raise Exception(
-                "Nozzle detection failed (%s: %s)"
-                % (result["statuscode"], result["statusmessage"])
-            )
-
-
-def _calculate_camera_to_space_matrix(server_url, calibration_points):
-    """Send calibration data to server to build transform matrix.
-
-    From kTAMV. The server builds a polynomial least-squares fit.
-    """
-    rr = _http_request(
-        server_url + "/calculate_camera_to_space_matrix",
-        {"calibration_points": calibration_points},
-        method="POST",
-    )
-    return rr.status == 200
-
-
-def _calculate_offset_from_matrix(server_url, _v):
-    """Ask server to calculate XY offset using transform matrix.
-
-    From kTAMV. Server applies: offset = -0.55 * transform_matrix @ _v
-    """
-    rr = _http_request(
-        server_url + "/calculate_offset_from_matrix",
-        {"_v": _v},
-        method="POST",
-    )
-    return rr.body
-
-
-# ═══════════════════════════════════════════════════════════════
-#  MATH UTILITIES (from ktamv_utl.py)
-# ═══════════════════════════════════════════════════════════════
-
-def _normalize_coords(coords, frame_width=640, frame_height=480):
-    """Normalize pixel coordinates to [-0.5, 0.5] range.
-
-    From kTAMV's normalize_coords().
-    """
-    return (coords[0] / frame_width - 0.5,
-            coords[1] / frame_height - 0.5)
-
-
-def _get_distance(x1, y1, x0, y0):
-    """Euclidean distance between two points.
-
-    From kTAMV's get_distance().
-    """
-    return round(sqrt((float(x1) - float(x0))**2
-                      + (float(y1) - float(y0))**2), 3)
-
-
-def _get_average_mpp(mpps, space_coordinates, camera_coordinates, gcmd):
-    """Calculate average mm/pixel with outlier removal.
-
-    From kTAMV's get_average_mpp(). Removes outliers in 3 passes:
-      1. Remove highest if >20% above mean
-      2. Remove lowest if >20% below mean
-      3. Remove values >2 standard deviations from mean
-      4. Remove values >25% from final mean
-
-    Returns:
-        (mpp, filtered_mpps, filtered_space, filtered_camera)
-        or None if std dev too high.
-    """
-    initial_mpps = mpps.copy()
-
-    def _stats(vals):
-        return stdev(vals), round(mean(vals), 3)
-
-    mpps_std_dev, mpp = _stats(mpps)
-
-    # Pass 1: Remove highest if >20% above mean
-    if max(mpps) > mpp + (mpp * 0.20):
-        idx = mpps.index(max(mpps))
-        mpps.pop(idx)
-        space_coordinates.pop(idx)
-        camera_coordinates.pop(idx)
-    mpps_std_dev, mpp = _stats(mpps)
-
-    # Pass 2: Remove lowest if >20% below mean
-    if min(mpps) < mpp - (mpp * 0.20):
-        idx = mpps.index(min(mpps))
-        mpps.pop(idx)
-        space_coordinates.pop(idx)
-        camera_coordinates.pop(idx)
-    mpps_std_dev, mpp = _stats(mpps)
-
-    # Pass 3: Remove >2 standard deviations
-    for i in reversed(range(len(mpps))):
-        if (mpps[i] > mpp + mpps_std_dev * 2
-                or mpps[i] < mpp - mpps_std_dev * 2):
-            mpps.pop(i)
-            space_coordinates.pop(i)
-            camera_coordinates.pop(i)
-    mpps_std_dev, mpp = _stats(mpps)
-
-    # Pass 4: Remove >25% deviation from final mean
-    for i in reversed(range(len(mpps))):
-        if mpps[i] > mpp + mpp * 0.25 or mpps[i] < mpp - mpp * 0.25:
-            mpps.pop(i)
-    mpps_std_dev, mpp = _stats(mpps)
-
-    gcmd.respond_info(
-        "Final mm/pixel: %.4f, std dev: %.1f%%, using %d of %d values"
-        % (mpp, (mpps_std_dev / mpp) * 100, len(mpps), len(initial_mpps))
-    )
-
-    if mpps_std_dev / mpp > 0.2:
-        gcmd.respond_info(
-            "Standard deviation too high (>20%%). Calibration failed."
-        )
-        return None
-
-    return mpp, mpps, space_coordinates, camera_coordinates
-
-
-# ═══════════════════════════════════════════════════════════════
-#  PRINTER MOVEMENT MANAGER (from ktamv_utl.py's ktamv_pm)
-# ═══════════════════════════════════════════════════════════════
-
-class PrinterManager:
-    """Handles toolhead movement via GCode commands.
-
-    From kTAMV's ktamv_pm class. All public methods accept speed
-    in mm/s; conversion to mm/min (G1 F parameter) is internal.
-    """
-    # Default speeds (mm/s)
-    DEFAULT_MOVE_SPEED = 50    # ~3000 mm/min (kTAMV default)
-    FINE_MOVE_SPEED = 17       # ~1000 mm/min (kTAMV nozzle centering)
-
-    def __init__(self, config):
-        self.printer = config.get_printer()
-        self.gcode = self.printer.lookup_object("gcode")
-        self.toolhead = self.printer.lookup_object("toolhead")
-
-    def ensure_homed(self):
-        """Verify XYZ are homed; raise if not."""
-        curtime = self.printer.get_reactor().monotonic()
-        kin_status = self.toolhead.get_kinematics().get_status(curtime)
-        if ("x" not in kin_status["homed_axes"]
-                or "y" not in kin_status["homed_axes"]
-                or "z" not in kin_status["homed_axes"]):
-            raise Exception("Must home X, Y, and Z axes first.")
-
-    def move_relative(self, X=0, Y=0, speed_mms=None):
-        """Move toolhead relative to current position.
-
-        Args:
-            X, Y: relative offset in mm
-            speed_mms: speed in mm/s (default: DEFAULT_MOVE_SPEED)
-        """
-        if speed_mms is None:
-            speed_mms = self.DEFAULT_MOVE_SPEED
-        self.ensure_homed()
-        pos = self.get_gcode_position()
-        new_pos = [pos[0] + X, pos[1] + Y]
-        self._move_absolute_array(new_pos, speed_mms)
-        self.toolhead.wait_moves()
-
-    def move_absolute(self, X=None, Y=None, Z=None, speed_mms=None):
-        """Move toolhead to absolute position.
-
-        Args:
-            X, Y, Z: absolute coordinates in mm (None = don't move)
-            speed_mms: speed in mm/s (default: DEFAULT_MOVE_SPEED)
-        """
-        if speed_mms is None:
-            speed_mms = self.DEFAULT_MOVE_SPEED
-        self._move_absolute_array([X, Y, Z], speed_mms)
-
-    def _move_absolute_array(self, pos_array, speed_mms):
-        """Execute G90 G1 move. Speed converted from mm/s to mm/min."""
-        gcode = "G90\nG1 "
-        for i, val in enumerate(pos_array):
-            if val is not None:
-                axis = ["X", "Y", "Z"][i]
-                gcode += "%s%s " % (axis, val)
-        gcode += "F%s " % int(speed_mms * 60)
-        self.gcode.run_script_from_command(gcode)
-        self.toolhead.wait_moves()
-
-    def get_gcode_position(self):
-        """Get current position in GCode coordinate space.
-
-        Returns [x, y, z] with tool offsets applied.
-        """
-        gcode_move = self.printer.lookup_object("gcode_move")
-        pos = gcode_move.get_status()["gcode_position"]
-        return [pos.x, pos.y, pos.z]
-
-    def get_raw_position(self):
-        """Get current physical/raw toolhead position.
-
-        Returns [x, y, z] without tool offsets.
-        Used for calculating tool-to-tool XY offsets.
-        """
-        gcode_move = self.printer.lookup_object("gcode_move")
-        pos = gcode_move.get_status()["position"]
-        return [pos.x, pos.y, pos.z]
-
-
-# ═══════════════════════════════════════════════════════════════
-#  MAIN CLASS: ToolVision
-# ═══════════════════════════════════════════════════════════════
 
 class ToolVision:
-    """Unified XYZ tool alignment for Klipper multi-tool printers.
-
-    Combines kTAMV (XY camera vision) and Axiscope (Z switch probe)
-    into a single module with TV_ prefixed GCode commands.
-    """
-
-    FRAME_WIDTH = 640
-    FRAME_HEIGHT = 480
+    VERSION = "2.0.0"
+    STATE_NAME = "TOOL_VISION_STATE"
 
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -400,47 +27,204 @@ class ToolVision:
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.config = config
 
-        # ── Conflict checks ──
-        # Tool Vision replaces both [axiscope] and standalone [tools_calibrate]
         if config.has_section("axiscope"):
             raise config.error(
-                "tool_vision: Cannot use [tool_vision] together with "
-                "[axiscope]. Remove [axiscope] section first — "
-                "Tool Vision replaces its functionality."
+                "[tool_vision] conflicts with [axiscope]; both allocate "
+                "probe_multi_axis"
+            )
+        if config.has_section("tools_calibrate"):
+            raise config.error(
+                "[tool_vision] conflicts with [tools_calibrate]; both allocate "
+                "probe_multi_axis"
             )
 
-        # ── Camera/Server config (from kTAMV) ──
-        self.camera_url = config.get("nozzle_cam_url")
-        self.server_url = config.get("server_url")
-        self.move_speed = config.getfloat(
-            "move_speed", 50.0, above=1.0
-        )  # mm/s
-        self.detection_tolerance = config.getint(
-            "detection_tolerance", 0, minval=0, maxval=5
+        self.server_url = config.get("server_url", "http://127.0.0.1:8085").rstrip("/")
+        self.camera_source = config.get("camera_source")
+        self.camera_mode = config.get("camera_mode", "auto").lower()
+        self.camera_rotation = config.getint("camera_rotation", 0)
+        self.camera_flip_x = config.getboolean("camera_flip_x", False)
+        self.camera_flip_y = config.getboolean("camera_flip_y", False)
+        self.camera_width = config.getint("camera_width", 0, minval=0)
+        self.camera_height = config.getint("camera_height", 0, minval=0)
+        self.camera_fps = config.getfloat("camera_fps", 0.0, minval=0.0)
+        self.camera_connect_timeout = config.getfloat(
+            "camera_connect_timeout", 2.0, above=0.0
         )
-        self.send_frame_to_cloud = config.getboolean(
-            "send_frame_to_cloud", False
+        self.camera_read_timeout = config.getfloat(
+            "camera_read_timeout", 5.0, above=0.0
+        )
+        self.camera_max_frame_bytes = config.getint(
+            "camera_max_frame_bytes", 8388608, minval=65536
+        )
+        self.camera_warmup_frames = config.getint(
+            "camera_warmup_frames", 0, minval=0
         )
 
-        # ── Z Switch config (from Axiscope) ──
-        self.z_x_pos = config.getfloat("zswitch_x_pos", None)
-        self.z_y_pos = config.getfloat("zswitch_y_pos", None)
-        self.z_z_pos = config.getfloat("zswitch_z_pos", None)
-        self.lift_z = config.getfloat("lift_z", 1.0)
-        self.travel_speed = config.getfloat(
-            "travel_speed", 100.0, above=1.0
-        )  # mm/s - XY travel to Z switch
-        self.z_move_speed = config.getfloat(
-            "z_move_speed", 10.0, above=0.5
-        )  # mm/s - Z probing
-        self.z_samples = config.getint("samples", 10, minval=1)
+        self.camera_x = config.getfloat("camera_x_pos", None)
+        self.camera_y = config.getfloat("camera_y_pos", None)
+        self.camera_z = config.getfloat("camera_z_pos", None)
+        self.camera_safe_z = config.getfloat("camera_safe_z", None)
+        self.camera_target_x_ratio = config.getfloat(
+            "camera_target_x_ratio", 0.5, minval=0.0, maxval=1.0
+        )
+        self.camera_target_y_ratio = config.getfloat(
+            "camera_target_y_ratio", 0.5, minval=0.0, maxval=1.0
+        )
+        self.camera_roi_x_min = config.getfloat(
+            "camera_roi_x_min", 0.0, minval=0.0, maxval=1.0
+        )
+        self.camera_roi_y_min = config.getfloat(
+            "camera_roi_y_min", 0.0, minval=0.0, maxval=1.0
+        )
+        self.camera_roi_x_max = config.getfloat(
+            "camera_roi_x_max", 1.0, minval=0.0, maxval=1.0
+        )
+        self.camera_roi_y_max = config.getfloat(
+            "camera_roi_y_max", 1.0, minval=0.0, maxval=1.0
+        )
 
-        # ── Config file for saving offsets (from Axiscope) ──
-        self.config_file_path = config.get("config_file_path", None)
-        self.has_cfg_data = False
+        self.detector_gamma = config.getfloat(
+            "detector_gamma", 1.0, above=0.0
+        )
+        self.detector_sensitivity = config.getfloat(
+            "detector_sensitivity", 1.0, minval=0.25, maxval=4.0
+        )
+        self.detector_min_area_ratio = config.getfloat(
+            "detector_min_area_ratio", 0.0002, above=0.0, below=1.0
+        )
+        self.detector_max_area_ratio = config.getfloat(
+            "detector_max_area_ratio", 0.08, above=0.0, below=1.0
+        )
+        self.detector_min_circularity = config.getfloat(
+            "detector_min_circularity", 0.55, minval=0.0, maxval=1.0
+        )
+        self.detector_min_convexity = config.getfloat(
+            "detector_min_convexity", 0.45, minval=0.0, maxval=1.0
+        )
+        self.detector_min_inertia = config.getfloat(
+            "detector_min_inertia", 0.35, minval=0.0, maxval=1.0
+        )
+        self.detector_min_confidence = config.getfloat(
+            "detector_min_confidence", 0.35, minval=0.0, maxval=1.0
+        )
+        self.detector_adaptive_block_size = config.getint(
+            "detector_adaptive_block_size", 35, minval=3
+        )
+        self.detector_adaptive_c = config.getfloat("detector_adaptive_c", 3.0)
+        self.detector_blur_size = config.getint(
+            "detector_blur_size", 5, minval=3
+        )
+        self.detector_polarity = config.get("detector_polarity", "auto").lower()
+        self.detection_stable_frames = config.getint(
+            "detection_stable_frames", 3, minval=1
+        )
+        self.detection_stability_px = config.getfloat(
+            "detection_stability_px", 2.0, minval=0.0
+        )
+        self.detection_stability_ratio = config.getfloat(
+            "detection_stability_ratio", 0.0, minval=0.0, maxval=1.0
+        )
+        self.detection_timeout = config.getfloat(
+            "detection_timeout", 12.0, above=0.0
+        )
+        self.detection_frame_interval_ms = config.getint(
+            "detection_frame_interval_ms", 120, minval=0
+        )
 
-        # ── Z Probe setup (from Axiscope) ──
+        self.reference_tool = config.getint("reference_tool", 0, minval=0)
+        self.tool_select_command = config.get("tool_select_command", "T{tool}")
+        configured_tools = config.get("tool_numbers", "").strip()
+        self.configured_tool_numbers = None
+        if configured_tools:
+            try:
+                self.configured_tool_numbers = [
+                    int(value.strip()) for value in configured_tools.split(",")
+                    if value.strip()
+                ]
+            except ValueError:
+                raise config.error("tool_numbers must be comma-separated integers")
+
+        self.xy_travel_speed = config.getfloat(
+            "xy_travel_speed", 100.0, above=0.0
+        )
+        self.z_travel_speed = config.getfloat(
+            "z_travel_speed", 10.0, above=0.0
+        )
+        self.camera_move_speed = config.getfloat(
+            "camera_move_speed", 20.0, above=0.0
+        )
+        self.camera_fine_speed = config.getfloat(
+            "camera_fine_speed", 5.0, above=0.0
+        )
+        self.camera_settle_ms = config.getint("camera_settle_ms", 350, minval=0)
+        self.camera_calibration_radius = config.getfloat(
+            "camera_calibration_radius", 0.6, above=0.0
+        )
+        self.camera_calibration_points = config.getint(
+            "camera_calibration_points", 10, minval=4, maxval=32
+        )
+        self.camera_model = config.get("camera_model", "affine").lower()
+        self.camera_max_rms_error = config.getfloat(
+            "camera_max_rms_error", 0.08, above=0.0
+        )
+        self.camera_center_tolerance = config.getfloat(
+            "camera_center_tolerance", 0.01, above=0.0
+        )
+        self.camera_center_max_iterations = config.getint(
+            "camera_center_max_iterations", 12, minval=1, maxval=50
+        )
+        self.camera_center_max_correction = config.getfloat(
+            "camera_center_max_correction", 2.0, above=0.0
+        )
+        self.camera_center_max_step = config.getfloat(
+            "camera_center_max_step", 0.6, above=0.0
+        )
+        self.camera_center_damping = config.getfloat(
+            "camera_center_damping", 0.8, above=0.0, maxval=1.0
+        )
+
         self.pin = config.get("pin", None)
+        self.zswitch_x = config.getfloat("zswitch_x_pos", None)
+        self.zswitch_y = config.getfloat("zswitch_y_pos", None)
+        self.zswitch_z = config.getfloat("zswitch_z_pos", None)
+        self.zswitch_safe_z = config.getfloat("zswitch_safe_z", None)
+        self.zswitch_lift_z = config.getfloat(
+            "zswitch_lift_z", 2.0, minval=0.0
+        )
+        self.probe_speed_ratio = config.getfloat(
+            "probe_speed_ratio", 0.5, above=0.0, maxval=1.0
+        )
+        self.probe_max_distance = config.getfloat(
+            "probe_max_distance", 10.0, above=0.0
+        )
+        self.probe_samples = config.getint("probe_samples", 10, minval=1)
+
+        self.allow_during_print = config.getboolean("allow_during_print", False)
+        self.result_file = os.path.expanduser(
+            config.get(
+                "result_file",
+                "~/printer_data/config/tool_vision_results.json",
+            )
+        )
+
+        self.gcode_macro = self.printer.load_object(config, "gcode_macro")
+        self.start_gcode = self.gcode_macro.load_template(
+            config, "start_gcode", ""
+        )
+        self.before_tool_gcode = self.gcode_macro.load_template(
+            config, "before_tool_gcode", ""
+        )
+        self.after_tool_gcode = self.gcode_macro.load_template(
+            config, "after_tool_gcode", ""
+        )
+        self.finish_gcode = self.gcode_macro.load_template(
+            config, "finish_gcode", ""
+        )
+        self.abort_gcode = self.gcode_macro.load_template(
+            config, "abort_gcode", ""
+        )
+
+        self.probe_multi_axis = None
         if self.pin is not None:
             from . import tools_calibrate
             self.probe_multi_axis = tools_calibrate.PrinterProbeMultiAxis(
@@ -449,1119 +233,787 @@ class ToolVision:
                 tools_calibrate.ProbeEndstopWrapper(config, "y"),
                 tools_calibrate.ProbeEndstopWrapper(config, "z"),
             )
-            query_endstops = self.printer.load_object(
-                config, "query_endstops"
-            )
+            query_endstops = self.printer.load_object(config, "query_endstops")
             query_endstops.register_endstop(
                 self.probe_multi_axis.mcu_probe[-1].mcu_endstop,
                 "ToolVision",
             )
-        else:
-            self.probe_multi_axis = None
 
-        # ── GCode templates (from Axiscope) ──
-        self.gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.start_gcode = self.gcode_macro.load_template(
-            config, "start_gcode", ""
-        )
-        self.before_pickup_gcode = self.gcode_macro.load_template(
-            config, "before_pickup_gcode", ""
-        )
-        self.after_pickup_gcode = self.gcode_macro.load_template(
-            config, "after_pickup_gcode", ""
-        )
-        self.finish_gcode = self.gcode_macro.load_template(
-            config, "finish_gcode", ""
-        )
+        toolchanger_name = config.get("toolchanger_object", "toolchanger")
+        self.toolchanger = self.printer.load_object(config, toolchanger_name)
+        self.reactor = self.printer.get_reactor()
+        self.toolhead = None
+        self.busy = False
+        self.server_configured = False
+        self.camera_calibrated = False
+        self.camera_transform = {}
+        self.xy_reference = None
+        self.z_reference = None
+        self.results = {}
+        self.last_observation = None
+        self.last_error = None
+        self.last_run = None
 
-        # ── Internal state: XY vision (from kTAMV) ──
-        self.mpp = None                    # mm per pixel
-        self.is_calibrated = False
-        self.last_nozzle_center_ok = False
-        self.space_coordinates = []        # real-world XY coords
-        self.camera_coordinates = []       # pixel coords
-        self.mm_per_pixels = []            # per-point mm/px values
-        self.cp = None                     # origin position (T0 reference)
-        self.last_xy_offset = [0, 0]       # last calculated XY offset
+        self._validate_config(config)
+        self._register_commands()
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
-        # ── Internal state: Z probe (from Axiscope) ──
-        self.probe_results = {}            # {tool_no: {z_trigger, z_offset}}
-
-        # ── Toolchanger ──
-        self.toolchanger = self.printer.load_object(config, "toolchanger")
-
-        # ── Event handlers ──
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
-        self.printer.register_event_handler(
-            "klippy:ready", self._handle_ready
-        )
-
-    # ── Startup ────────────────────────────────────────────────
+    def _validate_config(self, config):
+        if self.camera_rotation not in (0, 90, 180, 270):
+            raise config.error("camera_rotation must be 0, 90, 180, or 270")
+        if self.camera_mode not in ("auto", "http", "opencv"):
+            raise config.error("camera_mode must be auto, http, or opencv")
+        if self.detector_polarity not in ("auto", "dark", "light"):
+            raise config.error("detector_polarity must be auto, dark, or light")
+        if self.camera_model not in ("affine", "quadratic"):
+            raise config.error("camera_model must be affine or quadratic")
+        if self.detector_min_area_ratio >= self.detector_max_area_ratio:
+            raise config.error("detector_min_area_ratio must be below max")
+        if not (
+            self.camera_roi_x_min < self.camera_roi_x_max
+            and self.camera_roi_y_min < self.camera_roi_y_max
+        ):
+            raise config.error("camera ROI minimums must be below maximums")
+        tool_numbers = self._tool_numbers()
+        if not tool_numbers:
+            raise config.error("tool_numbers cannot be empty")
+        if any(tool < 0 for tool in tool_numbers):
+            raise config.error("tool_numbers cannot contain negative values")
+        if len(tool_numbers) != len(set(tool_numbers)):
+            raise config.error("tool_numbers cannot contain duplicates")
+        if self.reference_tool not in tool_numbers:
+            raise config.error("reference_tool is not present in tool_numbers")
+        if (
+            self.camera_z is not None
+            and self.camera_safe_z is not None
+            and self.camera_safe_z < self.camera_z
+        ):
+            raise config.error("camera_safe_z must be at or above camera_z_pos")
+        if (
+            self.zswitch_z is not None
+            and self.zswitch_safe_z is not None
+            and self.zswitch_safe_z < self.zswitch_z + self.zswitch_lift_z
+        ):
+            raise config.error(
+                "zswitch_safe_z must be at or above the switch approach Z"
+            )
+        if self.camera_center_tolerance > self.camera_center_max_correction:
+            raise config.error(
+                "camera_center_tolerance cannot exceed max correction"
+            )
 
     def _handle_connect(self):
-        """Check config file exists on startup."""
-        if self.config_file_path is not None:
-            expanded = os.path.expanduser(self.config_file_path)
-            self.config_file_path = expanded
-            if os.path.exists(expanded):
-                self.has_cfg_data = True
-                self.gcode.respond_info(
-                    "Tool Vision: config file found (%s)." % expanded
-                )
-            else:
-                self.gcode.respond_info(
-                    "Tool Vision: config file not found (%s), "
-                    "will create on first save." % expanded
-                )
-        self.gcode.respond_info("--Tool Vision Loaded--")
+        self.toolhead = self.printer.lookup_object("toolhead")
+        self.gcode.respond_info(
+            "Tool Vision %s loaded in report-only mode" % self.VERSION
+        )
 
-    def _handle_ready(self):
-        """Register all GCode commands when Klipper is ready."""
-        self.reactor = self.printer.get_reactor()
-        self.pm = PrinterManager(self.config)
-
-        # ── XY Vision Commands (from kTAMV) ──
-        cmds = {
-            "TV_SEND_SERVER_CFG": (
-                self.cmd_SEND_SERVER_CFG,
-                "Send camera config to vision server"
+    def _register_commands(self):
+        commands = {
+            "TV_STATUS": (self.cmd_STATUS, "Show Tool Vision status"),
+            "TV_SERVER_CONFIGURE": (
+                self.cmd_SERVER_CONFIGURE,
+                "Send camera and detector configuration to the host service",
             ),
-            "TV_START_PREVIEW": (
-                self.cmd_START_PREVIEW,
-                "Start camera preview stream"
+            "TV_CAMERA_CHECK": (
+                self.cmd_CAMERA_CHECK,
+                "Detect the nozzle at the current position",
             ),
-            "TV_STOP_PREVIEW": (
-                self.cmd_STOP_PREVIEW,
-                "Stop camera preview stream"
+            "TV_MOVE_TO_CAMERA": (
+                self.cmd_MOVE_TO_CAMERA,
+                "Move safely to the configured camera station",
             ),
-            "TV_CALIB_CAMERA": (
-                self.cmd_CALIB_CAMERA,
-                "Calibrate camera mm/pixel ratio"
-            ),
-            "TV_FIND_NOZZLE_CENTER": (
-                self.cmd_FIND_NOZZLE_CENTER,
-                "Find nozzle center and move to it"
-            ),
-            "TV_SET_ORIGIN": (
-                self.cmd_SET_ORIGIN,
-                "Save current position as reference origin"
-            ),
-            "TV_GET_OFFSET": (
-                self.cmd_GET_OFFSET,
-                "Get XY offset from saved origin"
-            ),
-            "TV_SIMPLE_NOZZLE_POSITION": (
-                self.cmd_SIMPLE_NOZZLE_POSITION,
-                "Check if nozzle is visible in camera"
-            ),
-            # ── Z Probe Commands (from Axiscope) ──
             "TV_MOVE_TO_ZSWITCH": (
                 self.cmd_MOVE_TO_ZSWITCH,
-                "Move toolhead above Z switch"
+                "Move safely to the configured Z switch",
             ),
-            "TV_PROBE_ZSWITCH": (
-                self.cmd_PROBE_ZSWITCH,
-                "Probe Z switch to measure offset"
+            "TV_CALIBRATE_CAMERA": (
+                self.cmd_CALIBRATE_CAMERA,
+                "Calibrate native camera pixels to machine XY movement",
             ),
-            "TV_SET_ENDSTOP_POSITION": (
-                self.cmd_SET_ENDSTOP_POSITION,
-                "Set Z switch endstop position"
+            "TV_MEASURE_XY": (
+                self.cmd_MEASURE_XY,
+                "Measure one tool XY offset relative to the reference",
             ),
-            # ── Combined Commands ──
-            "TV_CALIBRATE_ALL_Z": (
-                self.cmd_CALIBRATE_ALL_Z,
-                "Probe Z offset for all tools"
-            ),
-            "TV_CALIBRATE_ALL_XY": (
-                self.cmd_CALIBRATE_ALL_XY,
-                "Calibrate XY offset for all tools"
+            "TV_MEASURE_Z": (
+                self.cmd_MEASURE_Z,
+                "Measure one tool Z offset relative to the reference",
             ),
             "TV_CALIBRATE_ALL": (
                 self.cmd_CALIBRATE_ALL,
-                "Full XYZ calibration for all tools"
+                "Measure all tool offsets; MODE=XYZ, XY, or Z",
             ),
-            # ── Save/Load Commands (from Axiscope) ──
-            "TV_SAVE_TOOL_OFFSET": (
-                self.cmd_SAVE_TOOL_OFFSET,
-                "Save tool offsets to config file"
-            ),
-            "TV_SAVE_MULTIPLE_TOOL_OFFSETS": (
-                self.cmd_SAVE_MULTIPLE_TOOL_OFFSETS,
-                "Save multiple tool offsets to config file"
-            ),
+            "TV_REPORT": (self.cmd_REPORT, "Report measured offsets"),
         }
-        for name, (handler, desc) in cmds.items():
-            self.gcode.register_command(name, handler, desc=desc)
+        for name, item in commands.items():
+            self.gcode.register_command(name, item[0], desc=item[1])
 
-    # ═══════════════════════════════════════════════════════════
-    #  XY VISION COMMANDS (from kTAMV logic)
-    # ═══════════════════════════════════════════════════════════
+    # HTTP API
 
-    def cmd_SEND_SERVER_CFG(self, gcmd):
-        """Send camera URL and settings to the vision server."""
-        try:
-            cam = gcmd.get("CAMERA_URL", self.camera_url)
-            rr = _send_server_command(
-                self.server_url,
-                "/set_server_cfg",
-                camera_url=cam,
-                send_frame_to_cloud=self.send_frame_to_cloud,
-                detection_tolerance=self.detection_tolerance,
-            )
-            gcmd.respond_info("Tool Vision Server: %s" % str(rr))
-        except Exception as e:
-            raise self.gcode.error(
-                "Failed to send config to server: %s" % str(e)
-            )
-
-    def cmd_START_PREVIEW(self, gcmd):
-        """Start camera preview (view at http://server:8085/image)."""
-        self._preview(gcmd, "start")
-
-    def cmd_STOP_PREVIEW(self, gcmd):
-        """Stop camera preview."""
-        self._preview(gcmd, "stop")
-
-    def _preview(self, gcmd, action):
-        try:
-            rr = _send_server_command(
-                self.server_url, "/preview", action=action
-            )
-            gcmd.respond_info("Tool Vision: %s" % str(rr))
-        except Exception as e:
-            raise self.gcode.error(
-                "Preview command failed: %s" % str(e)
-            )
-
-    def cmd_CALIB_CAMERA(self, gcmd):
-        """Calibrate camera mm/pixel ratio using 10-point radial pattern.
-
-        From kTAMV: moves the nozzle to 10 points around a circle,
-        measures pixel displacement for each, calculates mm/pixel,
-        then builds a transform matrix for accurate offset calculation.
-        """
-        gcmd.respond_info("Starting mm/pixel calibration...")
-        self._calibrate_px_mm(gcmd)
-
-    def cmd_FIND_NOZZLE_CENTER(self, gcmd):
-        """Find nozzle center and iteratively move to camera center.
-
-        From kTAMV: uses the transform matrix to calculate pixel-to-mm
-        offsets, moves the nozzle step by step until centered.
-        Falls back to "wiggle" if nozzle not initially visible.
-        """
-        self.last_nozzle_center_ok = False
-        self._calibrate_nozzle(gcmd)
-
-    def cmd_SET_ORIGIN(self, gcmd):
-        """Save current raw position as reference point for offsets.
-
-        From kTAMV: records the physical (non-offset) position so that
-        tool-to-tool offsets reflect actual physical displacement.
-        """
-        self.cp = self.pm.get_raw_position()
-        self.cp = (round(float(self.cp[0]), 3), round(float(self.cp[1]), 3))
-        self.gcode.respond_info(
-            "Origin set to X:%.3f Y:%.3f" % (self.cp[0], self.cp[1])
+    def _api(self, method, path, payload=None, timeout=3.0):
+        url = self.server_url + path
+        data = None
+        headers = {"Accept": "application/json"}
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(
+            url, data=data, headers=headers, method=method
         )
-
-    def cmd_GET_OFFSET(self, gcmd):
-        """Calculate XY offset from current position to saved origin.
-
-        From kTAMV: compares raw positions to get physical offset
-        between tools.
-        """
-        if self.cp is None:
-            raise self.gcode.error(
-                "No origin set. Use TV_SET_ORIGIN first."
-            )
-        pos = self.pm.get_raw_position()
-        self.last_xy_offset = (
-            round(float(pos[0]) - self.cp[0], 3),
-            round(float(pos[1]) - self.cp[1], 3),
-        )
-        self.gcode.respond_info(
-            "Offset from origin: X:%.3f Y:%.3f"
-            % (self.last_xy_offset[0], self.last_xy_offset[1])
-        )
-
-    def cmd_SIMPLE_NOZZLE_POSITION(self, gcmd):
-        """Quick check: is a nozzle visible in the camera?"""
         try:
-            result = _get_nozzle_position(self.server_url, self.reactor)
-            if result is None:
-                raise self.gcode.error("Nozzle not found.")
-            gcmd.respond_info(
-                "Nozzle found at: %s (%.2fs)"
-                % (str(result["data"]), float(result["runtime"]))
-            )
-        except Exception as e:
-            raise self.gcode.error(
-                "Nozzle position check failed: %s" % str(e)
-            )
-
-    # ── Core XY Calibration Logic (from kTAMV) ────────────────
-
-    def _calibrate_px_mm(self, gcmd):
-        """10-point radial calibration for mm/pixel and transform matrix.
-
-        From kTAMV's _calibrate_px_mm(). The 10 calibration coordinates
-        form a circle (radius ~0.5mm) around the nozzle. For each point:
-          1. Move relative by known distance
-          2. Detect nozzle position in pixels
-          3. Calculate mm/pixel = distance_mm / distance_pixels
-          4. Move back to center
-
-        Then: calculate average mm/pixel (with outlier removal),
-        build the polynomial transform matrix on the server.
-        """
-        self.space_coordinates = []
-        self.camera_coordinates = []
-        self.mm_per_pixels = []
-
-        # 10 points around a circle (from kTAMV, in mm)
-        calib_coords = [
-            [0, -0.5],
-            [0.294, -0.405],
-            [0.476, -0.155],
-            [0.476, 0.155],
-            [0.294, 0.405],
-            [0, 0.5],
-            [-0.294, 0.405],
-            [-0.476, 0.155],
-            [-0.476, -0.155],
-            [-0.294, -0.405],
-        ]
-
-        guess_position = [1, 1]
-
-        try:
-            self.pm.ensure_homed()
-
-            # Get initial nozzle position
-            _rr = _get_nozzle_position(self.server_url, self.reactor)
-            if _rr is None:
-                gcmd.respond_info("Nozzle not found, aborting calibration.")
-                return
-
-            _uv = json.loads(_rr["data"])
-            _olduv = _uv
-            _xy = self.pm.get_gcode_position()
-
-            # Move to each calibration point
-            for i in range(len(calib_coords)):
-                _rr = _xy = None
-                try:
-                    _rr, _xy = self._move_and_detect(
-                        calib_coords[i][0], calib_coords[i][1], gcmd
-                    )
-                except NozzleNotFoundException:
-                    _rr = None
-
-                if _rr is None:
-                    # Move back if detection failed
-                    self.pm.move_relative(
-                        X=-calib_coords[i][0],
-                        Y=-calib_coords[i][1],
-                    )
-                    gcmd.respond_info(
-                        "Step %d/%d failed."
-                        % (i + 1, len(calib_coords))
-                    )
-                    continue
-
-                _uv = json.loads(_rr["data"])
-                mpp = self._calc_mm_per_pixel(calib_coords[i], _olduv, _uv)
-                self._store_calibration_point(_xy, _uv, mpp)
-                gcmd.respond_info(
-                    "Step %d/%d: mm/px = %s"
-                    % (i + 1, len(calib_coords), str(mpp))
-                )
-
-                # Move back to center (except last point)
-                if i < len(calib_coords) - 1:
-                    self.pm.move_relative(
-                        X=-calib_coords[i][0],
-                        Y=-calib_coords[i][1],
-                    )
-
-            # Move back from last calibration point
-            gcmd.respond_info("Moving back to starting position...")
-            if _rr is not None:
-                try:
-                    _rr, _xy = self._move_and_detect(
-                        -calib_coords[-1][0],
-                        -calib_coords[-1][1],
-                        gcmd,
-                    )
-                except NozzleNotFoundException:
-                    _rr = None
-
-                if _rr is None:
-                    _uv = _olduv = None
-                else:
-                    _olduv = _uv
-                    _uv = json.loads(_rr["data"])
-                    mpp = self._calc_mm_per_pixel(
-                        calib_coords[-1], _olduv, _uv
-                    )
-                    self._store_calibration_point(_xy, _uv, mpp)
-                    gcmd.respond_info(
-                        "Center calibrated: mm/px = %.4f" % mpp
-                    )
-
-            # Validate: need at least 75% of points
-            if len(self.mm_per_pixels) < len(calib_coords) * 0.75:
-                raise self.gcode.error(
-                    "More than 25%% of calibration points failed, aborting."
-                )
-
-            # Calculate average mm/pixel with outlier removal
-            gcmd.respond_info("Calculating average mm/pixel...")
-            self.mpp = self._calc_average_mpp(gcmd)
-
-            # Build transform matrix on server
-            transform_input = [
-                (
-                    self.space_coordinates[j],
-                    _normalize_coords(cam),
-                )
-                for j, cam in enumerate(self.camera_coordinates)
-            ]
-
-            if not _calculate_camera_to_space_matrix(
-                self.server_url, transform_input
-            ):
-                raise self.gcode.error(
-                    "Failed to calculate camera-to-space matrix."
-                )
-
-            # Calculate initial guess for nozzle center
-            _current_pos = self.pm.get_gcode_position()
-            _cx, _cy = _normalize_coords(_uv)
-            _v = [_cx**2, _cy**2, _cx * _cy, _cx, _cy, 0]
-
-            _offsets = json.loads(
-                _calculate_offset_from_matrix(self.server_url, _v)
-            )
-
-            guess_position[0] = (
-                round(_offsets[0], 3) + round(_current_pos[0], 3)
-            )
-            guess_position[1] = (
-                round(_offsets[1], 3) + round(_current_pos[1], 3)
-            )
-
-            self.pm.move_absolute(
-                X=guess_position[0], Y=guess_position[1]
-            )
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                body = response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", "replace")
             try:
-                _get_nozzle_position(self.server_url, self.reactor)
-            except NozzleNotFoundException:
-                pass
-
-            self.is_calibrated = True
-            gcmd.respond_info("Camera calibration complete!")
-
-        except Exception as e:
-            raise self.gcode.error(
-                "Camera calibration failed: %s" % str(e)
-            ).with_traceback(e.__traceback__)
-
-    def _calibrate_nozzle(self, gcmd, retries=30):
-        """Iteratively move nozzle to camera center using transform matrix.
-
-        From kTAMV's _calibrate_nozzle(). Algorithm:
-          1. Detect nozzle position (pixel coords)
-          2. Normalize pixel coords → [-0.5, 0.5]
-          3. Build feature vector [cx², cy², cx*cy, cx, cy, 0]
-          4. Server calculates offset using transform matrix
-          5. Move toolhead by offset
-          6. Repeat until offset = (0, 0)
-
-        Wiggle fallback: if nozzle not found, move ±0.1mm to help
-        detection (up to 4 wiggle attempts).
-        """
-        _retries = 0
-        _not_found_retries = 0
-        _uv = [None, None]
-        _xy = [None, None]
-        _olduv = None
-        _pixel_offsets = [None, None]
-        _offsets = [None, None]
-        _rr = None
-
+                message = json.loads(body).get("error", body)
+            except ValueError:
+                message = body
+            raise ToolVisionError("vision server HTTP %d: %s" % (exc.code, message))
+        except (urllib.error.URLError, OSError) as exc:
+            raise ToolVisionError("vision server unavailable: %s" % exc)
         try:
-            self.pm.ensure_homed()
+            result = json.loads(body)
+        except ValueError:
+            raise ToolVisionError("vision server returned invalid JSON")
+        if not result.get("ok", False):
+            raise ToolVisionError(result.get("error", "vision server request failed"))
+        return result
 
-            if not self.is_calibrated:
-                raise self.gcode.error(
-                    "Camera not calibrated. Run TV_CALIB_CAMERA first."
-                )
+    def _server_payload(self):
+        return {
+            "camera_source": self.camera_source,
+            "camera_mode": self.camera_mode,
+            "camera_rotation": self.camera_rotation,
+            "camera_flip_x": self.camera_flip_x,
+            "camera_flip_y": self.camera_flip_y,
+            "camera_width": self.camera_width,
+            "camera_height": self.camera_height,
+            "camera_fps": self.camera_fps,
+            "camera_connect_timeout": self.camera_connect_timeout,
+            "camera_read_timeout": self.camera_read_timeout,
+            "camera_max_frame_bytes": self.camera_max_frame_bytes,
+            "camera_warmup_frames": self.camera_warmup_frames,
+            "camera_target_x_ratio": self.camera_target_x_ratio,
+            "camera_target_y_ratio": self.camera_target_y_ratio,
+            "camera_roi_x_min": self.camera_roi_x_min,
+            "camera_roi_y_min": self.camera_roi_y_min,
+            "camera_roi_x_max": self.camera_roi_x_max,
+            "camera_roi_y_max": self.camera_roi_y_max,
+            "detector_gamma": self.detector_gamma,
+            "detector_sensitivity": self.detector_sensitivity,
+            "detector_min_area_ratio": self.detector_min_area_ratio,
+            "detector_max_area_ratio": self.detector_max_area_ratio,
+            "detector_min_circularity": self.detector_min_circularity,
+            "detector_min_convexity": self.detector_min_convexity,
+            "detector_min_inertia": self.detector_min_inertia,
+            "detector_min_confidence": self.detector_min_confidence,
+            "detector_adaptive_block_size": self.detector_adaptive_block_size,
+            "detector_adaptive_c": self.detector_adaptive_c,
+            "detector_blur_size": self.detector_blur_size,
+            "detector_polarity": self.detector_polarity,
+            "detection_stable_frames": self.detection_stable_frames,
+            "detection_stability_px": self.detection_stability_px,
+            "detection_stability_ratio": self.detection_stability_ratio,
+            "detection_timeout": self.detection_timeout,
+            "detection_frame_interval_ms": self.detection_frame_interval_ms,
+        }
 
-            for _retries in range(retries):
-                _rr = _get_nozzle_position(self.server_url, self.reactor)
+    def _configure_server(self):
+        result = self._api("POST", "/api/v1/config", self._server_payload())
+        self.server_configured = True
+        self.camera_calibrated = False
+        self.camera_transform = result.get("transform", {})
+        return result
 
-                if _rr is None:
-                    # Wiggle fallback (from kTAMV)
-                    if _not_found_retries > 3:
-                        raise self.gcode.error(
-                            "Nozzle not found after 4 wiggle attempts."
-                        )
-                    gcmd.respond_info(
-                        "Nozzle not found, wiggling toolhead..."
-                    )
-                    if _not_found_retries == 0:
-                        self.pm.move_relative(X=0.1)
-                    elif _not_found_retries == 1:
-                        self.pm.move_relative(X=-0.2)
-                    elif _not_found_retries == 2:
-                        self.pm.move_relative(X=0.1, Y=0.1)
-                    elif _not_found_retries == 3:
-                        self.pm.move_relative(Y=-0.2)
-                    _not_found_retries += 1
-                    continue
-                else:
-                    _not_found_retries = 0
+    def _detect(self):
+        if not self.server_configured:
+            self._configure_server()
+        response = self._api("POST", "/api/v1/jobs/detect", {})
+        job_id = response["job"]["job_id"]
+        deadline = time.monotonic() + self.detection_timeout + 10.0
+        while time.monotonic() < deadline:
+            job = self._api(
+                "GET", "/api/v1/jobs/%s" % job_id, timeout=2.0
+            )["job"]
+            if job["state"] == "complete":
+                self.last_observation = job["result"]
+                return job["result"]
+            if job["state"] == "error":
+                raise ToolVisionError(job.get("error") or "nozzle detection failed")
+            self.reactor.pause(self.reactor.monotonic() + 0.15)
+        raise ToolVisionError("nozzle detection job timed out")
 
-                _uv = json.loads(_rr["data"])
-                if _olduv is None:
-                    _olduv = _uv
-                _xy = self.pm.get_gcode_position()
+    # Motion and safety
 
-                # Calculate offset from transform matrix
-                _cx, _cy = _normalize_coords(_uv)
-                _v = [_cx**2, _cy**2, _cx * _cy, _cx, _cy, 0]
-                _offsets = json.loads(
-                    _calculate_offset_from_matrix(self.server_url, _v)
-                )
-                _offsets[0] = round(_offsets[0], 3)
-                _offsets[1] = round(_offsets[1], 3)
+    def _tool_numbers(self):
+        if self.configured_tool_numbers is not None:
+            return list(self.configured_tool_numbers)
+        return [int(value) for value in self.toolchanger.tool_numbers]
 
-                gcmd.respond_info(
-                    "Take %d: X%.2f Y%.2f UV:%s Offset X:%.2f Y:%.2f"
-                    % (
-                        _retries,
-                        round(_xy[0], 2), round(_xy[1], 2),
-                        str(_uv),
-                        _offsets[0], _offsets[1],
-                    )
-                )
+    def _active_tool_number(self):
+        active = getattr(self.toolchanger, "active_tool", None)
+        if active is None:
+            raise ToolVisionError("toolchanger has no active tool")
+        return int(active.tool_number)
 
-                if _offsets[0] != 0.0 or _offsets[1] != 0.0:
-                    # Check if offset would move nozzle outside frame
-                    _pixel_offsets[0] = _offsets[0] / self.mpp
-                    _pixel_offsets[1] = _offsets[1] / self.mpp
+    def _assert_homed(self):
+        eventtime = self.reactor.monotonic()
+        homed = self.toolhead.get_kinematics().get_status(eventtime)["homed_axes"]
+        if not all(axis in homed for axis in "xyz"):
+            raise ToolVisionError("home X, Y, and Z before running Tool Vision")
 
-                    if (
-                        _pixel_offsets[0] + _uv[0] > self.FRAME_WIDTH
-                        or _pixel_offsets[1] + _uv[1] > self.FRAME_HEIGHT
-                        or _pixel_offsets[0] + _uv[0] < 0
-                        or _pixel_offsets[1] + _uv[1] < 0
-                    ):
-                        raise self.gcode.error(
-                            "Offset would move nozzle outside frame. "
-                            "Check mm/px calibration."
-                        )
-
-                    _olduv = _uv
-                    # Fine centering speed: ~1000 mm/min (from kTAMV)
-                    self.pm.move_relative(
-                        X=_offsets[0], Y=_offsets[1],
-                        speed_mms=PrinterManager.FINE_MOVE_SPEED,
-                    )
-                    continue
-
-                elif _offsets[0] == 0.0 and _offsets[1] == 0.0:
-                    gcmd.respond_info("Nozzle aligned to camera center!")
-                    self.last_nozzle_center_ok = True
-                    return
-
-        except Exception as e:
-            logging.exception(
-                "tool_vision _calibrate_nozzle: mpp=%s pixel_offsets=%s "
-                "uv=%s offsets=%s olduv=%s xy=%s retries=%s "
-                "not_found_retries=%s rr=%s"
-                % (
-                    self.mpp, _pixel_offsets, _uv, _offsets,
-                    _olduv, _xy, _retries, _not_found_retries, _rr,
-                )
-            )
-            raise self.gcode.error(e).with_traceback(e.__traceback__)
-
-    # ── XY Helper Functions ────────────────────────────────────
-
-    def _move_and_detect(self, X, Y, gcmd):
-        """Move relative and detect nozzle position.
-
-        Returns (server_result, [gcode_x, gcode_y]) or (None, None).
-        """
-        self.pm.move_relative(X=X, Y=Y)
-        result = _get_nozzle_position(self.server_url, self.reactor)
-        if result is None:
-            return None, None
-        pos = self.pm.get_gcode_position()
-        return result, [pos[0], pos[1]]
-
-    def _calc_mm_per_pixel(self, distance_traveled, from_pt, to_pt):
-        """Calculate mm/pixel from known move distance and pixel shift.
-
-        From kTAMV: mm_per_pixel = total_mm / pixel_distance
-        """
-        total_dist = abs(distance_traveled[0]) + abs(distance_traveled[1])
-        pixel_dist = _get_distance(
-            from_pt[0], from_pt[1], to_pt[0], to_pt[1]
-        )
-        return round(total_dist / pixel_dist, 3)
-
-    def _store_calibration_point(self, space, camera, mpp):
-        """Store one calibration data point."""
-        self.space_coordinates.append(space)
-        self.camera_coordinates.append(camera)
-        self.mm_per_pixels.append(mpp)
-
-    def _calc_average_mpp(self, gcmd):
-        """Calculate average mm/pixel with outlier removal.
-
-        From kTAMV's _get_average_mpp_from_lists().
-        """
-        try:
-            result = _get_average_mpp(
-                self.mm_per_pixels,
-                self.space_coordinates,
-                self.camera_coordinates,
-                gcmd,
-            )
-            if result is None:
-                raise self.gcode.error(
-                    "Failed to calculate average mm/pixel."
-                )
-            mpp, new_mpps, new_space, new_camera = result
-
-            if len(new_mpps) < len(self.mm_per_pixels) * 0.75:
-                raise self.gcode.error(
-                    "More than 25%% of calibration points failed."
-                )
-
-            self.mm_per_pixels = new_mpps
-            self.space_coordinates = new_space
-            self.camera_coordinates = new_camera
-            return mpp
-        except Exception as e:
-            raise self.gcode.error(
-                "Average mm/pixel calculation failed: %s" % str(e)
-            ).with_traceback(e.__traceback__)
-
-    # ═══════════════════════════════════════════════════════════
-    #  Z PROBE COMMANDS (from Axiscope logic)
-    # ═══════════════════════════════════════════════════════════
-
-    def _is_homed(self):
-        """Check if all axes are homed."""
-        toolhead = self.printer.lookup_object("toolhead")
-        ctime = self.printer.get_reactor().monotonic()
-        homed = toolhead.get_kinematics().get_status(ctime)["homed_axes"]
-        return all(x in homed for x in "xyz")
-
-    def _has_switch_pos(self):
-        """Check if Z switch position is configured."""
-        return all(
-            x is not None for x in [self.z_x_pos, self.z_y_pos, self.z_z_pos]
-        )
-
-    def cmd_MOVE_TO_ZSWITCH(self, gcmd):
-        """Move toolhead above the Z switch position.
-
-        From Axiscope: first moves XY at travel_speed (fast), then
-        lowers Z to switch_z + lift_z at z_move_speed (slow).
-        """
-        if not self._is_homed():
-            gcmd.respond_info("Must home first.")
+    def _assert_idle(self):
+        if self.allow_during_print:
             return
-        if not self._has_switch_pos():
-            gcmd.respond_error("Z switch positions not configured.")
-            return
+        print_stats = self.printer.lookup_object("print_stats", None)
+        if print_stats is not None:
+            status = print_stats.get_status(self.reactor.monotonic())
+            state = str(status.get("state", ""))
+            if state.lower() in ("printing", "paused"):
+                raise ToolVisionError("Tool Vision is disabled during a print")
 
-        gcmd.respond_info("Moving to Z Switch...")
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.wait_moves()
-        current_pos = toolhead.get_position()
-
-        # Move XY to switch position (at current Z, using travel_speed)
-        # From Axiscope: uses gcode_move.cmd_G1 for offset-aware XY move
-        self.gcode_move.cmd_G1(
-            self.gcode.create_gcode_command(
-                "G0", "G0",
-                {
-                    "X": self.z_x_pos,
-                    "Y": self.z_y_pos,
-                    "Z": current_pos[2],
-                    "F": self.travel_speed * 60,  # mm/s → mm/min
-                },
-            )
-        )
-        # Lower Z to approach height (switch_z + lift_z)
-        # From Axiscope: uses manual_move for direct Z positioning
-        toolhead.manual_move(
-            [None, None, self.z_z_pos + self.lift_z],
-            self.z_move_speed,
-        )
-
-    def cmd_PROBE_ZSWITCH(self, gcmd):
-        """Probe the Z switch and record the result.
-
-        From Axiscope: uses tools_calibrate.PrinterProbeMultiAxis to
-        probe Z axis. Records trigger position for each tool.
-        Z offset = tool_trigger - T0_trigger (T0 is reference).
-        """
-        if self.probe_multi_axis is None:
-            raise self.gcode.error("Z probe not configured (no pin).")
-
-        toolhead = self.printer.lookup_object("toolhead")
-        tool_no = str(self.toolchanger.active_tool.tool_number)
-        start_pos = toolhead.get_position()
-
-        # Probe Z (from Axiscope: run_probe with "z-" direction)
-        z_result = self.probe_multi_axis.run_probe(
-            "z-", gcmd, speed_ratio=0.5, max_distance=10.0,
-            samples=self.z_samples,
-        )[2]
-
-        measured_time = self.printer.get_reactor().monotonic()
-
-        # Record result
-        if tool_no == "0":
-            self.probe_results[tool_no] = {
-                "z_trigger": z_result,
-                "z_offset": 0,
-                "last_run": measured_time,
-            }
-        elif "0" in self.probe_results:
-            z_offset = z_result - self.probe_results["0"]["z_trigger"]
-            self.probe_results[tool_no] = {
-                "z_trigger": z_result,
-                "z_offset": z_offset,
-                "last_run": measured_time,
-            }
+    def _station_ready(self, station):
+        if station == "camera":
+            values = (self.camera_x, self.camera_y, self.camera_z, self.camera_safe_z)
         else:
-            self.probe_results[tool_no] = {
-                "z_trigger": z_result,
-                "z_offset": None,
-                "last_run": measured_time,
-            }
-
-        # Return to start position
-        toolhead.move(start_pos, self.z_move_speed)
-        toolhead.set_position(start_pos)
-        toolhead.wait_moves()
-
-    def cmd_SET_ENDSTOP_POSITION(self, gcmd):
-        """Set Z switch endstop position dynamically.
-
-        From Axiscope. Params: X=, Y=, Z=, CURRENT=1 (use toolhead pos).
-        """
-        toolhead = self.printer.lookup_object("toolhead")
-        current_pos = toolhead.get_position()
-        use_current = gcmd.get_int("CURRENT", 0)
-
-        x_pos = gcmd.get_float("X", None)
-        y_pos = gcmd.get_float("Y", None)
-        z_pos = gcmd.get_float("Z", None)
-
-        if use_current:
-            if x_pos is None:
-                x_pos = current_pos[0]
-            if y_pos is None:
-                y_pos = current_pos[1]
-            if z_pos is None:
-                z_pos = current_pos[2]
-
-        set_axes = []
-        if x_pos is not None:
-            self.z_x_pos = x_pos
-            set_axes.append("X=%.3f" % x_pos)
-        if y_pos is not None:
-            self.z_y_pos = y_pos
-            set_axes.append("Y=%.3f" % y_pos)
-        if z_pos is not None:
-            self.z_z_pos = z_pos
-            set_axes.append("Z=%.3f" % z_pos)
-
-        if set_axes:
-            gcmd.respond_info(
-                "Tool Vision endstop: %s" % " ".join(set_axes)
+            values = (
+                self.zswitch_x,
+                self.zswitch_y,
+                self.zswitch_z,
+                self.zswitch_safe_z,
             )
-        else:
-            gcmd.respond_info(
-                "No axes specified. Use X=, Y=, Z=, or CURRENT=1."
-            )
+        return all(value is not None for value in values)
 
-    # ═══════════════════════════════════════════════════════════
-    #  COMBINED CALIBRATION COMMANDS
-    # ═══════════════════════════════════════════════════════════
+    def _axis_limits(self):
+        status = self.toolhead.get_status(self.reactor.monotonic())
+        minimum = status.get("axis_minimum")
+        maximum = status.get("axis_maximum")
+        if minimum is None or maximum is None:
+            return None
+        return (
+            (float(minimum.x), float(maximum.x)),
+            (float(minimum.y), float(maximum.y)),
+            (float(minimum.z), float(maximum.z)),
+        )
 
-    def cmd_CALIBRATE_ALL_Z(self, gcmd):
-        """Probe Z offset for all tools.
-
-        From Axiscope's CALIBRATE_ALL_Z_OFFSETS:
-          1. Run start_gcode
-          2. For each tool: pickup → move to switch → probe Z
-          3. Return to T0
-          4. Print summary
-          5. Run finish_gcode
-        """
-        if not self._is_homed():
-            gcmd.respond_info("Must home first.")
+    def _validate_target(self, x=None, y=None, z=None):
+        limits = self._axis_limits()
+        if limits is None:
             return
-
-        self._run_template("start_gcode", self.start_gcode)
-
-        for tool_no in self.toolchanger.tool_numbers:
-            self._run_template("before_pickup_gcode", self.before_pickup_gcode)
-            self.gcode.run_script_from_command("T%i" % tool_no)
-            self._run_template("after_pickup_gcode", self.after_pickup_gcode)
-
-            self.gcode.run_script_from_command("TV_MOVE_TO_ZSWITCH")
-            self.gcode.run_script_from_command(
-                "TV_PROBE_ZSWITCH SAMPLES=%i" % self.z_samples
-            )
-
-        self.gcode.run_script_from_command("T0")
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.wait_moves()
-
-        # Print summary
-        for tn in self.probe_results:
-            if tn != "0":
-                gcmd.respond_info(
-                    "T%s gcode_z_offset: %.3f"
-                    % (tn, self.probe_results[tn]["z_offset"])
-                )
-
-        self._run_template("finish_gcode", self.finish_gcode)
-
-    def cmd_CALIBRATE_ALL_XY(self, gcmd):
-        """Calibrate XY offset for all tools using camera vision.
-
-        Flow:
-          1. Select T0 → send server config → calibrate camera
-          2. Center T0 nozzle → save as origin
-          3. For each Tn: pickup → center nozzle → calculate offset
-          4. Return to T0
-        """
-        if not self._is_homed():
-            gcmd.respond_info("Must home first.")
-            return
-
-        # Camera calibration on T0
-        self.gcode.run_script_from_command("T0")
-        self.cmd_SEND_SERVER_CFG(gcmd)
-        self._calibrate_px_mm(gcmd)
-
-        if not self.is_calibrated:
-            raise self.gcode.error(
-                "Camera calibration failed. Cannot proceed."
-            )
-
-        # Set T0 as origin
-        self._calibrate_nozzle(gcmd)
-        self.cmd_SET_ORIGIN(gcmd)
-
-        # Calibrate each tool
-        for tool_no in self.toolchanger.tool_numbers:
-            if tool_no == 0:
+        for index, item in enumerate((x, y, z)):
+            if item is None:
                 continue
-
-            gcmd.respond_info("Calibrating T%d XY offset..." % tool_no)
-            self.gcode.run_script_from_command("T%i" % tool_no)
-            self._calibrate_nozzle(gcmd)
-            self.cmd_GET_OFFSET(gcmd)
-
-            gcmd.respond_info(
-                "T%d XY offset: X:%.3f Y:%.3f"
-                % (
-                    tool_no,
-                    self.last_xy_offset[0],
-                    self.last_xy_offset[1],
+            if item < limits[index][0] or item > limits[index][1]:
+                raise ToolVisionError(
+                    "%s target %.3f is outside %.3f..%.3f"
+                    % ("XYZ"[index], item, limits[index][0], limits[index][1])
                 )
-            )
 
-        self.gcode.run_script_from_command("T0")
+    def _gcode_position(self):
+        pos = self.gcode_move.get_status()["gcode_position"]
+        return [float(pos.x), float(pos.y), float(pos.z)]
 
-    def cmd_CALIBRATE_ALL(self, gcmd):
-        """Full XYZ calibration: Z probe + XY vision for all tools.
+    def _raw_position(self):
+        pos = self.gcode_move.get_status()["position"]
+        return [float(pos.x), float(pos.y), float(pos.z)]
 
-        Combined workflow:
-          1. Camera calibration on T0
-          2. For each tool: Z probe + XY center
-          3. T0 = reference origin
-          4. Tn = calculate XY+Z offsets relative to T0
-          5. Print summary
-        """
-        if not self._is_homed():
-            gcmd.respond_info("Must home first.")
+    def _move(self, x=None, y=None, z=None, speed=None):
+        self._validate_target(x, y, z)
+        fields = []
+        for axis, value in (("X", x), ("Y", y), ("Z", z)):
+            if value is not None:
+                fields.append("%s%.5f" % (axis, value))
+        if not fields:
             return
+        fields.append("F%.1f" % ((speed or self.xy_travel_speed) * 60.0))
+        self.gcode.run_script_from_command("G1 " + " ".join(fields))
+        self.toolhead.wait_moves()
 
-        gcmd.respond_info("=== Tool Vision: Starting full XYZ calibration ===")
-        self._run_template("start_gcode", self.start_gcode)
+    def _move_to_station(self, station):
+        if not self._station_ready(station):
+            raise ToolVisionError("%s station coordinates are incomplete" % station)
+        current = self._gcode_position()
+        if station == "camera":
+            x, y, z, safe_z = (
+                self.camera_x,
+                self.camera_y,
+                self.camera_z,
+                self.camera_safe_z,
+            )
+        else:
+            x, y, z, safe_z = (
+                self.zswitch_x,
+                self.zswitch_y,
+                self.zswitch_z + self.zswitch_lift_z,
+                self.zswitch_safe_z,
+            )
+        travel_z = max(current[2], safe_z)
+        self._validate_target(x, y, z)
+        self._validate_target(z=travel_z)
+        if current[2] < travel_z:
+            self._move(z=travel_z, speed=self.z_travel_speed)
+        self._move(x=x, y=y, speed=self.xy_travel_speed)
+        self._move(z=z, speed=self.z_travel_speed)
+        self._settle()
 
-        # ── Phase 1: Camera Calibration on T0 ──
-        gcmd.respond_info("Phase 1: Camera calibration on T0...")
-        self.gcode.run_script_from_command("T0")
-        self.cmd_SEND_SERVER_CFG(gcmd)
-        self._calibrate_px_mm(gcmd)
-
-        if not self.is_calibrated:
-            raise self.gcode.error("Camera calibration failed.")
-
-        # ── Phase 2: Z + XY for each tool ──
-        for tool_no in self.toolchanger.tool_numbers:
-            gcmd.respond_info("=== Calibrating T%d ===" % tool_no)
-
-            self._run_template("before_pickup_gcode", self.before_pickup_gcode)
-            self.gcode.run_script_from_command("T%i" % tool_no)
-            self._run_template("after_pickup_gcode", self.after_pickup_gcode)
-
-            # Z probe (if switch configured)
-            if self._has_switch_pos() and self.probe_multi_axis is not None:
-                self.gcode.run_script_from_command("TV_MOVE_TO_ZSWITCH")
-                self.gcode.run_script_from_command(
-                    "TV_PROBE_ZSWITCH SAMPLES=%i" % self.z_samples
-                )
-
-            # XY vision
-            self._calibrate_nozzle(gcmd)
-
-            if tool_no == 0:
-                self.cmd_SET_ORIGIN(gcmd)
-                gcmd.respond_info("T0: Set as reference origin.")
-            else:
-                self.cmd_GET_OFFSET(gcmd)
-                z_offset_str = "N/A"
-                if str(tool_no) in self.probe_results:
-                    z_off = self.probe_results[str(tool_no)].get("z_offset")
-                    if z_off is not None:
-                        z_offset_str = "%.3f" % z_off
-
-                gcmd.respond_info(
-                    "T%d: X:%.3f Y:%.3f Z:%s"
-                    % (
-                        tool_no,
-                        self.last_xy_offset[0],
-                        self.last_xy_offset[1],
-                        z_offset_str,
-                    )
-                )
-
-        self.gcode.run_script_from_command("T0")
-        toolhead = self.printer.lookup_object("toolhead")
-        toolhead.wait_moves()
-
-        # ── Summary ──
-        gcmd.respond_info("=== Tool Vision: Calibration Summary ===")
-        for tn in self.probe_results:
-            r = self.probe_results[tn]
-            gcmd.respond_info(
-                "T%s: Z_trigger=%.3f Z_offset=%s"
-                % (
-                    tn,
-                    r["z_trigger"],
-                    "%.3f" % r["z_offset"]
-                    if r["z_offset"] is not None else "N/A",
-                )
+    def _settle(self):
+        if self.camera_settle_ms > 0:
+            self.reactor.pause(
+                self.reactor.monotonic() + self.camera_settle_ms / 1000.0
             )
 
-        self._run_template("finish_gcode", self.finish_gcode)
-        gcmd.respond_info("=== Tool Vision: Calibration Complete! ===")
+    def _select_tool(self, tool_number):
+        tool_number = int(tool_number)
+        if tool_number not in self._tool_numbers():
+            raise ToolVisionError("tool T%d is not configured" % tool_number)
+        if getattr(self.toolchanger, "active_tool", None) is not None:
+            if self._active_tool_number() == tool_number:
+                return
+        self._run_template(self.before_tool_gcode, tool_number)
+        try:
+            command = self.tool_select_command.format(
+                tool=tool_number, reference_tool=self.reference_tool
+            )
+        except (KeyError, ValueError) as exc:
+            raise ToolVisionError("invalid tool_select_command: %s" % exc)
+        self.gcode.run_script_from_command(command)
+        self.toolhead.wait_moves()
+        if self._active_tool_number() != tool_number:
+            raise ToolVisionError("toolchanger did not activate T%d" % tool_number)
+        self._run_template(self.after_tool_gcode, tool_number)
 
-    # ═══════════════════════════════════════════════════════════
-    #  GCODE TEMPLATE COMMANDS (from Axiscope)
-    # ═══════════════════════════════════════════════════════════
+    # Measurement primitives
 
-    def _run_template(self, name, template):
-        """Execute a GCode template with toolchanger context.
+    def _calibrate_camera(self, gcmd):
+        self._move_to_station("camera")
+        baseline = self._detect()
+        base_gcode = self._gcode_position()
+        base_raw = self._raw_position()
+        frame_width = int(baseline["frame_width"])
+        frame_height = int(baseline["frame_height"])
+        samples = []
 
-        From Axiscope's _run_gcode_from_command().
-        """
+        point_count = self.camera_calibration_points
+        if self.camera_model == "quadratic" and point_count < 8:
+            raise ToolVisionError("quadratic camera_model requires at least 8 points")
+        for index in range(point_count):
+            angle = (2.0 * math.pi * index) / point_count
+            dx = self.camera_calibration_radius * math.cos(angle)
+            dy = self.camera_calibration_radius * math.sin(angle)
+            self._move(
+                x=base_gcode[0] + dx,
+                y=base_gcode[1] + dy,
+                speed=self.camera_move_speed,
+            )
+            self._settle()
+            observation = self._detect()
+            if (
+                int(observation["frame_width"]) != frame_width
+                or int(observation["frame_height"]) != frame_height
+            ):
+                raise ToolVisionError("camera resolution changed during calibration")
+            raw = self._raw_position()
+            pixel_delta = [
+                float(observation["x"]) - float(baseline["x"]),
+                float(observation["y"]) - float(baseline["y"]),
+            ]
+            if math.hypot(pixel_delta[0], pixel_delta[1]) < 0.5:
+                raise ToolVisionError(
+                    "camera did not observe calibration move %d" % (index + 1)
+                )
+            samples.append(
+                {
+                    "pixel_delta": pixel_delta,
+                    "machine_delta": [raw[0] - base_raw[0], raw[1] - base_raw[1]],
+                }
+            )
+            gcmd.respond_info(
+                "Camera point %d/%d: dpx=(%.2f, %.2f)"
+                % (index + 1, point_count, pixel_delta[0], pixel_delta[1])
+            )
+            self._move(
+                x=base_gcode[0],
+                y=base_gcode[1],
+                speed=self.camera_move_speed,
+            )
+
+        target = [float(baseline["target_x"]), float(baseline["target_y"])]
+        response = self._api(
+            "POST",
+            "/api/v1/model",
+            {
+                "model": self.camera_model,
+                "samples": samples,
+                "target": target,
+                "frame_width": frame_width,
+                "frame_height": frame_height,
+                "max_rms_error": self.camera_max_rms_error,
+            },
+        )
+        self.camera_transform = response["transform"]
+        self.camera_calibrated = True
+        gcmd.respond_info(
+            "Camera calibrated at %dx%d: RMS %.4fmm, condition %.1f"
+            % (
+                frame_width,
+                frame_height,
+                self.camera_transform["rms_error"],
+                self.camera_transform["condition"],
+            )
+        )
+        return self.camera_transform
+
+    def _center_nozzle(self, gcmd):
+        if not self.camera_calibrated:
+            raise ToolVisionError("run TV_CALIBRATE_CAMERA first")
+        self._move_to_station("camera")
+        for iteration in range(1, self.camera_center_max_iterations + 1):
+            observation = self._detect()
+            correction = self._api(
+                "POST",
+                "/api/v1/offset",
+                {
+                    "point": [observation["x"], observation["y"]],
+                    "frame_width": observation["frame_width"],
+                    "frame_height": observation["frame_height"],
+                },
+            )["correction"]
+            distance = float(correction["distance_mm"])
+            gcmd.respond_info(
+                "Center %d/%d: move=(%.4f, %.4f) distance=%.4fmm"
+                % (
+                    iteration,
+                    self.camera_center_max_iterations,
+                    correction["move_x"],
+                    correction["move_y"],
+                    distance,
+                )
+            )
+            if distance <= self.camera_center_tolerance:
+                return self._raw_position(), observation
+            if distance > self.camera_center_max_correction:
+                raise ToolVisionError(
+                    "camera correction %.3fmm exceeds safety limit %.3fmm"
+                    % (distance, self.camera_center_max_correction)
+                )
+            scale = self.camera_center_damping
+            if distance * scale > self.camera_center_max_step:
+                scale = self.camera_center_max_step / distance
+            current = self._gcode_position()
+            self._move(
+                x=current[0] + correction["move_x"] * scale,
+                y=current[1] + correction["move_y"] * scale,
+                speed=self.camera_fine_speed,
+            )
+            self._settle()
+        raise ToolVisionError("nozzle did not converge to the camera target")
+
+    def _measure_xy(self, gcmd, tool_number, set_reference=False):
+        self._select_tool(tool_number)
+        raw, observation = self._center_nozzle(gcmd)
+        if set_reference:
+            self.xy_reference = [raw[0], raw[1]]
+            offset = [0.0, 0.0]
+        else:
+            if self.xy_reference is None:
+                raise ToolVisionError("measure the XY reference tool first")
+            offset = [
+                raw[0] - self.xy_reference[0],
+                raw[1] - self.xy_reference[1],
+            ]
+        result = self.results.setdefault(str(tool_number), {})
+        result.update(
+            {
+                "x": round(offset[0], 5),
+                "y": round(offset[1], 5),
+                "xy_raw": [round(raw[0], 5), round(raw[1], 5)],
+                "xy_confidence": round(float(observation["confidence"]), 4),
+                "xy_stdev": [
+                    round(float(observation["stdev_x"]), 4),
+                    round(float(observation["stdev_y"]), 4),
+                ],
+            }
+        )
+        return result
+
+    def _measure_z(self, tool_number, set_reference=False):
+        if self.probe_multi_axis is None:
+            raise ToolVisionError("Z switch pin is not configured")
+        self._select_tool(tool_number)
+        self._move_to_station("zswitch")
+        start_pos = self.toolhead.get_position()
+        try:
+            measured = self.probe_multi_axis.run_probe(
+                "z-",
+                self._active_gcmd,
+                speed_ratio=self.probe_speed_ratio,
+                max_distance=self.probe_max_distance,
+                samples=self.probe_samples,
+            )[2]
+        finally:
+            self.toolhead.move(start_pos, self.z_travel_speed)
+            self.toolhead.set_position(start_pos)
+            self.toolhead.wait_moves()
+        if set_reference:
+            self.z_reference = float(measured)
+            offset = 0.0
+        else:
+            if self.z_reference is None:
+                raise ToolVisionError("measure the Z reference tool first")
+            offset = float(measured) - self.z_reference
+        result = self.results.setdefault(str(tool_number), {})
+        result.update(
+            {
+                "z": round(offset, 5),
+                "z_trigger": round(float(measured), 5),
+            }
+        )
+        return result
+
+    # Command orchestration
+
+    def _run_guarded(self, gcmd, callback):
+        if self.busy:
+            raise gcmd.error("Tool Vision is already running")
+        self.busy = True
+        self._active_gcmd = gcmd
+        state_saved = False
+        self.last_error = None
+        try:
+            self._assert_idle()
+            self._assert_homed()
+            self.gcode.run_script_from_command(
+                "SAVE_GCODE_STATE NAME=%s" % self.STATE_NAME
+            )
+            state_saved = True
+            self.gcode.run_script_from_command("G90")
+            return callback()
+        except Exception as exc:
+            self.last_error = str(exc)
+            try:
+                self._run_template(self.abort_gcode, self._safe_active_tool())
+            except Exception:
+                pass
+            if isinstance(exc, self.printer.command_error):
+                raise
+            raise gcmd.error("Tool Vision: %s" % exc)
+        finally:
+            if state_saved:
+                try:
+                    self.gcode.run_script_from_command(
+                        "RESTORE_GCODE_STATE NAME=%s MOVE=0" % self.STATE_NAME
+                    )
+                except Exception:
+                    pass
+            self._active_gcmd = None
+            self.busy = False
+
+    def _safe_active_tool(self):
+        try:
+            return self._active_tool_number()
+        except Exception:
+            return self.reference_tool
+
+    def _run_template(self, template, tool_number):
         if not template:
             return
-        curtime = self.printer.get_reactor().monotonic()
-        context = {
-            **template.create_template_context(),
-            "tool": (
-                self.toolchanger.active_tool.get_status(curtime)
-                if self.toolchanger.active_tool
-                else {}
-            ),
-            "toolchanger": self.toolchanger.get_status(curtime),
-            "tool_vision": self.get_status(curtime),
-        }
+        eventtime = self.reactor.monotonic()
+        context = template.create_template_context()
+        context.update(
+            {
+                "tool_number": tool_number,
+                "reference_tool": self.reference_tool,
+                "toolchanger": self.toolchanger.get_status(eventtime),
+                "tool_vision": self.get_status(eventtime),
+            }
+        )
         template.run_gcode_from_command(context)
 
-    # ═══════════════════════════════════════════════════════════
-    #  SAVE/LOAD CONFIG (from Axiscope)
-    # ═══════════════════════════════════════════════════════════
+    def _run_all(self, gcmd, mode):
+        mode = mode.upper()
+        if mode not in ("XYZ", "XY", "Z"):
+            raise ToolVisionError("MODE must be XYZ, XY, or Z")
+        if mode in ("XYZ", "XY") and not self._station_ready("camera"):
+            raise ToolVisionError("camera station coordinates are incomplete")
+        if mode in ("XYZ", "Z"):
+            if self.probe_multi_axis is None or not self._station_ready("zswitch"):
+                raise ToolVisionError("Z switch configuration is incomplete")
 
-    def _update_tool_offsets(self, cfg_data, tool_name, offsets):
-        """Update tool offsets in config file data.
+        self.results = {}
+        self.xy_reference = None
+        self.z_reference = None
+        self.last_run = time.time()
+        self._run_template(self.start_gcode, self.reference_tool)
+        self._select_tool(self.reference_tool)
+        if mode in ("XYZ", "XY"):
+            self._configure_server()
+            self._calibrate_camera(gcmd)
+            self._measure_xy(gcmd, self.reference_tool, set_reference=True)
+        if mode in ("XYZ", "Z"):
+            self._measure_z(self.reference_tool, set_reference=True)
 
-        From Axiscope's update_tool_offsets(). Finds the [tool_name]
-        section and updates gcode_x/y/z_offset lines. Creates a new
-        section if it doesn't exist.
-        """
-        axis = "xyz" if len(offsets) == 3 else "xy"
-        section_name = "[%s]" % tool_name
-        section_start = None
-        section_end = None
-        new_section = None
+        for tool_number in self._tool_numbers():
+            if tool_number == self.reference_tool:
+                continue
+            gcmd.respond_info("Measuring T%d (%s)..." % (tool_number, mode))
+            if mode in ("XYZ", "XY"):
+                self._measure_xy(gcmd, tool_number, set_reference=False)
+            if mode in ("XYZ", "Z"):
+                self._measure_z(tool_number, set_reference=False)
 
-        # Find section boundaries
-        for i, line in enumerate(cfg_data):
-            stripped = line.lstrip()
-            if stripped.startswith(section_name):
-                section_start = i + 1
-            elif section_start is not None:
-                if stripped.startswith("["):
-                    section_end = i - 1
-                    break
+        self._select_tool(self.reference_tool)
+        self._run_template(self.finish_gcode, self.reference_tool)
+        self._save_results(mode)
+        self._report(gcmd)
 
-        # Update or create offset lines
-        for i, a in enumerate(axis):
-            offset_name = "gcode_%s_offset" % a
-            offset_value = offsets[i]
-            offset_string = "%s: %.3f\n" % (offset_name, offset_value)
-
-            if section_start is not None:
-                # Section exists - find and replace offset line
-                section_lines = (
-                    cfg_data[section_start : section_end + 1]
-                    if section_end is not None
-                    else cfg_data[section_start:]
-                )
-                for line in section_lines:
-                    if line.lstrip().startswith(offset_name):
-                        cfg_data[cfg_data.index(line)] = offset_string
-            else:
-                # Section doesn't exist - create new
-                if new_section is not None:
-                    new_section.append(offset_string)
-                else:
-                    new_section = ["\n", section_name + "\n", offset_string]
-
-        if new_section is not None:
-            new_section.append("\n")
-            # If printer.cfg, insert before #*# section
-            no_touch_index = None
-            if self.config_file_path.endswith("printer.cfg"):
-                for line in cfg_data:
-                    if line.lstrip().startswith("#*#"):
-                        no_touch_index = cfg_data.index(line)
-                        break
-            if no_touch_index is not None:
-                cfg_data = (
-                    cfg_data[:no_touch_index]
-                    + ["\n"] + new_section
-                    + cfg_data[no_touch_index:]
-                )
-            else:
-                cfg_data = cfg_data + ["\n"] + new_section
-
-        return cfg_data
-
-    def cmd_SAVE_TOOL_OFFSET(self, gcmd):
-        """Save tool offsets to config file.
-
-        Params: TOOL_NAME="tool T1" OFFSETS="[0.123, -0.045, 0.031]"
-        """
-        if not self.has_cfg_data:
-            gcmd.respond_info(
-                "Tool Vision: config_file_path required to save offsets."
-            )
+    def _save_results(self, mode):
+        if not self.result_file:
             return
+        parent = os.path.dirname(self.result_file)
+        if parent and not os.path.isdir(parent):
+            os.makedirs(parent)
+        payload = {
+            "schema_version": 1,
+            "tool_vision_version": self.VERSION,
+            "timestamp": self.last_run,
+            "mode": mode,
+            "reference_tool": self.reference_tool,
+            "camera_transform": self.camera_transform,
+            "results": self.results,
+        }
+        temporary = self.result_file + ".tmp"
+        with open(temporary, "w") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        os.replace(temporary, self.result_file)
 
-        with open(self.config_file_path, "r") as f:
-            cfg_data = f.readlines()
+    def _report(self, gcmd):
+        gcmd.respond_info("=== Tool Vision measured offsets (report only) ===")
+        for tool_number in self._tool_numbers():
+            result = self.results.get(str(tool_number), {})
+            values = []
+            for axis in "xyz":
+                if axis in result:
+                    values.append("%s=%+.5f" % (axis.upper(), result[axis]))
+            if values:
+                gcmd.respond_info("T%d %s" % (tool_number, " ".join(values)))
+            if tool_number != self.reference_tool and all(
+                axis in result for axis in "xyz"
+            ):
+                gcmd.respond_info(
+                    "Suggested: SET_TOOL_PARAMETER T=%d "
+                    "PARAMETER=gcode_x_offset VALUE=%.5f"
+                    % (tool_number, result["x"])
+                )
+                gcmd.respond_info(
+                    "Suggested: SET_TOOL_PARAMETER T=%d "
+                    "PARAMETER=gcode_y_offset VALUE=%.5f"
+                    % (tool_number, result["y"])
+                )
+                gcmd.respond_info(
+                    "Suggested: SET_TOOL_PARAMETER T=%d "
+                    "PARAMETER=gcode_z_offset VALUE=%.5f"
+                    % (tool_number, result["z"])
+                )
+        if self.result_file:
+            gcmd.respond_info("Results file: %s" % self.result_file)
 
-        tool_name = gcmd.get("TOOL_NAME")
-        offsets = ast.literal_eval(gcmd.get("OFFSETS"))
-        out_data = self._update_tool_offsets(cfg_data, tool_name, offsets)
+    # GCode handlers
 
-        gcmd.respond_info("Writing %s offsets..." % tool_name)
-        with open(self.config_file_path, "w") as f:
-            for line in out_data:
-                f.write(line)
-        gcmd.respond_info("Offsets written successfully.")
-
-    def cmd_SAVE_MULTIPLE_TOOL_OFFSETS(self, gcmd):
-        """Save multiple tool offsets at once.
-
-        Params: TOOLS="['tool T1', 'tool T2']"
-                OFFSETS="[[0.12, -0.04, 0.03], [0.05, 0.02, -0.01]]"
-        """
-        if not self.has_cfg_data:
-            gcmd.respond_info(
-                "Tool Vision: config_file_path required to save offsets."
+    def cmd_STATUS(self, gcmd):
+        try:
+            health = self._api("GET", "/api/v1/health", timeout=2.0)
+            server = "configured=%s busy=%s" % (
+                health["configured"], health["busy"]
             )
-            return
-
-        with open(self.config_file_path, "r") as f:
-            cfg_data = f.readlines()
-
-        tool_names = gcmd.get("TOOLS")
-        offsets = ast.literal_eval(gcmd.get("OFFSETS"))
-        out_data = cfg_data
-
-        for i, tool_name in enumerate(tool_names):
-            out_data = self._update_tool_offsets(
-                out_data, tool_name, offsets[i]
+        except Exception as exc:
+            server = "unavailable (%s)" % exc
+        gcmd.respond_info(
+            "Tool Vision %s: busy=%s server=%s results=%d last_error=%s"
+            % (
+                self.VERSION,
+                self.busy,
+                server,
+                len(self.results),
+                self.last_error or "none",
             )
+        )
 
-        gcmd.respond_info("Writing offsets for %d tools..." % len(tool_names))
-        with open(self.config_file_path, "w") as f:
-            for line in out_data:
-                f.write(line)
-        gcmd.respond_info("Offsets written successfully.")
+    def cmd_SERVER_CONFIGURE(self, gcmd):
+        result = self._configure_server()
+        gcmd.respond_info(
+            "Vision server configured; native frame size will be detected on capture"
+        )
+        return result
 
-    # ═══════════════════════════════════════════════════════════
-    #  STATUS
-    # ═══════════════════════════════════════════════════════════
+    def cmd_CAMERA_CHECK(self, gcmd):
+        observation = self._detect()
+        gcmd.respond_info(
+            "Nozzle: X%.2f Y%.2f frame=%dx%d confidence=%.3f stdev=(%.2f, %.2f)"
+            % (
+                observation["x"],
+                observation["y"],
+                observation["frame_width"],
+                observation["frame_height"],
+                observation["confidence"],
+                observation["stdev_x"],
+                observation["stdev_y"],
+            )
+        )
+
+    def cmd_MOVE_TO_CAMERA(self, gcmd):
+        return self._run_guarded(gcmd, lambda: self._move_to_station("camera"))
+
+    def cmd_MOVE_TO_ZSWITCH(self, gcmd):
+        return self._run_guarded(gcmd, lambda: self._move_to_station("zswitch"))
+
+    def cmd_CALIBRATE_CAMERA(self, gcmd):
+        def work():
+            self._select_tool(gcmd.get_int("TOOL", self.reference_tool))
+            self._configure_server()
+            return self._calibrate_camera(gcmd)
+        return self._run_guarded(gcmd, work)
+
+    def cmd_MEASURE_XY(self, gcmd):
+        tool_number = gcmd.get_int("TOOL", self._safe_active_tool())
+        set_reference = bool(gcmd.get_int("REFERENCE", 0, minval=0, maxval=1))
+        return self._run_guarded(
+            gcmd,
+            lambda: self._measure_xy(gcmd, tool_number, set_reference),
+        )
+
+    def cmd_MEASURE_Z(self, gcmd):
+        tool_number = gcmd.get_int("TOOL", self._safe_active_tool())
+        set_reference = bool(gcmd.get_int("REFERENCE", 0, minval=0, maxval=1))
+        return self._run_guarded(
+            gcmd,
+            lambda: self._measure_z(tool_number, set_reference),
+        )
+
+    def cmd_CALIBRATE_ALL(self, gcmd):
+        mode = gcmd.get("MODE", "XYZ")
+        return self._run_guarded(gcmd, lambda: self._run_all(gcmd, mode))
+
+    def cmd_REPORT(self, gcmd):
+        self._report(gcmd)
 
     def get_status(self, eventtime=None):
-        """Return current status for use in GCode templates.
-
-        Includes backward-compatible aliases for kTAMV macros:
-          - travel_speed: move_speed converted to mm/min (for G0/G1 F param)
-          - last_nozzle_center_successful: alias of last_nozzle_center_ok
-          - mm_per_pixels: alias of mm_per_pixel
-          - last_calculated_offset: alias of last_xy_offset
-        """
         return {
-            # ── Tool Vision keys ──
-            "last_xy_offset": self.last_xy_offset,
-            "mm_per_pixel": self.mpp,
-            "is_calibrated": self.is_calibrated,
-            "send_frame_to_cloud": self.send_frame_to_cloud,
-            "camera_center_coordinates": self.cp,
-            "move_speed": self.move_speed,
-            "last_nozzle_center_ok": self.last_nozzle_center_ok,
-            "probe_results": self.probe_results,
-            "can_save_config": self.has_cfg_data is not False,
-            "endstop_x": self.z_x_pos,
-            "endstop_y": self.z_y_pos,
-            "endstop_z": self.z_z_pos,
-            # ── kTAMV backward-compatible aliases ──
-            "travel_speed": self.move_speed * 60,  # mm/s → mm/min for F param
-            "last_nozzle_center_successful": self.last_nozzle_center_ok,
-            "mm_per_pixels": self.mpp,
-            "last_calculated_offset": self.last_xy_offset,
+            "version": self.VERSION,
+            "busy": self.busy,
+            "server_configured": self.server_configured,
+            "camera_calibrated": self.camera_calibrated,
+            "camera_transform": self.camera_transform,
+            "last_observation": self.last_observation,
+            "results": self.results,
+            "reference_tool": self.reference_tool,
+            "tool_numbers": self._tool_numbers(),
+            "last_error": self.last_error,
+            "last_run": self.last_run,
+            "result_file": self.result_file,
         }
 
-
-# ═══════════════════════════════════════════════════════════════
-#  KLIPPER ENTRY POINT
-# ═══════════════════════════════════════════════════════════════
 
 def load_config(config):
     return ToolVision(config)
