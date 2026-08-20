@@ -372,3 +372,62 @@ của dự án gốc cùng các snapshot backup vẫn cho phép phục hồi.
 Tool Vision hiện có một nguồn chính thức độc lập trên PC/GitHub. Máy in chỉ hiển
 thị file cấu hình cần chỉnh; runtime sau này sẽ được installer tự lưu trực tiếp
 trên Pi mà không cần clone repository.
+
+## 6. Đồng bộ All-Config-Voron với máy thật
+
+### Mục tiêu
+Đối chiếu payload `config/` trên PC với `~/printer_data/config` tại máy
+`192.168.1.43`, đồng bộ mọi khác biệt production và bảo đảm quá trình update sau
+này không xóa dữ liệu chỉ thuộc máy in.
+
+### Audit ban đầu
+- Repository PC sạch tại commit `51e9689`.
+- Local `config/`: 33 file; trong đó `README.md` là tài liệu và được deployment
+  scripts loại khỏi payload.
+- Máy thật: 44 file trước backup mới; 32 file managed, 10 file trong
+  `.codex-backups/`, một `.moonraker.conf.bkp` do Moonraker sinh và một
+  `Tool-Vision/tool_vision.cfg` thuộc dự án độc lập.
+- 32/32 file managed khớp SHA256 tuyệt đối giữa PC và máy thật; không có khác
+  biệt nội dung hoặc line ending.
+
+### Vấn đề phát hiện
+`config/scripts/install.sh` và `config/scripts/update.sh` dùng đồng thời
+`rsync --delete --delete-excluded`. Nếu chạy lại, cơ chế này có thể xóa các vùng
+máy-local không có trong payload All-Config, bao gồm backup và Tool Vision.
+
+### Sao lưu
+- Local:
+  `extras/backups/pre-config-sync-20260820-181021/`.
+- Máy thật:
+  `config/.codex-backups/pre-config-sync-20260820-181021/config/scripts/`.
+- SHA256 bản cũ `install.sh`:
+  `ECDB2F955CCB2643AFACEC887B91858AAB3DE5205C5E1C339C50A48D5AD01269`.
+- SHA256 bản cũ `update.sh`:
+  `C13E9F8BF0D152A2B16FD771F957427A7B5445F70BD85C6E39E7DCBAB86355D4`.
+
+### Thay đổi
+- Bỏ `--delete-excluded` nhưng giữ `--delete` để stale managed files vẫn được
+  loại bỏ.
+- Thêm exclude được bảo vệ cho `.codex-backups/`, `.moonraker.conf.bkp` và
+  `Tool-Vision/`.
+- Giữ nguyên exclude tài liệu `README.md`, `*.md` và
+  `Nhat-ky-chinh-sua/`.
+- Upload đúng hai script đã sửa lên `config/scripts/`; không sửa config Klipper
+  đang parse và không restart service.
+- SHA256 mới `install.sh`:
+  `A44A06EEB4394BABD436DBC5719BC977E8B49FCB542B664E97F183487AA9954A`.
+- SHA256 mới `update.sh`:
+  `7C4D46690DBDF5696215314E45C76150C09153DFAFCD460F95CF9DCAADCDE29E`.
+
+### Kiểm tra
+- Bash syntax của cả hai script: đạt.
+- Contract check: không còn `--delete-excluded`, đủ ba exclude máy-local.
+- Sau upload, 32/32 file managed khớp SHA256; mismatch = 0.
+- Backup mới, `.moonraker.conf.bkp` và Tool Vision đều còn tồn tại.
+- Klipper `ready`, print `standby`, pause `False`, `SAVE_CONFIG` pending `False`.
+- Không chạy G-code, không restart, không tạo chuyển động hoặc gia nhiệt.
+
+### Kết quả
+Payload All-Config-Voron trên PC và máy thật hiện thống nhất hoàn toàn. Các file
+generated, backup và Tool Vision được phân loại là dữ liệu máy-local có chủ đích
+và đã được deployment scripts bảo vệ cho các lần đồng bộ sau.

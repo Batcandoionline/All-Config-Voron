@@ -19,16 +19,7 @@ fi
 
 echo "Installing config files from: ${SOURCE_CONFIG_DIR}"
 mkdir -p "${CONFIG_DIR}"
-# Excluded paths are intentionally protected from --delete. They are maintained
-# by the printer or by an independent project and are not part of this payload.
-rsync -a --delete \
-  --exclude ".codex-backups/" \
-  --exclude ".moonraker.conf.bkp" \
-  --exclude "Tool-Vision/" \
-  --exclude "Nhat-ky-chinh-sua/" \
-  --exclude "README.md" \
-  --exclude "*.md" \
-  "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
+rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" --exclude "README.md" --exclude "*.md" "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
 
 echo "Install complete."
 echo "Source repository: ${REPO_URL}"

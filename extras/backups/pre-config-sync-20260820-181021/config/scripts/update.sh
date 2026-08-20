@@ -21,16 +21,7 @@ mkdir -p "${BACKUP_DIR}"
 rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
 
 echo "Copying latest config files."
-# Excluded paths are intentionally protected from --delete. They are maintained
-# by the printer or by an independent project and are not part of this payload.
-rsync -a --delete \
-  --exclude ".codex-backups/" \
-  --exclude ".moonraker.conf.bkp" \
-  --exclude "Tool-Vision/" \
-  --exclude "Nhat-ky-chinh-sua/" \
-  --exclude "README.md" \
-  --exclude "*.md" \
-  "${REPO_DIR}/config/" "${CONFIG_DIR}/"
+rsync -a --delete --delete-excluded --exclude "Nhat-ky-chinh-sua/" --exclude "README.md" --exclude "*.md" "${REPO_DIR}/config/" "${CONFIG_DIR}/"
 
 if [ "${BACKUP_KEEP}" -gt 0 ] 2>/dev/null; then
   echo "Keeping the newest ${BACKUP_KEEP} config backups in: ${BACKUP_ROOT}"
