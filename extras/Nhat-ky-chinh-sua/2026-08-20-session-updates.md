@@ -847,6 +847,10 @@ khi homing Z với tool đang active.
   là bằng chứng runtime chưa được cài/load.
 - SSH `voron@192.168.1.43` tiếp tục trả
   `Permission denied (publickey,password)`.
+- Sau khi người dùng báo đã cấp key, thử lại với `IdentitiesOnly=yes` và ép
+  chính xác `C:\Users\batca\.ssh\id_ed25519`; client đã offer fingerprint
+  `SHA256:yxE9VagQtOgNe24Q66f8HeGO9vKt30Uwn2aUt6eg29o` nhưng server không accept.
+  Các tài khoản `voron`, `pi`, `mks`, `biqu`, `root` đều bị từ chối.
 - Source Tool Vision chủ động báo config error nếu `[axiscope]` hoặc
   `[tools_calibrate]` cùng tồn tại vì các backend cùng tạo
   `probe_multi_axis`.
