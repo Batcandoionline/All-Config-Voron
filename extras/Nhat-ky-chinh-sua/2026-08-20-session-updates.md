@@ -77,3 +77,47 @@ logic. Cấu hình production hiện hành được giữ nguyên an toàn.
 - Chỉ disable `[axiscope]` rồi include `[tool_vision]` khi bắt đầu commissioning.
 - Chạy tuần tự T0, một tool phụ, sau đó mới chạy toàn bộ tool và đối chiếu với
   first-layer print trước khi áp dụng bất kỳ offset nào.
+
+## 2. Clone tool_crash của cekim-git làm nguồn tham khảo
+
+### Mục tiêu
+Đưa nguyên bản dự án crash detection của cekim-git vào `extras/` để có thể đọc,
+đối chiếu thiết kế sensor/watchdog với hệ thống toolchanger hiện tại.
+
+### File đã sửa đổi
+- `.gitmodules` — khai báo URL để Git có thể tái tạo nguồn tham khảo.
+- `extras/tool_crash/` — clone nguyên repository upstream dưới dạng Git
+  submodule; không sửa source của tác giả.
+
+### Sao lưu
+- Không cần sao lưu vì đây là thư mục mới, không ghi đè file hiện có.
+
+### Chi tiết thay đổi
+- Nguồn: `https://github.com/cekim-git/tool_crash.git`.
+- Nhánh: `main`.
+- Upstream commit được ghim: `5cb00ad9e0216db97b8139a627b41407c86c88a9`.
+- Nội dung chính gồm `tool_crash.py`, `README.md` và `LICENSE`.
+- Không copy extension vào Klipper, không thêm `[tool_crash]` vào production và
+  không chạy bất kỳ mã upstream nào.
+
+### Lý do
+Dự án triển khai crash detection cho `klipper-toolchanger` bằng cạnh tín hiệu
+probe/detection pin kết hợp watchdog kiểm tra trạng thái active tool. Đây là
+nguồn tham khảo phù hợp cho phần an toàn toolchanger, nhưng upstream tự đánh dấu
+là alpha nên chưa được phép dùng trực tiếp trên máy.
+
+### Kiểm tra
+- Xác nhận remote origin, nhánh và commit upstream: đạt.
+- `git fsck --no-reflogs` trong repository clone: đạt.
+- Working tree upstream sạch: đạt.
+- Parse AST `tool_crash.py`: đạt.
+- Klipper runtime/hardware test: không thực hiện vì chỉ clone làm tham khảo.
+
+### Kết quả
+Repository upstream đã có tại `extras/tool_crash` dưới dạng submodule, giữ
+nguyên lịch sử Git để đọc, so sánh hoặc cập nhật độc lập khi cần.
+
+### Vấn đề còn lại
+- Cần review chi tiết tính tương thích với phiên bản `klipper-toolchanger` đang
+  dùng trước khi kế thừa bất kỳ logic nào.
+- Không enable `[tool_crash]` trên production khi chưa audit và thử nghiệm an toàn.
