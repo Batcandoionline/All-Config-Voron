@@ -21,7 +21,7 @@ Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D pri
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
 | **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
 | **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
-| **Tool-Offset Calibrator**| PF2 microswitch; Axiscope active, Tool Vision staged | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
+| **Tool-Offset Calibrator**| Tool Vision active; removable MF-500 camera + PF2 microswitch | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
 | **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
 | **Chamber Feedback** | Generic 3950 100K NTC | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
@@ -69,7 +69,7 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
 2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
 3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
-4. **Tool-offset station (`^PF2`):** Axiscope currently uses the switch at $(X=68.0, Y=-10.0, Z=7.0)$. Tool Vision is staged for camera XY plus switch Z, but remains disabled until the removable magnetic camera station is measured and commissioned.
+4. **Tool-offset station (`^PF2`):** Tool Vision owns the switch at $(X=68.0, Y=-10.0, Z=7.0)$ and uses the removable MF-500 camera for XY. The backend is active, but camera-station motion remains blocked until the magnetic mount position is measured and commissioned.
 
 ### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
 * **Purge Bucket:** $X = 320.0, Y = -8.0$
@@ -127,7 +127,7 @@ Voron 5 Tool/
 │   ├── Printer-Setup/        ← Modular printer configuration files
 │   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
-│   │   ├── calibration-probe.cfg ← Cartographer/mesh and active Axiscope switch (^PF2)
+│   │   ├── calibration-probe.cfg ← Cartographer/mesh and Tool Vision switch ownership (^PF2)
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)

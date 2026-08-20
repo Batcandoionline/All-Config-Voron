@@ -24,10 +24,10 @@ File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
 
 1. `mainsail.cfg`: macro Mainsail chuẩn như `PAUSE`, `RESUME`, `CANCEL_PRINT`.
 2. `toolchanger/readonly-configs/toolchanger-include.cfg`: nạp KTC-Easy readonly, homing, toolchanger, macro M104/M109, calibration, crash detection gốc và toàn bộ `T*.cfg`.
-3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, Axiscope PF2 và các macro trạng thái calibration.
+3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, quyền sở hữu PF2 của Tool Vision, dữ liệu rollback Axiscope và các macro trạng thái calibration.
 4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
 5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
-6. `Tool-Vision/tool_vision.cfg` chỉ được stage; include vẫn comment khi Axiscope đang active.
+6. `Tool-Vision/tool_vision.cfg` là backend offset active; Axiscope được giữ dạng comment để rollback.
 
 Nguyên tắc quan trọng:
 
@@ -289,12 +289,13 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend production hiện tại là Axiscope tại PF2, X=68, Y=-10, Z=7. Các macro
-SexBolt/tools_calibrate cũ bị chặn vì PF4/X257/Y327 không còn là phần cứng active.
-Tool Vision đã có cấu hình stage để sau này thay Axiscope: camera MF-500 được
-tháo khỏi vị trí soi buồng, đặt lên gá nam châm có định vị, rồi người dùng tự jog
-T0 và nhập X/Y/Z/safe-Z. Không bật đồng thời `axiscope`, `tools_calibrate` và
-`tool_vision` vì cả ba cùng sở hữu `probe_multi_axis`.
+Backend production hiện tại là Tool Vision với công tắc PF2 tại X=68, Y=-10,
+Z=7; Axiscope và SexBolt/tools_calibrate đã tắt. Camera MF-500 vẫn dùng để soi
+buồng, khi hiệu chuẩn mới tháo xuống gá nam châm có định vị. Người dùng phải tự
+jog T0 và nhập X/Y/Z/safe-Z trước khi chạy camera-station calibration; khi các
+tọa độ này còn trống, Tool Vision chặn chuyển động tới station. Không bật đồng
+thời `axiscope`, `tools_calibrate` và `tool_vision` vì cả ba cùng sở hữu
+`probe_multi_axis`.
 
 Kiểm tra offset:
 

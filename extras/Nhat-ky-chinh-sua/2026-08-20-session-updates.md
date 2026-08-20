@@ -867,3 +867,76 @@ khi homing Z với tool đang active.
 ### Trạng thái máy
 - Không có cấu hình production nào bị thay đổi trong lượt kiểm tra này.
 - Axiscope tiếp tục active để không làm mất backend hiệu chuẩn đang hoạt động.
+
+## 13. Cutover Axiscope sang Tool Vision
+
+### Mục tiêu
+- Cài runtime Tool Vision trên CM4 mà không clone Git repository.
+- Tắt Axiscope do xung đột `probe_multi_axis`, bật include Tool Vision và chỉ
+  kiểm tra config/runtime; chưa chạy camera detection, chuyển động hoặc hiệu
+  chuẩn vật lý.
+
+### Sao lưu
+- PC:
+  [pre-toolvision-cutover-20260820-210754](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-toolvision-cutover-20260820-210754/).
+- Pi:
+  `/home/voron/printer_data/config/.codex-backups/pre-toolvision-cutover-20260820-210754/`.
+- Backup gồm `printer.cfg`, `calibration-probe.cfg`, `tool_vision.cfg`,
+  `toolchanger-config.cfg`, unit/trạng thái Axiscope và source Tool Vision trước
+  hai lỗi runtime được sửa. Các file config PC/Pi trước cutover khớp SHA-256.
+
+### Cài runtime
+- Source ban đầu: Tool Vision commit `cad935b`; đóng gói thành archive 31,007
+  byte, SHA-256
+  `d0c34cac26067104889587ca989dcf5f8d44c2f4e7dd322b7a0f12d62eb15304`.
+- Archive chỉ tồn tại tạm trong `/tmp`; installer lưu runtime tối thiểu vào
+  `/home/voron/printer_data/tool-vision`, venv vào
+  `/home/voron/tool-vision-env` và giữ nguyên config machine-specific.
+- Các cảnh báo `RemoteDisconnected` khi pip tải package là retry tạm; quá trình
+  kết thúc với toàn bộ package cài thành công và `pip check` không có lỗi.
+- Xác minh runtime không chứa `.git`; gói `/tmp` đã được xóa sau khi cài.
+
+### Lỗi phát hiện và sửa trong Tool Vision
+- Lần start service đầu báo
+  `WorkingDirectory= path is not absolute: "/home/voron/printer_data/tool-vision"`.
+  Systemd trên Pi giữ dấu quote trong path directive. Đổi template thành
+  `WorkingDirectory=@PROJECT_DIR@`, xác minh `systemd-analyze verify` đạt và
+  push commit Tool Vision `7a876fe`.
+- Lần include đầu Klipper báo `tool_numbers cannot be empty`. KTC chưa populate
+  danh sách tool ở thời điểm object được construct, trong khi template cho phép
+  để trống để discover động. Dời validation danh sách động sang event
+  `klippy:connect`, thêm regression test và push commit Tool Vision `da160f3`.
+- Cấu hình production của máy này dùng danh sách phần cứng rõ ràng
+  `tool_numbers: 0, 1, 2, 3, 4`; source vẫn hỗ trợ discover động cho máy khác.
+- Tool Vision test sau sửa: 26/26 đạt; Python compile, Bash syntax và
+  `git diff --check` đạt.
+
+### Thay đổi production
+- Bật `[include Tool-Vision/tool_vision.cfg]` trong `printer.cfg`.
+- Comment toàn bộ section `[axiscope]` nhưng giữ nguyên PF2/X68/Y-10/Z7 và
+  start/finish G-code để rollback.
+- Dừng và disable `axiscope.service`; giữ unit/source Axiscope, không xóa.
+- `tool-vision.service` active/enabled, bind `127.0.0.1:8085`; API health
+  `ok=true`, `configured=true`, `busy=false`.
+- Cập nhật macro `CALIBRATION_STATUS`, guard SexBolt, README và hướng dẫn để
+  phản ánh Tool Vision active/Axiscope disabled.
+- Giữ camera X/Y/Z/safe-Z absent. Camera station motion vẫn bị chặn cho tới khi
+  người dùng đo vị trí gá nam châm.
+
+### Kiểm tra cuối
+- Active include graph: 23 file, 229 section; đúng một `[tool_vision]`, không có
+  `[axiscope]` hoặc `[tools_calibrate]` active.
+- Klipper `ready`; Moonraker warning 0, failed component 0.
+- Object: Tool Vision 2.0.0, T0-T4, reference T0, server configured, chưa
+  calibrate camera, không result/observation/error.
+- `TV_SERVER_CONFIGURE`, `TV_STATUS`, `CALIBRATION_STATUS` chạy thành công và
+  không tạo chuyển động.
+- `SAVE_CONFIG` giữ nguyên từng byte. Bốn file deploy khớp SHA-256 PC/Pi.
+- Trạng thái máy: print `standby`, pause false, active tool -1, detected T0 và
+  sáu heater target 0.
+
+### Chưa thực hiện
+- Chưa gọi `TV_CAMERA_CHECK`, `TV_MOVE_*`, `TV_CALIBRATE_*`, home, QGL, probe,
+  pickup/dropoff, heat hoặc calibration.
+- Cần người dùng đặt camera vào gá nam châm, jog thủ công và cung cấp
+  camera X/Y/Z/safe-Z trước lượt commissioning có người giám sát.

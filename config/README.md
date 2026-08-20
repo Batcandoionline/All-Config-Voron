@@ -19,7 +19,7 @@ config/
 │
 ├── Printer-Setup/                ← Hardware, probe, fans, input shaper & macros
 │   ├── hardware.cfg              ← MCU definitions (Manta M8P V2 + Cartographer), X/Y/Z steppers, bed heater, chamber sensor
-│   ├── calibration-probe.cfg     ← Cartographer/mesh plus active Axiscope PF2 calibration workflow
+│   ├── calibration-probe.cfg     ← Cartographer/mesh plus Tool Vision PF2 ownership and Axiscope rollback data
 │   ├── fans-leds.cfg             ← Enclosure/CM4 fans, toolhead NeoPixels, LED status macros
 │   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
@@ -38,7 +38,7 @@ config/
 │   └── readonly-configs/         ← Auto-managed by klipper-toolchanger-easy (DO NOT EDIT)
 │
 ├── Tool-Vision/
-│   └── tool_vision.cfg           ← Staged machine config; not included while Axiscope is active
+│   └── tool_vision.cfg           ← Active machine config; camera station remains uncommissioned
 │
 └── scripts/                      ← Deployment and maintenance scripts
     ├── install.sh                ← First-time install script (excludes *.md)
@@ -55,7 +55,7 @@ config/
 | **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
 | **Z Homing & Probe** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Tool-Offset Sensor** | PF2 microswitch; Axiscope active, Tool Vision staged | Manta M8P `PF2` (GND + `^PF2`) at $X=68.0, Y=-10.0, Z=7.0$ |
+| **Tool-Offset Sensor** | Tool Vision active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`) at $X=68.0, Y=-10.0, Z=7.0$ |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
 | **Bed Heater & SSR** | AC Silicone 1000W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
