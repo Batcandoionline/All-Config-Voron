@@ -2,53 +2,33 @@
 set -euo pipefail
 
 CONFIG_DIR="${HOME}/printer_data/config"
-REPO_URL="git@github.com:IDcrazy123/All-Config-Voron.git"
-REPO_DIR="${HOME}/All-Config-Voron"
-BACKUP_ROOT="${HOME}/printer_data/config_backups"
-BACKUP_KEEP="${BACKUP_KEEP:-10}"
-BACKUP_DIR="${BACKUP_ROOT}/config-$(date +%Y%m%d-%H%M%S)"
+ARCHIVE_URL="${ARCHIVE_URL:-https://github.com/IDcrazy123/All-Config-Voron/archive/refs/heads/main.tar.gz}"
+TEMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/all-config-voron.XXXXXX")"
+ARCHIVE_FILE="${TEMP_ROOT}/source.tar.gz"
+SOURCE_ROOT="${TEMP_ROOT}/source"
 
-if [ -d "${REPO_DIR}/.git" ]; then
-  echo "Updating source repository: ${REPO_DIR}"
-  git -C "${REPO_DIR}" pull --ff-only
+cleanup() {
+  rm -rf -- "${TEMP_ROOT}"
+}
+trap cleanup EXIT HUP INT TERM
+
+# Download a transient source archive. No persistent repository clone is kept
+# on the Pi; install.sh performs the full backup and protected rsync.
+mkdir -p "${SOURCE_ROOT}"
+if command -v curl >/dev/null 2>&1; then
+  curl --fail --location --silent --show-error "${ARCHIVE_URL}" --output "${ARCHIVE_FILE}"
+elif command -v wget >/dev/null 2>&1; then
+  wget --quiet "${ARCHIVE_URL}" --output-document="${ARCHIVE_FILE}"
 else
-  echo "Cloning source repository to: ${REPO_DIR}"
-  git clone "${REPO_URL}" "${REPO_DIR}"
+  echo "ERROR: curl or wget is required." >&2
+  exit 1
 fi
 
-echo "Backing up current config to: ${BACKUP_DIR}"
-mkdir -p "${BACKUP_DIR}"
-rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
-
-echo "Copying latest config files."
-# Excluded paths are intentionally protected from --delete. They are maintained
-# by the printer or by an independent project and are not part of this payload.
-rsync -a --delete \
-  --exclude ".codex-backups/" \
-  --exclude ".moonraker.conf.bkp" \
-  --exclude "Tool-Vision/" \
-  --exclude "Nhat-ky-chinh-sua/" \
-  --exclude "toolchanger/readonly-configs/" \
-  --exclude "README.md" \
-  --exclude "*.md" \
-  "${REPO_DIR}/config/" "${CONFIG_DIR}/"
-
-if [ "${BACKUP_KEEP}" -gt 0 ] 2>/dev/null; then
-  echo "Keeping the newest ${BACKUP_KEEP} config backups in: ${BACKUP_ROOT}"
-  find "${BACKUP_ROOT}" -maxdepth 1 -mindepth 1 -type d -name 'config-*' \
-    | sort -r \
-    | tail -n +"$((BACKUP_KEEP + 1))" \
-    | xargs -r rm -rf
+tar -xzf "${ARCHIVE_FILE}" --strip-components=1 -C "${SOURCE_ROOT}"
+if [[ ! -f "${SOURCE_ROOT}/config/printer.cfg" ]]; then
+  echo "ERROR: downloaded archive does not contain config/printer.cfg" >&2
+  exit 1
 fi
 
-echo "Update complete."
-if [ ! -L "${CONFIG_DIR}/toolchanger/readonly-configs/toolchanger.cfg" ]; then
-  echo "WARNING: KTC-Easy readonly configs are not installer-managed symlinks."
-  echo "Run: bash ~/klipper-toolchanger-easy/install.sh"
-fi
-echo "Backup: ${BACKUP_DIR}"
-echo "Restore example:"
-echo "  rsync -a --delete '${BACKUP_DIR}/' '${CONFIG_DIR}/'"
-echo "Next:"
-echo "  sudo systemctl restart moonraker"
-echo "  sudo systemctl restart klipper"
+bash "${SOURCE_ROOT}/config/scripts/install.sh"
+echo "Update source was downloaded to a temporary directory and removed; no repository clone remains on the Pi."

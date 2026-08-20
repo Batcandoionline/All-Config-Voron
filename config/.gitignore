@@ -17,8 +17,7 @@ _backups/
 Thumbs.db
 desktop.ini
 
-# Bảo mật thông tin nhạy cảm
+# Secrets and host-specific network credentials
 *.secrets
 moonraker.secrets
 wpa_supplicant.conf
-

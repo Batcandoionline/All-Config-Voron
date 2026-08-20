@@ -18,6 +18,14 @@ hardware belong in the independent Tool Vision project, not in this payload.
 The Tool Vision include is commented. It must not be enabled while `[axiscope]`
 is active.
 
+## Maintenance comments
+
+Configuration comments are intentionally kept beside the sections they govern.
+They identify measured values, ownership, safe adjustment points, and motion
+preconditions. Historical trial values and old `BUG/FIX` narratives are kept in
+the project journal or backups, not beside production numbers where they can be
+mistaken for valid alternatives.
+
 ## Ownership boundaries
 
 | Path | Owner | Rule |
@@ -32,6 +40,11 @@ is active.
 The install/update scripts exclude `readonly-configs/` because current KTC-Easy
 uses installer-managed links. A warning means the official KTC installer must
 repair those links; copying tracked snapshots over them is not a repair.
+
+Five tracked readonly files match KTC-Easy v258. The tracked `homing.cfg` is an
+older snapshot; user-owned no-op overrides reproduce the current fixed-shuttle
+behavior without editing installer-owned content. Run the official KTC installer
+when interactive SSH is available so all readonly files become current symlinks.
 
 ## Measured hardware
 
@@ -87,6 +100,10 @@ derived from camera resolution, and native frames are not forced to 640x480.
 bash scripts/update.sh
 ```
 
+`update.sh` downloads the GitHub `main` archive into a temporary directory,
+calls the backup-first installer, and removes the archive. It does not leave an
+`All-Config-Voron` clone on the Pi.
+
 Protected from rsync deletion/copy:
 
 - `.codex-backups/`
@@ -98,3 +115,15 @@ Protected from rsync deletion/copy:
 
 After deployment, restart only when the machine is idle and heaters are off.
 Parse success is not permission to home, probe, or toolchange unattended.
+
+## Official references
+
+- Klipper configuration: <https://www.klipper3d.org/Config_Reference.html>
+- Klipper bed mesh: <https://www.klipper3d.org/Bed_Mesh.html>
+- Moonraker configuration: <https://moonraker.readthedocs.io/en/latest/configuration/>
+- Mainsail client macros: <https://github.com/mainsail-crew/mainsail-config>
+- crowsnest camera configuration: <https://crowsnest.mainsail.xyz/configuration/cam-section>
+- KlipperScreen configuration: <https://github.com/KlipperScreen/KlipperScreen/blob/master/docs/Configuration.md>
+- Cartographer configuration: <https://docs.cartographer3d.com/cartographer-probe/reference/configuration-reference>
+- KTC-Easy: <https://github.com/jwellman80/klipper-toolchanger-easy>
+- tool_crash: <https://github.com/cekim-git/tool_crash>

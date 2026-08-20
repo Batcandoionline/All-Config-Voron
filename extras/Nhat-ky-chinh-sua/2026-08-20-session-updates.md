@@ -531,3 +531,88 @@ khi homing Z với tool đang active.
   có tọa độ camera station do người dùng đo.
 - Khi commissioning: đo station, stage installer `--no-restart`, chuyển đúng một
   backend, chạy T0 lặp lại, một tool phụ, đủ 5 tool, sau đó first-layer validation.
+
+## 8. Viết lại toàn bộ cấu hình production và đồng bộ máy thật
+
+### Phạm vi
+- Rà soát toàn bộ 33 file trong `config/`, bao gồm đồ thị include và các file
+  KTC readonly.
+- Viết lại 24 file được triển khai lên Pi và tài liệu quản trị; không sửa 6 file
+  KTC installer-owned trong `toolchanger/readonly-configs/`.
+- Giữ nguyên dữ liệu phần cứng, tọa độ, PID, Cartographer model và XYZ offset.
+
+### Sao lưu trước thay đổi
+- Backup kép:
+  `extras/backups/pre-full-config-rewrite-20260820-191536/`.
+- Bản backup gồm `pc-config/` 33 file, `live-config/` 34 file và README mô tả;
+  tổng 68 file. Hash PC 33/33 và live 34/34 đã được xác minh trước khi sửa.
+- Máy thật giữ thêm:
+  `config/.codex-backups/pre-full-config-rewrite-20260820-191536/`.
+- Snapshot zip của cấu hình live:
+  `extras/Config download/config-20260820-194101.zip`, SHA256
+  `ACA930B70E3EF80A941032C346230AB537531208F159031D96E2BBB654674483`.
+
+### Nguồn đối chiếu
+- Klipper đúng commit máy thật `60fc7aa67a8da9abb43a2bad825d4992294ebf3f`.
+- Moonraker, Mainsail client config, crowsnest 4.2, KlipperScreen,
+  Cartographer, KTC-Easy v258 và `cekim-git/tool_crash` từ repository/tài liệu
+  chính thức.
+- Không áp dụng schema crowsnest v5 cho máy đang chạy v4.2.
+- `mainsail.cfg` đồng bộ logic với `mainsail-config/client.cfg` chính thức.
+
+### Thay đổi cấu hình
+- Viết lại `hardware.cfg`, toolchanger user config và T0-T4 theo từng khối rõ
+  ràng; xóa giá trị thử nghiệm cũ trong inline comment nhưng giữ nguyên giá trị
+  production hiện hành.
+- Giữ nguyên tuyệt đối 6/6 file readonly KTC và toàn bộ block SAVE_CONFIG.
+- Loại `_THERMAL_CALIBRATION_PARAMS` và `_SET_CALIBRATION_MATERIAL` không còn
+  consumer; giữ Axiscope active và ba guard chặn SexBolt cũ.
+- Rút gọn macro nhưng giữ chú thích bảo trì cạnh từng khối: mục đích, số đo,
+  điều kiện an toàn và điểm được phép tinh chỉnh. Không giữ nhật ký `BUG/FIX`
+  hoặc giá trị thử nghiệm bên cạnh số production.
+- `CANCEL_PRINT` nay dock tool đang active bằng `UNSELECT_TOOL` thay vì lấy T0.
+- Sửa moisture-flush dryer dùng `min` để giới hạn 70%, đồng thời clamp tham số
+  bed/chamber/humidity/time/fan vào khoảng an toàn.
+- Clamp tham số cleaning, bỏ `M82` tạm thời và để SAVE/RESTORE quản lý extrusion
+  mode của caller.
+- Giữ tool_crash ở chế độ pause an toàn, retract E, không XYZ park và không
+  emergency shutdown.
+- `KlipperScreen.conf` chuyển block generated thành `[main]` rõ ràng với đúng
+  bốn giá trị runtime cũ.
+- `update.sh` tải archive GitHub vào `mktemp`, gọi installer backup-first rồi
+  xóa source tạm; không để clone repository trên Pi.
+- `install.sh` bảo vệ Tool Vision, KTC readonly, backup và dữ liệu local.
+- `cleanup-voron.sh` mặc định dry-run và kiểm tra realpath trước khi xóa.
+
+### Kiểm tra tĩnh
+- 92/92 template Jinja user-owned parse thành công bằng delimiter của Klipper.
+- 112/112 khai báo pin là duy nhất; không phát hiện pin trùng.
+- Không còn duplicate section trong phạm vi user-owned. Các duplicate với
+  readonly/Mainsail đều là override có chủ đích và đúng include order.
+- Block SAVE_CONFIG giống backup từng byte.
+- 6/6 file KTC readonly có SHA256 không đổi.
+- `git diff --check` đạt sau khi xử lý whitespace; tất cả file cấu hình/script
+  dùng LF.
+
+### Đồng bộ và xác minh máy thật
+- Trước deploy: Klipper ready, print standby, pause false, active tool -1, bed
+  và năm hotend target 0.
+- Upload 24 file production user-owned qua Moonraker; 24/24 SHA256 khớp PC.
+- Chỉ chạy Klipper `RESTART`; không home, heat, probe, QGL hoặc toolchange.
+- Sau restart: Klipper ready, warning 0, failed component 0.
+- Axiscope và tool_crash load; Tool Vision và tools_calibrate không load.
+- Runtime xác nhận safe_y 120, fast speed 15000, path speed 900; năm dock và
+  năm bộ XYZ offset đúng dữ liệu production.
+- Runtime xác nhận dryer dùng giới hạn 70% và cancel cleanup chứa
+  `UNSELECT_TOOL`.
+- Chạy `CALIBRATION_STATUS` và `CHECK_OFFSETS` không chuyển động; kết quả đủ
+  T0-T4 và đúng offset.
+- Camera proxy trả HTTP 200, `image/jpeg`, 309145 byte.
+- Trạng thái cuối: standby, pause false, active tool -1, sáu heater target 0.
+
+### Giới hạn kiểm tra cơ khí
+- Không tự động chạy G28, Cartographer Touch, QGL, pickup/dropoff hoặc test in.
+- Các đường dock/tọa độ được bảo toàn từ máy thật; cần người đứng máy cho lần
+  kiểm thử chuyển động tiếp theo.
+- Chưa enable Tool Vision; camera vẫn phục vụ soi buồng cho tới khi người dùng
+  đặt lên gá nam châm và đo station thủ công.

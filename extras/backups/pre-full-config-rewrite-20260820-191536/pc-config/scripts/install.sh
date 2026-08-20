@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_URL="git@github.com:IDcrazy123/All-Config-Voron.git"
+CONFIG_DIR="${HOME}/printer_data/config"
+BACKUP_ROOT="${HOME}/printer_data/config_backups"
+BACKUP_DIR="${BACKUP_ROOT}/config-install-$(date +%Y%m%d-%H%M%S)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_CONFIG_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+echo "Installing All-Config-Voron/config"
+echo "Target: ${CONFIG_DIR}"
+
+if [ -d "${CONFIG_DIR}" ]; then
+  echo "Backing up existing config to: ${BACKUP_DIR}"
+  mkdir -p "${BACKUP_DIR}"
+  rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
+fi
+
+echo "Installing config files from: ${SOURCE_CONFIG_DIR}"
+mkdir -p "${CONFIG_DIR}"
+# Excluded paths are intentionally protected from --delete. They are maintained
+# by the printer or by an independent project and are not part of this payload.
+rsync -a --delete \
+  --exclude ".codex-backups/" \
+  --exclude ".moonraker.conf.bkp" \
+  --exclude "Tool-Vision/" \
+  --exclude "Nhat-ky-chinh-sua/" \
+  --exclude "toolchanger/readonly-configs/" \
+  --exclude "README.md" \
+  --exclude "*.md" \
+  "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
+
+echo "Install complete."
+if [ ! -L "${CONFIG_DIR}/toolchanger/readonly-configs/toolchanger.cfg" ]; then
+  echo "WARNING: KTC-Easy readonly configs are not installer-managed symlinks."
+  echo "Run: bash ~/klipper-toolchanger-easy/install.sh"
+fi
+echo "Source repository: ${REPO_URL}"
+echo "Backup: ${BACKUP_DIR}"
+echo "Restore example:"
+echo "  rsync -a --delete '${BACKUP_DIR}/' '${CONFIG_DIR}/'"
+echo "Next:"
+echo "  sudo systemctl restart moonraker"
+echo "  sudo systemctl restart klipper"
