@@ -121,3 +121,80 @@ nguyên lịch sử Git để đọc, so sánh hoặc cập nhật độc lập 
 - Cần review chi tiết tính tương thích với phiên bản `klipper-toolchanger` đang
   dùng trước khi kế thừa bất kỳ logic nào.
 - Không enable `[tool_crash]` trên production khi chưa audit và thử nghiệm an toàn.
+
+## 3. Chuyển tool_crash từ Klipper shutdown sang pause an toàn
+
+### Mục tiêu
+Audit cấu hình `tool_crash` đang chạy trên Voron 5 Tool và máy thật
+`192.168.1.43`; nếu crash đang gây emergency/shutdown thì đổi sang trạng thái
+pause có thể sửa tool, cứu bản in hoặc cancel.
+
+### File đã sửa đổi
+- `config/Printer-Setup/tool_crash_cartographer.cfg` — bật custom crash handler,
+  thêm macro pause không park XYZ và sửa giải thích `ignore_events`.
+- `config/Printer-Setup/crash_detection_override.cfg` — sửa hướng dẫn vô hiệu
+  detection; upstream `ignore_events: all` không vô hiệu mọi sự kiện.
+- `extras/backups/pre-tool-crash-safe-pause-20260820-170905/` — bản sao hai file
+  cấu hình trước thay đổi và hướng dẫn restore.
+
+### Sao lưu
+- Local: `extras/backups/pre-tool-crash-safe-pause-20260820-170905/`.
+- Máy in: `config/.codex-backups/pre-tool-crash-safe-pause-20260820-170905/`.
+- SHA256 bản gốc `tool_crash_cartographer.cfg`:
+  `9492AC393D3F176CD0F5E954A3FA762A3AA70C526C5ADC6D84A91BECC3B69344`.
+- SHA256 bản gốc `crash_detection_override.cfg`:
+  `7E59E00AE0F72EE189C33CE1CBC973F8D7A0B48D064FF5EFF0213899E51D3E66`.
+
+### Audit logic
+- Cấu hình cũ không khai báo `crash_gcode`. Source upstream gọi
+  `printer.invoke_shutdown(msg)`, vì vậy Klipper vào shutdown, không thể Resume
+  và cần `FIRMWARE_RESTART` sau khi xử lý nguyên nhân.
+- Năm tool T0-T4 đều có detection pin đúng dạng `^!EBBn:PB6`.
+- `PRINT_START` dừng detection trước G28/QGL/mesh/prime và bật lại sau prime.
+- `dropoff_gcode` dừng detection trước đường docking; `after_change_gcode` chỉ
+  bật lại khi `_PRINT_STATE == "printing"`.
+- `PRINT_END` và cancel cleanup dừng detection trước các chuyển động dọn dẹp.
+- Wrapper START/STOP ưu tiên plugin mới và giữ fallback cũ khi `[tool_crash]`
+  không tồn tại.
+- Upstream tự đánh dấu alpha và cảnh báo custom crash gcode có thể chờ sau motion
+  đã nằm trong hàng đợi. Pause không nhanh bằng hard shutdown trong mọi tình huống.
+
+### Thay đổi hành vi
+- `crash_gcode` gọi `_TOOL_CRASH_SAFE_PAUSE`; `crash_mintime` giảm từ mặc định
+  0.5 giây xuống 0.1 giây để giảm fixed callback latency.
+- Khi đang in virtual SD: lưu target nhiệt cho RESUME, gọi `PAUSE_BASE`, đổi LED
+  sang pause, retract E theo Mainsail và hiện cảnh báo.
+- Không gọi macro PAUSE thông thường vì macro đó tự nâng Z và park XY; tool đã
+  rơi/lệch có thể khiến chuyển động phục hồi làm hỏng thêm đầu in hoặc bàn.
+- Crash handler không phát lệnh X/Y/Z, không tắt heater và không shutdown.
+- Khi đã pause hoặc không có bản in active: chỉ cảnh báo, không tạo thêm chuyển
+  động hay shutdown.
+
+### Deploy và kiểm tra máy thật
+- Trước sửa: Klipper `ready`, máy `standby`, `is_paused=False`, active tool `-1`.
+- Xác nhận live plugin có các lệnh `START_TOOL_CRASH_DETECTION` và
+  `STOP_TOOL_CRASH_DETECTION`; `[tool_crash]` được parse với watchdog 0.5 giây,
+  threshold 2 và `ignore_events: probing`.
+- Upload hai file qua Moonraker với SHA256 checksum khớp local.
+- Chỉ gọi Klipper `RESTART` khi máy standby; restart hoàn tất với trạng thái
+  `ready` và thông báo `Printer is ready`.
+- Xác nhận live `_TOOL_CRASH_SAFE_PAUSE` đã được nạp, `crash_gcode` trỏ đúng
+  macro, `crash_mintime=0.1`, năm pin T0-T4 đúng và START/STOP wrapper đúng.
+- Không có `Config error`, parse error, unknown command hoặc `crash gcode failed`
+  trong log sau restart.
+- Không cố ý tháo tool/kích detection pin để tạo crash thật vì thử nghiệm đó có
+  nguy cơ cơ khí; cần xác nhận lần đầu bằng test có giám sát và khoảng trống an toàn.
+
+### Kết quả
+Production không còn dùng hard shutdown mặc định của tool_crash. Khi crash được
+phát hiện trong lúc in, hệ thống chuyển sang pause có thể Resume/Cancel và tránh
+mọi chuyển động park XYZ tự động sau sự cố.
+
+### Vấn đề còn lại
+- Custom pause chỉ được thực thi khi đến lượt trong hàng đợi G-code; motion đã
+  buffer trước đó có thể vẫn hoàn tất. Đây là giới hạn upstream, không phải cam
+  kết dừng tức thì như `invoke_shutdown`/M112.
+- Trước khi RESUME, người vận hành phải xác nhận tool được gắn chắc, dây/canbus
+  còn nguyên, vị trí cơ khí đúng và nozzle không mắc vào chi tiết in.
+- Nên chạy một test giám sát ở tốc độ thấp, toolhead cách xa bàn/chi tiết, rồi
+  kiểm tra trạng thái `paused` và quy trình RESUME/CANCEL trước khi tin cậy hoàn toàn.
