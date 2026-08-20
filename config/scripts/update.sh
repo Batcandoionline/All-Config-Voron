@@ -28,6 +28,7 @@ rsync -a --delete \
   --exclude ".moonraker.conf.bkp" \
   --exclude "Tool-Vision/" \
   --exclude "Nhat-ky-chinh-sua/" \
+  --exclude "toolchanger/readonly-configs/" \
   --exclude "README.md" \
   --exclude "*.md" \
   "${REPO_DIR}/config/" "${CONFIG_DIR}/"
@@ -41,6 +42,10 @@ if [ "${BACKUP_KEEP}" -gt 0 ] 2>/dev/null; then
 fi
 
 echo "Update complete."
+if [ ! -L "${CONFIG_DIR}/toolchanger/readonly-configs/toolchanger.cfg" ]; then
+  echo "WARNING: KTC-Easy readonly configs are not installer-managed symlinks."
+  echo "Run: bash ~/klipper-toolchanger-easy/install.sh"
+fi
 echo "Backup: ${BACKUP_DIR}"
 echo "Restore example:"
 echo "  rsync -a --delete '${BACKUP_DIR}/' '${CONFIG_DIR}/'"

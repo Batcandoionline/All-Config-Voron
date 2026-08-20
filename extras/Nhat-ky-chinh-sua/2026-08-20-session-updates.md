@@ -431,3 +431,103 @@ máy-local không có trong payload All-Config, bao gồm backup và Tool Vision
 Payload All-Config-Voron trên PC và máy thật hiện thống nhất hoàn toàn. Các file
 generated, backup và Tool Vision được phân loại là dữ liệu máy-local có chủ đích
 và đã được deployment scripts bảo vệ cho các lần đồng bộ sau.
+
+## 7. Tái cấu trúc cấu hình 5 tool và chuẩn bị tích hợp Tool Vision
+
+### Mục tiêu
+Đọc lại toàn bộ tài liệu dự án, đối chiếu cấu hình máy thật và nguồn chính thức,
+rút gọn các lớp cấu hình user-owned, giữ nguyên tuyệt đối dữ liệu phần cứng, và
+lập luồng thay Axiscope bằng Tool Vision phù hợp camera tháo lắp bằng gá nam châm.
+
+### Sao lưu trước thay đổi
+- Local:
+  `extras/backups/pre-five-tool-rewrite-20260820-181903/`.
+- Bản local gồm cấu hình PC, cấu hình live tải từ Moonraker và source Tool Vision.
+- Máy thật:
+  `config/.codex-backups/pre-five-tool-rewrite-20260820-181903/config/`.
+- Đã xác minh 34/34 file live trong backup máy thật khớp SHA256 với bản tải về.
+- Root `.gitattributes` lưu `extras/backups/**` byte-for-byte, không normalize
+  line ending hoặc báo lỗi whitespace của snapshot lịch sử.
+- Tổng cộng 127 file Markdown trong workspace đã được đọc trước khi tái cấu trúc.
+
+### Đối chiếu nguồn chính thức
+- Klipper Config Reference: xác nhận bed mesh dùng tọa độ probe tương đối và
+  Klipper không có `sensor_type: DHT22` native.
+- KTC-Easy: máy đang dùng đúng commit mới nhất
+  `e881fe40949a3999b0d63f59c22df589474eae9b` (v0.0.0-258).
+- Cartographer: cấu trúc Touch/Scan hiện tại phù hợp probe cố định trên shuttle.
+- crowsnest: MF-500 đang stream 1280x720/30 MJPEG đúng mode camera hỗ trợ.
+- Axiscope/kTAMV: giữ đúng chiều delta XYZ và ràng buộc chỉ một backend dùng
+  `probe_multi_axis`.
+- tool_crash: xác nhận cần `crash_gcode` tùy chỉnh để tránh shutdown mặc định.
+
+### Vấn đề quan trọng phát hiện
+Repo KTC trên Pi đã cập nhật nhưng `toolchanger/readonly-configs` vẫn là file
+copy cũ, không phải symlink mới do installer quản lý. Script All-Config trước đây
+có thể tiếp tục ghi đè vùng này. `homing.cfg` cũ gọi
+`_ADJUST_Z_HOME_FOR_TOOL_OFFSET` và truy cập `tool_probe_endstop` không tồn tại
+khi homing Z với tool đang active.
+
+### Thay đổi cấu hình
+- `install.sh` và `update.sh` loại trừ toàn bộ
+  `toolchanger/readonly-configs/` và cảnh báo nếu file KTC không phải symlink.
+- Thêm no-op user-owned `_ADJUST_Z_HOME_FOR_TOOL_OFFSET` cho tới khi chạy lại
+  official KTC installer; không sửa trực tiếp readonly.
+- Rút gọn `calibration.cfg`, giữ Axiscope active, chặn ba macro SexBolt cũ truy
+  cập object không tồn tại, và thêm `CALIBRATION_STATUS`/`CHECK_OFFSETS` đủ XYZ.
+- Loại các section extruder rỗng trùng lặp và ví dụ DHT22 không được Klipper hỗ
+  trợ khỏi `hardware.cfg`; giữ nguyên mọi pin, MCU và thông số nhiệt.
+- Làm rõ `crash_detection_override.cfg` vẫn cần để route macro KTC sang
+  `tool_crash`; file detector tiếp tục pause an toàn, không XYZ park/shutdown.
+- Thêm Tool Vision include ở trạng thái comment; chưa chuyển backend production.
+- Viết lại README/config guide ngắn gọn, thêm hardware preservation contract và
+  kế hoạch tích hợp/rollback Tool Vision theo từng pha.
+- Bỏ hai gitlink hỏng `extras/Axiscope-reference` và `extras/kTAMV` khỏi
+  All-Config sau khi xác minh bản ghim tương ứng đã có trong repository Tool
+  Vision độc lập; thư mục legacy trên ổ đĩa được giữ nguyên và ignore. Submodule
+  `extras/tool_crash` vẫn hợp lệ.
+
+### Camera và tọa độ station
+- Chỉ có một MF-500. Bình thường camera soi buồng in.
+- Khi cần hiệu chuẩn, người dùng đặt camera lên gá nam châm có định vị trên bàn,
+  kiểm tra không rung/lắc và ảnh hướng lên.
+- Người dùng tự jog T0, xác định camera X/Y/Z/safe-Z và nhập vào `.cfg`.
+- Vị trí switch/pin cũng được người dùng đo thủ công và nhập `.cfg`; máy hiện tại
+  giữ nguyên `^PF2`, X=68, Y=-10, Z=7.
+- Không suy đoán tọa độ từ ảnh, không copy tọa độ giữa các máy.
+
+### Tool Vision độc lập
+- Nâng lên phiên bản 2.2.0, commit GitHub
+  `16ff1b26033468d3b27963fa13e3d9dbaff62e48`.
+- Camera/switch example station đều để comment, buộc người dùng đo trên phần cứng.
+- Thêm `TV_PREFLIGHT`, `TV_ARM`, `TV_DISARM` và `require_manual_arm: true`.
+- Mỗi lần arm camera tháo lắp sẽ xóa transform cũ, buộc chạy lại
+  `TV_CALIBRATE_CAMERA`; lệnh station move bị khóa nếu chưa arm.
+- Detector tự thu nhỏ adaptive threshold block cho ROI nhỏ và tiếp tục dùng frame
+  native, không có `cv2.resize`/hằng số 640x480.
+- Installer hỗ trợ `--no-restart` để stage runtime trước cutover.
+- Unit/integration tests: 28/28 đạt; Python compile, Bash parse và diff check đạt.
+
+### Đồng bộ và kiểm tra máy thật
+- Trước deploy: Klipper `ready`, print `standby`, pause `false`, active tool `-1`,
+  bed và 5 hotend target đều 0.
+- Upload 15 file user-owned qua Moonraker; 15/15 SHA256 khớp bản PC.
+- Chỉ gọi Klipper RESTART để parse; không home, heat, toolchange hoặc probe.
+- Sau restart: `ready`, đủ T0-T4, Axiscope active, Tool Vision và tools_calibrate
+  không active, không có `tool_probe_endstop`.
+- Xác nhận lệnh START/STOP tool_crash, safe-pause, Axiscope Z và hai macro status
+  đều tồn tại; `crash_gcode=_TOOL_CRASH_SAFE_PAUSE`, `crash_mintime=0.1`.
+- Chạy hai macro chỉ đọc. `CHECK_OFFSETS` trả đúng:
+  T0 `0/0/0`, T1 `-0.243/-0.252/+0.228`,
+  T2 `+0.746/+0.086/-0.295`, T3 `+0.304/+0.449/-0.268`,
+  T4 `+0.041/+0.352/-0.014`.
+
+### Việc còn lại cần giám sát vật lý
+- Chạy lại `bash ~/klipper-toolchanger-easy/install.sh` khi có SSH hợp lệ để
+  khôi phục readonly symlink; user compatibility guard đang bảo vệ tạm thời.
+- Chưa chạy G28, pickup/dropoff, Cartographer Touch/QGL hoặc test in cơ khí trong
+  lượt này.
+- Chưa cài/enable Tool Vision service vì camera đang ở vị trí soi buồng và chưa
+  có tọa độ camera station do người dùng đo.
+- Khi commissioning: đo station, stage installer `--no-restart`, chuyển đúng một
+  backend, chạy T0 lặp lại, một tool phụ, đủ 5 tool, sau đó first-layer validation.
