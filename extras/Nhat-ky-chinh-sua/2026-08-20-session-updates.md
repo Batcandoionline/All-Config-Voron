@@ -831,3 +831,35 @@ khi homing Z với tool đang active.
 ### Kết quả
 - URL xem/thử camera từ PC là `http://192.168.1.43/webcam/stream`.
 - Không mở cổng raw 8080 ra LAN và không thay đổi cấu hình Crowsnest production.
+
+## 12. Kiểm tra điều kiện cutover Axiscope sang Tool Vision
+
+### Mục tiêu
+- Bật include Tool Vision và gỡ Axiscope nếu hai backend xung đột.
+
+### Kiểm tra thực tế
+- Klipper objects: `axiscope=true`, `tool_vision=false`,
+  `tools_calibrate=false`.
+- Moonraker `available_services` có `axiscope` nhưng không có
+  `tool-vision`.
+- LAN `192.168.1.43:8085/health` không nhận kết nối. Dịch vụ thiết kế để bind
+  loopback nên phép thử này chỉ bổ trợ; danh sách service và Klipper object mới
+  là bằng chứng runtime chưa được cài/load.
+- SSH `voron@192.168.1.43` tiếp tục trả
+  `Permission denied (publickey,password)`.
+- Source Tool Vision chủ động báo config error nếu `[axiscope]` hoặc
+  `[tools_calibrate]` cùng tồn tại vì các backend cùng tạo
+  `probe_multi_axis`.
+
+### Kết luận an toàn
+- Chưa sửa `printer.cfg` hoặc `calibration-probe.cfg`. Tắt Axiscope và bật
+  include khi `tool_vision.py` chưa nằm trong Klipper extras sẽ đưa Klipper về
+  `not ready` với section `[tool_vision]` không xác định.
+- Cutover bắt buộc theo thứ tự: cấp SSH, chạy installer Tool Vision, kiểm tra
+  `tool-vision.service` và loopback API 8085, backup, tắt `[axiscope]`, bật
+  include, rồi chỉ chạy `RESTART` để parse. Không chạy chuyển động/calibration
+  trong bước cutover cấu hình.
+
+### Trạng thái máy
+- Không có cấu hình production nào bị thay đổi trong lượt kiểm tra này.
+- Axiscope tiếp tục active để không làm mất backend hiệu chuẩn đang hoạt động.
