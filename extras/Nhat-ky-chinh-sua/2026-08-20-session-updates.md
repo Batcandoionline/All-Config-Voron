@@ -616,3 +616,9 @@ khi homing Z với tool đang active.
   kiểm thử chuyển động tiếp theo.
 - Chưa enable Tool Vision; camera vẫn phục vụ soi buồng cho tới khi người dùng
   đặt lên gá nam châm và đo station thủ công.
+
+### Git
+- Commit cấu hình và backup: `8b5a170` —
+  `Rewrite production configuration and deployment flow`.
+- Đã push thành công nhánh `main` lên
+  `git@github.com:IDcrazy123/All-Config-Voron.git`.
