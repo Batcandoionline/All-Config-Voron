@@ -24,7 +24,7 @@ config/
 │   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
 │   ├── prime-lines.cfg           ← Per-tool prime line macros (T0–T4)
-│   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, single-prompt Filament Dryer presets
+│   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, Filament Dryer suite & presets
 │   └── tool-crash.cfg            ← tool_crash detector, KTC routing, and safe-pause handler
 │
 ├── toolchanger/                  ← StealthChanger KTC-Easy config & tool definitions

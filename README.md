@@ -83,20 +83,23 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 
 Dries filament spools directly on the 1000W heated bed under a cardboard cover with closed-loop chamber feedback, forced convection (`bed_fan`), and Amber/Orange status lighting:
 
-| Preset | Material | Bed Temp | Target Chamber | Duration | Base Fan (`bed_fan`) | Airflow Profile |
+Mainsail exposes one `START_DRYER` button instead of separate `DRY_PLA`, `DRY_PETG`, and other preset buttons. Clicking it opens a material-selection prompt. The same presets can be started from the console with `START_DRYER MATERIAL=<material>`.
+
+| Material selection | Material | Bed Temp | Target Chamber | Duration | Base Fan (`bed_fan`) | Airflow Profile |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`DRY_PLA`** | PLA / PLA+ | **50°C** | **40°C** | 4 hours | **40%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_TPU`** | TPU / TPE | **60°C** | **45°C** | 5 hours | **40%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_PETG`** | PETG | **70°C** | **55°C** | 4 hours | **50%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_ABS`** | ABS | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_ASA`** | ASA | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_NYLON`** | PA / Nylon | **100°C** | **70°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
-| **`DRY_PC`** | Polycarbonate | **105°C** | **75°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=PLA`** | PLA / PLA+ | **50°C** | **40°C** | 4 hours | **40%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=TPU`** | TPU / TPE | **60°C** | **45°C** | 5 hours | **40%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=PETG`** | PETG | **70°C** | **55°C** | 4 hours | **50%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=ABS`** | ABS | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=ASA`** | ASA | **90°C** | **65°C** | 4 hours | **60%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=NYLON`** | PA / Nylon | **100°C** | **70°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
+| **`MATERIAL=PC`** | Polycarbonate | **105°C** | **75°C** | 6 hours | **70%** | Multi-Zone + 20m Flush Pulse |
 
 * **Multi-Zone Adaptive Airflow:** Automatic cold warmup boost (65–85%), active moisture evacuation window (40–50%), and overheat safety protection.
 * **Periodic Moisture Flush Pulse:** Automatically increases fan to 70% for 30 seconds every 20 minutes to flush trapped humid air.
 * **Optional humidity input:** Dryer macros use `.humidity` only when a separately installed sensor extension exposes that field. Native Klipper does not provide `sensor_type: DHT22`.
-* **Live Telemetry & Controls:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). Commands: `STOP_DRYER`, `DRYER_STATUS`.
+* **Direct command:** `START_DRYER MATERIAL=PETG`. Explicit `BED`, `CHAMBER`, `TIME`, `TIME_HOURS`, `FAN`, `PARK`, and humidity parameters override the selected preset when required.
+* **Live Telemetry & Controls:** Real-time countdown on LCD/Mainsail (`Dry 3h50m | B:60C C:45C`). The public dryer controls are `START_DRYER`, `STOP_DRYER`, and `DRYER_STATUS`.
 
 ---
 
