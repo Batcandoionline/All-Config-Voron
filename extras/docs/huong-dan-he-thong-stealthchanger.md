@@ -295,6 +295,10 @@ Backend tạm thời hiện tại là kTAMV từ repository chính thức
 Installer upstream không được chạy vì tự gọi `apt`, chỉnh giờ hệ thống, dùng
 port 8085 và có lỗi sinh cấu hình Moonraker. Cloud upload bị tắt.
 
+Quy trình thao tác chi tiết, phân loại lệnh có/không có chuyển động và cách ghi
+nhận T0–T4 nằm tại
+[`huong-dan-su-dung-ktamv.md`](huong-dan-su-dung-ktamv.md).
+
 kTAMV chỉ đo/căn XY, không dùng PF2 và không hiệu chuẩn Z. Camera calibration,
 origin và matrix chỉ nằm trong RAM của Klipper/server, mất sau restart. ToolVision
 3.3.0-rc2, PF2 state và kết quả cũ vẫn được giữ nguyên nhưng inactive để rollback.

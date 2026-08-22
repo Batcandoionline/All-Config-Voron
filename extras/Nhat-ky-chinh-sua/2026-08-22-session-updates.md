@@ -494,3 +494,45 @@ dọn an toàn. Runtime ngoài config vẫn hoạt động và có thể cập n
    `Printer-Setup/tool_vision.cfg` và updater ToolVision.
 3. Start/enable `tool-vision.service`, sau đó restart Klipper và Moonraker.
 4. Xác nhận ToolVision đọc lại state/result đã bảo toàn trước khi chạy motion.
+
+## 6. Dọn thư mục Home legacy và bổ sung hướng dẫn kTAMV
+
+### Rà soát năm mục trong ảnh MobaXterm
+
+- `~/All-Config-Voron` (358 MB): clone cũ sạch tại commit `22a59ac`, trỏ remote
+  cũ `Batcandoionline/All-Config-Voron`. Không service, process, symlink, cron
+  hoặc updater nào dùng; cơ chế All-Config hiện tại tải archive tạm rồi xóa.
+- `~/axiscope.bak` (206 MB): fork cũ tại commit `a34a956`, có một file sửa và
+  thư mục untracked. Không runtime nào trỏ tới; `cleanup-voron.sh` đã đánh dấu
+  đây là legacy cleanup candidate.
+- `~/axiscope` (104 MB): giữ lại vì `axiscope.service` và symlink
+  `klippy/extras/axiscope.py` trỏ vào đây. Service inactive/disabled; xóa folder
+  sẽ làm hỏng đường rollback dù không ảnh hưởng kTAMV tức thời.
+- `~/Tool-Vision` và `~/tool-vision-env`: giữ lại vì system service cùng bốn
+  symlink Klipper vẫn trỏ vào hai runtime này. ToolVision đã được người dùng
+  disable đúng cách và đang inactive; dữ liệu được giữ để phục hồi sau trial.
+
+### Dọn an toàn trên máy thật
+
+- Tạo recovery archive tại
+  `/home/voron/printer_data/config_backups/home-folder-cleanup-20260822-213300/`.
+- Archive đầy đủ `All-Config-Voron.tar.gz` và `axiscope.bak.tar.gz`, lưu Git
+  status/remote/commit, kiểm tra `tar -tzf` và `sha256sum -c` trước khi xóa.
+- Sau khi xác minh, xóa đúng hai source path `~/All-Config-Voron` và
+  `~/axiscope.bak`; tổng dữ liệu gốc 579,722,406 byte. Recovery archive còn
+  khoảng 402 MB và có thể giải nén trở lại `/home/voron`.
+- Sau cleanup: Klipper/Moonraker active, ToolVision/Axiscope inactive, kTAMV
+  active; chỉ port 8086 trong nhóm 3000/8085/8086 đang lắng nghe.
+
+### Hướng dẫn kTAMV
+
+- Đối chiếu HEAD upstream ngày 2026-08-22: vẫn là commit `72421f2` đang cài.
+- Đọc đầy đủ `ktamv.py`, `ktamv_utl.py`, server endpoints, macro mẫu và README.
+- Ghi tài liệu `extras/docs/huong-dan-su-dung-ktamv.md`, phân loại rõ lệnh có
+  chuyển động, lệnh chỉ đọc, camera preview, workflow T0 origin rồi T1–T4 và
+  xử lý lỗi.
+- Làm rõ `KTAMV_GET_OFFSET` chỉ báo raw-current trừ raw-origin, kTAMV không lưu
+  config/Z, trạng thái mất sau restart và lệnh `KTAMV_MOVE_TO_ORIGIN` không tồn
+  tại trong runtime đang cài.
+- Không chạy homing, toolchange, calibration hoặc bất kỳ lệnh chuyển động nào
+  trong lần rà soát này.

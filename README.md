@@ -195,6 +195,9 @@ or duplicate-prone configuration on this machine:
 - Cloud image upload: disabled
 - Scope: XY reporting/centering only; no Z calibration and no automatic offset save
 
+See the supervised machine-specific workflow in
+[extras/docs/huong-dan-su-dung-ktamv.md](extras/docs/huong-dan-su-dung-ktamv.md).
+
 The ToolVision 3.3.0-rc2 checkout, venv, Klipper links and
 `Generated-Data/ToolVision/` remain preserved but inactive for rollback. Its
 running process is stopped, and its Klipper include/Moonraker updater are
