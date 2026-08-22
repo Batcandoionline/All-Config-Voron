@@ -319,3 +319,104 @@ Các lỗi dùng chung heater/fan, thứ tự dock, vòng đời crash detector,
 active tool, LED cancel, fallback shaper và status calibration đã được sửa và nạp
 trên máy thật. `prime-lines.cfg` và `hardware.cfg` không cần thay đổi sau khi rà
 soát; KTC readonly không bị chỉnh sửa.
+
+## 4. Gom cấu hình ToolVision khỏi thư mục riêng trong Mainsail
+
+### Mục tiêu
+
+- Đưa cấu hình Klipper ToolVision vào `Printer-Setup/`.
+- Đưa updater ToolVision trực tiếp vào `moonraker.conf`.
+- Xác định rõ tác dụng của backup và hai thư mục cùng tên dễ nhầm.
+- Dọn `/config/Tool-Vision` mà không làm hỏng runtime hoặc mất dữ liệu đã học.
+
+### Phân tích mã nguồn và máy thật
+
+- `install.sh` của repository ToolVision là nguồn tạo
+  `/config/Tool-Vision/tool_vision.cfg` và
+  `/config/Tool-Vision/moonraker_update_manager.conf`.
+- `backups/pre-v3.2.0-20260821-214510/` là bản bảo toàn trước migration cũ,
+  không được runtime hiện tại đọc. Installer mới đã dùng đúng
+  `~/printer_data/config_backups/tool-vision/`.
+- Bốn file backup legacy được so sánh bằng `diff`, `cmp` và SHA-256 với
+  `config_backups/tool-vision/manual-20260822-180254/`; tất cả giống hệt.
+- `~/Tool-Vision` không phải thư mục thừa. Đây là Git runtime production tại
+  commit `5e79f633`, được `tool-vision.service` dùng làm `WorkingDirectory`, và
+  là đích của bốn symlink `klippy/extras/tool_vision*.py` cùng Moonraker updater.
+  Xóa thư mục này sẽ làm hỏng service, module Klipper và cập nhật ToolVision.
+- Python ToolVision vẫn có default path cũ khi người dùng không override; cấu
+  hình máy này đặt rõ state/result dưới `Generated-Data/ToolVision`, nên việc
+  chuyển file include không thay đổi hoặc làm mất state đã học.
+
+### File đã sửa đổi
+
+- `config/Printer-Setup/tool_vision.cfg` — chuyển nguyên byte từ
+  `config/Tool-Vision/tool_vision.cfg`; SHA-256 giữ nguyên
+  `c89cd8a5f9c8026baef0c7a9b4cb668bbed1c8b0b8c99435bd0afde20017215e`.
+- `config/printer.cfg` — đổi include sang
+  `Printer-Setup/tool_vision.cfg`.
+- `config/moonraker.conf` — thay include sinh tự động bằng một section
+  `[update_manager tool-vision]` trực tiếp; giữ nguyên runtime, venv, origin,
+  branch, requirements và managed services đang hoạt động.
+- `config/scripts/install.sh` — bỏ bảo vệ toàn bộ thư mục `Tool-Vision/`, bỏ
+  copy riêng file cfg và neo hai exclude JSON legacy vào root để không giữ nhầm
+  file cùng tên trong thư mục backup con.
+- `config/toolchanger/toolchanger-config.cfg` — cập nhật comment owner/path.
+- `README.md`, `config/README.md`,
+  `extras/docs/huong-dan-he-thong-stealthchanger.md` — cập nhật cấu trúc, quy
+  trình triển khai và version production `3.3.0-rc1`/commit `5e79f63`.
+- `.agents/DIRECTORY.md`, `.agents/DECISIONS.md` — ghi nhớ layout mới và quy
+  tắc tuyệt đối không nhầm/xóa runtime `~/Tool-Vision`.
+
+### Sao lưu
+
+- [Backup PC](<file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-consolidate-toolvision-config-20260822-184504/>).
+- Snapshot đầy đủ máy thật trước thay đổi:
+  `/home/voron/printer_data/config_backups/pre-consolidate-toolvision-config-20260822-184504/`
+  (40 file, có `SHA256SUMS`).
+- Backup tự động khi installer chạy:
+  `/home/voron/printer_data/config_backups/config-install-20260822-184951/`.
+- Bản legacy vẫn phục hồi được tại
+  `/home/voron/printer_data/config_backups/tool-vision/manual-20260822-180254/`.
+
+### Triển khai và dọn dữ liệu
+
+- Xác nhận trước triển khai: printer standby, không pause, bed target 0,
+  ToolVision không busy; cả ba service active.
+- Payload staging được sửa mode, kiểm tra Bash và đối chiếu hash trên Linux.
+- Chạy `config/scripts/install.sh` đúng một lần. Hai rule exclude JSON cũ khiến
+  rsync giữ lại hai file trong backup con; sau khi so khớp lại với bản ngoài
+  config, dùng `unlink` đúng hai file và `rmdir` từng thư mục rỗng, không dùng
+  xóa đệ quy.
+- `/config/Tool-Vision` đã được loại bỏ hoàn toàn. Runtime
+  `/home/voron/Tool-Vision`, venv, service, symlink và `Generated-Data` được giữ.
+- Gửi yêu cầu migration installer/tests/docs vào task Codex của repository
+  `D:\Desktop\Tool-Vision` để lần cài sau không tái tạo layout cũ.
+
+### Kiểm tra
+
+- `bash -n` cho `install.sh` và `update.sh`: đạt trên máy Linux.
+- `git diff --check`: đạt.
+- `moonraker.conf`: đúng một `[update_manager]`, đúng một
+  `[update_manager tool-vision]`, không có section trùng.
+- Hash bốn file production `tool_vision.cfg`, `printer.cfg`, `moonraker.conf`,
+  `install.sh` khớp giữa PC và máy thật.
+- Moonraker sau restart: không warning/failed component; Klipper `ready`.
+- Klipper, Moonraker, ToolVision: active; ToolVision API `ok=true`, version
+  `3.3.0-rc1`, switch vẫn ready, không busy và không có last error.
+- State/result còn nguyên dưới `Generated-Data/ToolVision/`; không còn thư mục
+  vật lý `/config/Tool-Vision`.
+- Update Manager nhận repository `tool-vision` hợp lệ, pristine, không dirty,
+  không chậm commit. Version đang hiển thị `?` do tag backup ảnh hưởng
+  `git describe`; vấn đề metadata/tag đã được gửi bổ sung sang task ToolVision.
+
+### Kết quả
+
+Mainsail chỉ còn file cấu hình ToolVision trong `Printer-Setup` và updater trong
+`moonraker.conf`; thư mục cấu hình ToolVision riêng cùng backup legacy đã được
+dọn an toàn. Runtime ngoài config vẫn hoạt động và có thể cập nhật độc lập.
+
+### Vấn đề còn lại
+
+- Chờ task ToolVision hoàn tất migration installer và sửa version metadata để
+  reinstall/update không tái tạo layout cũ và Mainsail hiển thị version đúng.
+- Camera ToolVision vẫn chưa setup; không liên quan đến thay đổi layout này.

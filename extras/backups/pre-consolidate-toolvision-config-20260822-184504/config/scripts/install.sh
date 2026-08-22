@@ -47,23 +47,32 @@ if [[ -e "${CONFIG_DIR}/toolchanger/readonly-configs" ]]; then
   READONLY_EXCLUDE=(--exclude "toolchanger/readonly-configs/")
 fi
 
-# Deploy only repository-owned configuration. On-printer backups, ToolVision
+# Deploy only repository-owned configuration. On-printer backups, Tool Vision
 # state/results, ShakeTune output, downloaded snapshots, and printer-local
-# files remain untouched. The ToolVision Git runtime lives outside CONFIG_DIR.
+# files remain untouched.
 rsync -a --delete --itemize-changes \
   --exclude ".codex-backups/" \
   --exclude ".moonraker.conf.bkp" \
   --exclude "Generated-Data/" \
   --exclude "ShakeTune_results/" \
+  --exclude "Tool-Vision/" \
   --exclude "Nhat-ky-chinh-sua/" \
-  --exclude "/tool_vision_state.json" \
-  --exclude "/tool_vision_results.json" \
+  --exclude "tool_vision_state.json" \
+  --exclude "tool_vision_results.json" \
   --exclude "config-*.zip" \
   --exclude "moonraker.conf.pre-*" \
   "${READONLY_EXCLUDE[@]}" \
   --exclude "README.md" \
   --exclude "*.md" \
   "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
+
+# Tool Vision remains an independent runtime, but its one editable machine
+# config is managed by All-Config without deleting result/local files beside it.
+if [[ -f "${SOURCE_CONFIG_DIR}/Tool-Vision/tool_vision.cfg" ]]; then
+  mkdir -p "${CONFIG_DIR}/Tool-Vision"
+  rsync -a "${SOURCE_CONFIG_DIR}/Tool-Vision/tool_vision.cfg" \
+    "${CONFIG_DIR}/Tool-Vision/tool_vision.cfg"
+fi
 
 if (( TOOL_CRASH_PATCH_NEEDED )); then
   mkdir -p "${BACKUP_DIR}/runtime"

@@ -13,7 +13,7 @@ This directory is the **active Klipper configuration payload**. Its contents are
 config/
 ├── printer.cfg                   ← Main entry point (includes sub-configs, kinematics, SAVE_CONFIG block)
 ├── KlipperScreen.conf            ← KlipperScreen settings (language: vi, screen blanking)
-├── moonraker.conf                ← Moonraker API server and ToolVision updater
+├── moonraker.conf                ← Moonraker API server; includes the ToolVision updater generated on the printer
 ├── crowsnest.conf                ← Camera streaming config (WebRTC)
 ├── mainsail.cfg                  ← Mainsail web interface macros
 │
@@ -25,8 +25,7 @@ config/
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
 │   ├── prime-lines.cfg           ← Per-tool prime line macros (T0–T4)
 │   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, single-prompt Filament Dryer presets
-│   ├── tool-crash.cfg            ← tool_crash detector, KTC routing, and safe-pause handler
-│   └── tool_vision.cfg           ← Active ToolVision 3 teach-once config; PF2 switch ready, camera setup pending
+│   └── tool-crash.cfg            ← tool_crash detector, KTC routing, and safe-pause handler
 │
 ├── toolchanger/                  ← StealthChanger KTC-Easy config & tool definitions
 │   ├── toolchanger-config.cfg    ← StealthChanger motion paths, switch position, toolchanger logic
@@ -37,6 +36,9 @@ config/
 │   │   ├── T3.cfg                ← EBB36 V1.2 (EBB3)
 │   │   └── T4.cfg                ← EBB36 V1.2 (EBB4)
 │   └── readonly-configs/         ← Auto-managed by klipper-toolchanger-easy (DO NOT EDIT)
+│
+├── Tool-Vision/
+│   └── tool_vision.cfg           ← Active ToolVision 3 teach-once config; PF2 switch ready, camera setup pending
 │
 └── scripts/                      ← Deployment and maintenance scripts
     ├── install.sh                ← First-time install script; validates/applies the reviewed tool_crash runtime patch
@@ -54,7 +56,7 @@ config/
 | **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
 | **Z Homing & Probe** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Tool-Offset Sensor** | ToolVision 3.3.0-rc1 active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`); station positions are learned into printer-local state |
+| **Tool-Offset Sensor** | ToolVision 3.2.2 active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`); station positions are learned into printer-local state |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
 | **Bed Heater & SSR** | AC Silicone 1000W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
@@ -100,12 +102,11 @@ sudo systemctl restart moonraker klipper
 
 `update.sh` downloads a temporary All-Config source archive, creates a backup,
 deploys the managed payload, and removes the archive. All-Config does not keep a
-Git clone on the printer. ToolVision is different by design: its active 3.3.0-rc1
+Git clone on the printer. ToolVision is different by design: its active v3.2.2
 runtime is the persistent `~/Tool-Vision` Git checkout and is updated through
-Mainsail's Update Manager. This repository synchronizes the editable
-`Printer-Setup/tool_vision.cfg` and keeps `[update_manager tool-vision]`
-directly in `moonraker.conf`; it does not create a ToolVision subdirectory in
-the Klipper config root.
+Mainsail's Update Manager. This repository synchronizes only the editable
+`Tool-Vision/tool_vision.cfg`; the ToolVision installer owns and regenerates
+`Tool-Vision/moonraker_update_manager.conf`, which deployment preserves.
 
 Generated runtime data is grouped under `Generated-Data/ToolVision/` and
 `Generated-Data/ShakeTune/` on the printer. `install.sh` excludes the entire

@@ -27,7 +27,7 @@ File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
 3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, quyền sở hữu PF2 của Tool Vision, dữ liệu rollback Axiscope và các macro trạng thái calibration.
 4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
 5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
-6. `Tool-Vision/tool_vision.cfg` là backend offset active; Axiscope được giữ dạng comment để rollback.
+6. `Printer-Setup/tool_vision.cfg` là backend offset active; Axiscope được giữ dạng comment để rollback.
 
 Nguyên tắc quan trọng:
 
@@ -289,7 +289,7 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend production hiện tại là ToolVision 3.2.2 từ repository độc lập
+Backend production hiện tại là ToolVision 3.3.0-rc1 từ repository độc lập
 `https://github.com/IDcrazy123/Tool-Vision`; runtime Git nằm tại
 `~/Tool-Vision`, service `tool-vision.service` đang active và có mục cập nhật
 `tool-vision` trong Moonraker/Mainsail. Axiscope và SexBolt/tools_calibrate đã
@@ -341,15 +341,15 @@ sudo systemctl restart moonraker
 2. Giải nén source tạm, không tạo Git repository trên Pi.
 3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
 4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ
-   `Generated-Data/`, KTC readonly và runtime ToolVision.
-5. Đồng bộ riêng `Tool-Vision/tool_vision.cfg` mà không xóa
-   `moonraker_update_manager.conf` hoặc dữ liệu sinh tự động.
+   `Generated-Data/`, KTC readonly và runtime ToolVision bên ngoài config.
+5. Đồng bộ `Printer-Setup/tool_vision.cfg`; updater ToolVision được quản lý
+   trực tiếp trong `moonraker.conf`.
 6. Xóa toàn bộ source/archive tạm khi kết thúc.
 
 ToolVision không đi theo cơ chế archive tạm của All-Config. Runtime của nó là
 Git checkout `~/Tool-Vision` và được cập nhật riêng tại **Machine → Update
 Manager → tool-vision**. Không sửa source trực tiếp trên máy; thay đổi cấu hình
-máy chỉ thực hiện trong `Tool-Vision/tool_vision.cfg`.
+máy chỉ thực hiện trong `Printer-Setup/tool_vision.cfg`.
 
 Dữ liệu sinh tự động trên máy được gom về:
 
