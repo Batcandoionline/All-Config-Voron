@@ -1,0 +1,12 @@
+--- a/tool_crash.py
++++ b/tool_crash.py
+@@ -167,5 +167,4 @@
+-        err_msg = "tool_crash detected"
+-        if self.toolchanger.active_tool is not None:
+-            err_msg += ' ' + self.toolchanger.active_tool.name
+-
+-        self._do_crash(err_msg,eventtime)
++        # Every tool detection pin is registered with this same callback. An
++        # edge from a docked/inactive tool is not a crash. Reuse the watchdog's
++        # active-tool consistency check and its configured confirmation count.
++        self._sync_expected()

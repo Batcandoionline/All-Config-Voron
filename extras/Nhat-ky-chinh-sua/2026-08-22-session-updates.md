@@ -208,3 +208,105 @@ server chỉ trả một cây `Generated-Data`. Dữ liệu ToolVision đã họ
 - Trình duyệt Mainsail đang mở từ trước có thể cần bấm nút Refresh trong widget
   Config Files hoặc hard refresh một lần để bỏ state frontend cũ.
 - Camera ToolVision vẫn chưa setup; không liên quan đến việc sắp xếp dữ liệu.
+
+## 3. Rà soát mã nguồn và sửa logic Printer-Setup từ tool-crash đến calibration-probe
+
+### Phạm vi và nguyên tắc
+
+- Đọc lần lượt toàn bộ tám file production trong `config/Printer-Setup/`:
+  `tool-crash.cfg`, `print-macros.cfg`, `prime-lines.cfg`, `nozzle-clean.cfg`,
+  `input-shaper.cfg`, `hardware.cfg`, `fans-leds.cfg` và
+  `calibration-probe.cfg`.
+- Không sửa KTC readonly, tọa độ cơ khí, PID, Cartographer hay dữ liệu ToolVision
+  đã học.
+- Tạm dừng bản vá sau yêu cầu kiểm tra sâu; đối chiếu mã Python trước khi tiếp
+  tục và chỉ triển khai sau khi kiểm thử render đạt.
+
+### Mã nguồn đã đối chiếu
+
+- Klipper đang chạy commit `60fc7aa67a8da9abb43a2bad825d4992294ebf3f`:
+  `gcode_macro.py`, `delayed_gcode.py`, `buttons.py`, `fan.py`,
+  `fan_generic.py` và `heaters.py`.
+- KTC-Easy commit `e881fe40949a3999b0d63f59c22df589474eae9b`:
+  `tool.py` và `toolchanger.py`; source cài trong Klipper khớp repository.
+- `tool_crash.py` upstream commit
+  `5cb00ad9e0216db97b8139a627b41407c86c88a9`; bản cài máy thật khớp nội dung
+  upstream trước khi vá.
+- ToolVision `tool_vision.py`: `TOOL_VISION_STATUS` chỉ đọc readiness/service và
+  station do ToolVision sở hữu; macro config không thể đọc tọa độ station nội bộ
+  qua status object.
+- Tài liệu Klipper xác nhận macro được render toàn bộ trước khi lệnh sinh ra chạy,
+  macro con render khi được gọi và delayed gcode phải hủy bằng
+  `UPDATE_DELAYED_GCODE ... DURATION=0`.
+
+### Lỗi gốc và sửa đổi
+
+- Dryer và print cùng sở hữu bed heater/bed fan: thêm handoff không tắt nhiệt,
+  hủy timer dryer và callback tắt fan cũ khi `PRINT_START` tiếp quản; timer dryer
+  tự dừng nếu phát hiện print đang active.
+- Dryer dock tool trước khi nâng Z đủ cao: chuyển Z lên tối thiểu 200 mm, giới hạn
+  theo `axis_maximum.z`, trước `UNSELECT_TOOL`.
+- Tham số dryer nâng cao không kiểm tra: chặn BED/CHAMBER/HUMIDITY/TIME/FAN/PARK
+  ngoài phạm vi trước mọi chuyển động hoặc gia nhiệt.
+- Crash detector tự disable sau crash nhưng RESUME không bật lại: thêm
+  `START_CRASH_DETECTION` vào hook RESUME sau khi KTC initialize/verify thành công.
+- Upstream `tool_crash.py` gọi crash với mọi cạnh của cả năm detection pin: lưu
+  patch tối thiểu tại
+  `extras/klipper-patches/tool_crash-active-tool-validation.patch`; cạnh sensor
+  nay dùng kiểm tra active-tool và confirmation threshold sẵn có của watchdog.
+- `CLEAN_NOZZLE` nhầm `toolhead.extruder` là bằng chứng có tool thật: chuyển guard
+  sang `toolchanger.tool_number`; khi không có tool sẽ abort trước SAVE/motion/heat.
+- Cancel không xử lý vòng đời bed fan và ghi đè LED của T0 vừa pickup: schedule
+  fan-off 180 giây như PRINT_END và dùng helper render sau toolchange để đồng bộ
+  LED theo active tool thật.
+- Fallback input shaper ghi là T0 nhưng không khớp T0: đồng bộ thành X
+  `3hump_ei/98.6/0.081`, Y `mzv/35.0/0.076` đúng giá trị trong `T0.cfg`.
+- `CALIBRATION_STATUS` hard-code tọa độ PF2 cũ: bỏ bản sao tọa độ và gọi
+  `TOOL_VISION_STATUS` để báo trạng thái do ToolVision sở hữu.
+
+### Sao lưu
+
+- PC:
+  `extras/backups/pre-fix-printer-setup-logic-20260822-174512/`.
+- Máy thật:
+  `/home/voron/printer_data/config_backups/pre-fix-printer-setup-logic-20260822-174512/`.
+- Backup gồm năm CFG thay đổi và `tool_crash.py` đang chạy trước triển khai.
+
+### Kiểm thử trước triển khai
+
+- `git diff --check`: đạt.
+- `git apply --check` nghiêm ngặt trên cả upstream local và source đang cài trên
+  máy thật: đạt.
+- Dùng đúng `/home/voron/klippy-env` (Python 3.11.2, Jinja2 2.11.3): biên dịch
+  62/62 template G-code trong tám file.
+- 15 assertion render đạt: thứ tự nâng Z/dock, dryer handoff, delayed callback,
+  nhánh print-active không tắt heat/fan, tham số lỗi abort, CLEAN_NOZZLE không có
+  active tool, RESUME crash detector, cancel cleanup và ToolVision status.
+- `tool_crash.py` patched compile đạt; mô phỏng xác nhận cạnh inactive không báo
+  crash, active loss cần đủ hai lần, cạnh hồi phục reset counter và các guard
+  disabled/toolchange/probing vẫn hoạt động.
+
+### Triển khai và xác minh máy thật
+
+- Trước triển khai: printer standby, không pause, bed target 0, bed fan 0,
+  dryer 0, ToolVision không busy; Klipper/Moonraker/ToolVision active.
+- Lệnh install staging đầu tiên bị PowerShell mở rộng sai biến đường dẫn và dừng.
+  Hash sáu file đích được kiểm tra ngay sau đó, xác nhận toàn bộ vẫn là bản cũ;
+  không restart ở bước lỗi này.
+- Cài lại bằng sáu đường dẫn tuyệt đối, mode `0644`, rồi xác nhận SHA-256 từng
+  file khớp staging. Restart Klipper một lần qua Moonraker API; ready sau 7 giây.
+- Sau restart: 0 config warning; macro/command mới đều có trong G-code help;
+  input shaper nạp đúng fallback T0; ba service active; log phiên Klipper không
+  có traceback/config/template/shutdown error.
+- Trạng thái cuối lúc kiểm tra: standby, không pause, bed target 0, bed fan 0,
+  dryer 0, KTC ready với T0 active; ToolVision `3.3.0-rc1`, không busy.
+- Không chạy lệnh gia nhiệt, vệ sinh nozzle, dryer hoặc toolchange để thử. Thư mục
+  kiểm thử `/tmp/codex-printer-setup-audit-20260822-1815` đã được xác minh đúng
+  target và xóa sau khi hoàn tất.
+
+### Kết quả
+
+Các lỗi dùng chung heater/fan, thứ tự dock, vòng đời crash detector, nhận diện
+active tool, LED cancel, fallback shaper và status calibration đã được sửa và nạp
+trên máy thật. `prime-lines.cfg` và `hardware.cfg` không cần thay đổi sau khi rà
+soát; KTC readonly không bị chỉnh sửa.
