@@ -587,3 +587,68 @@ quyết việc nhận sai vật thể và có thể làm kết quả giả dễ 
 - Chỉ đọc log/state/source, tải frame raw/processed và chạy detector offline trên
   frame tĩnh.
 - Không chạy thêm G-code, không làm máy chuyển động và không sửa config/runtime.
+
+## 8. Gỡ kTAMV và khôi phục Axiscope PF2
+
+### Mục tiêu
+
+- Kết thúc thử nghiệm camera kTAMV.
+- Dùng lại Axiscope với microswitch PF2 để đo Z-offset giữa năm tool.
+- Dọn toàn bộ backup cũ trên repo và máy thật, chỉ giữ snapshot hiện tại.
+
+### Sao lưu
+
+- [Backup PC](<file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-return-to-axiscope-20260822-210550/>)
+  — sáu file cấu hình/script trước khi chuyển backend.
+- Backup máy thật:
+  `/home/voron/printer_data/config_backups/config-install-20260822-211338/`
+  — bản config đang chạy ngay trước khi triển khai, còn file `ktamv.cfg` để
+  hoàn tác; kích thước 396 KB.
+
+### Thay đổi cấu hình
+
+- `config/Printer-Setup/calibration-probe.cfg` — kích hoạt `[axiscope]` với
+  `pin: ^PF2`, tọa độ `X=68`, `Y=-10`, `Z=7`, `samples: 10`.
+- Axiscope chỉ báo Z delta; không đặt `config_file_path` vì các section tool
+  nằm trong năm file T0–T4 riêng. Cách này tránh tự tạo section trùng.
+- `config/printer.cfg` — bỏ include `Printer-Setup/ktamv.cfg`.
+- `config/scripts/install.sh` — bỏ preflight kTAMV, thêm preflight bảo đảm
+  module `~/klipper/klippy/extras/axiscope.py` tồn tại trước khi deploy.
+- `config/moonraker.conf`, `config/toolchanger/toolchanger-config.cfg`, README
+  và tài liệu cấu trúc — bỏ trạng thái trial và ghi Axiscope là backend active.
+- Xóa config, service template, detector patch, hướng dẫn và gitlink source
+  kTAMV khỏi All-Config.
+
+### Gỡ runtime trên máy thật
+
+- Dừng/disable và xóa user unit `ktamv-server.service`.
+- Xóa `~/kTAMV` (3.1 MB), `~/ktamv-env` (31 MB), hai symlink Klipper
+  `ktamv.py`/`ktamv_utl.py` và hai ảnh chẩn đoán `/tmp/ktamv-*`.
+- Port 8086 đã đóng; Klipper object list không còn `ktamv` và có `axiscope`.
+- ToolVision vẫn được giữ inactive, không có include/updater; port 8085 đóng.
+
+### Dọn backup cũ
+
+- Repo: xóa 81 thư mục, 3.617 file, khoảng 224,38 MB; giữ duy nhất
+  `pre-return-to-axiscope-20260822-210550`. Lịch sử Git cũ vẫn cho phép truy
+  xuất nội dung đã commit.
+- Máy thật: xóa 21 entry, 431.850.071 byte; giữ duy nhất
+  `config-install-20260822-211338`.
+- Không chạm hai mục untracked dưới `extras/Config download/`.
+
+### Kiểm tra
+
+- `bash -n` đạt cho `install.sh` và `update.sh` trên máy thật.
+- Installer deploy thành công và xóa `Printer-Setup/ktamv.cfg` khỏi config live.
+- Restart Klipper thành công; `webhooks.state=ready`.
+- Object `axiscope` báo `endstop_x=68`, `endstop_y=-10`, `endstop_z=7`,
+  `can_save_config=false`; `QUERY_ENDSTOPS` chạy an toàn, không chuyển động.
+- Máy ở `standby`, bed target `0`; không chạy homing, toolchange hoặc calibration.
+- Web service Axiscope cổng 3000 không cần cho module/switch và hiện vẫn
+  inactive/disabled; việc bật autostart cần quyền sudo tại máy nếu muốn dùng UI.
+
+### Kết quả
+
+Backend production hiện là Axiscope PF2 cho phép đo Z delta bằng công tắc cơ
+khí. kTAMV đã được gỡ khỏi repo, config live, Klipper extras, systemd user và
+Home runtime; các backup cũ đã được dọn theo yêu cầu.

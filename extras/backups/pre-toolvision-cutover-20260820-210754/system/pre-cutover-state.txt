@@ -1,7 +1,0 @@
-2026-08-20T21:08:12+07:00
-user=voron
-axiscope_active=active
-axiscope_enabled=enabled
-toolvision_active=inactive
-toolvision_enabled=toolvision_extra=/home/voron/klipper/klippy/extras/tool_vision.py
-klipper=active

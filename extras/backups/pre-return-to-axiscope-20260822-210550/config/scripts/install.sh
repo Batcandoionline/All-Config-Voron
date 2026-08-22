@@ -10,19 +10,32 @@ TOOL_CRASH_SOURCE="${HOME}/klipper/klippy/extras/tool_crash.py"
 TOOL_CRASH_PATCH="${SCRIPT_DIR}/patches/tool_crash-active-tool-validation.patch"
 TOOL_CRASH_PATCH_MARKER="Every tool detection pin is registered with this same callback"
 TOOL_CRASH_PATCH_NEEDED=0
-AXISCOPE_MODULE="${HOME}/klipper/klippy/extras/axiscope.py"
+KTAMV_CLIENT="${HOME}/klipper/klippy/extras/ktamv.py"
+KTAMV_UTILITY="${HOME}/klipper/klippy/extras/ktamv_utl.py"
+KTAMV_DETECTOR="${HOME}/kTAMV/server/ktamv_server_dm.py"
 
 if [[ ! -f "${SOURCE_CONFIG_DIR}/printer.cfg" ]]; then
   echo "ERROR: printer.cfg was not found in ${SOURCE_CONFIG_DIR}" >&2
   exit 1
 fi
 
-# Axiscope owns the PF2 switch in the active production config. Refuse to
-# deploy that section unless the machine-local Klipper module is installed.
-if grep -Eq '^[[:space:]]*\[axiscope\][[:space:]]*$' \
-    "${SOURCE_CONFIG_DIR}/Printer-Setup/calibration-probe.cfg"; then
-  if [[ ! -f "${AXISCOPE_MODULE}" ]]; then
-    echo "ERROR: active Axiscope module is missing: ${AXISCOPE_MODULE}" >&2
+# The temporary kTAMV trial is installed manually instead of using its
+# system-wide upstream installer. Refuse to deploy an active include unless the
+# reviewed client links and multi-object detector fix are present.
+if grep -Fq '[include Printer-Setup/ktamv.cfg]' \
+    "${SOURCE_CONFIG_DIR}/printer.cfg"; then
+  for required_file in "${KTAMV_CLIENT}" "${KTAMV_UTILITY}" \
+      "${KTAMV_DETECTOR}"; do
+    if [[ ! -f "${required_file}" ]]; then
+      echo "ERROR: active kTAMV trial runtime is missing: ${required_file}" >&2
+      exit 1
+    fi
+  done
+  if ! grep -Fq 'def find_closest_keypoint(self, keypoints):' \
+      "${KTAMV_DETECTOR}" ||
+      ! grep -Fq 'np.around(keypoints[closest_index].pt)' \
+      "${KTAMV_DETECTOR}"; then
+    echo "ERROR: reviewed kTAMV multi-object selection patch is missing." >&2
     exit 1
   fi
 fi

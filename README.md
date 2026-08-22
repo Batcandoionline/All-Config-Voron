@@ -3,7 +3,7 @@
 [![Klipper](https://img.shields.io/badge/Klipper-v0.13.0-green.svg)](https://www.klipper3d.org/)
 [![Toolchanger](https://img.shields.io/badge/StealthChanger-KTC--Easy-blue.svg)](https://stealthchanger.com/)
 [![Cartographer3D](https://img.shields.io/badge/Cartographer-V3%20fw6.1.0-orange.svg)](https://cartographer3d.com/)
-[![kTAMV](https://img.shields.io/badge/kTAMV-trial-blueviolet.svg)](https://github.com/TypQxQ/kTAMV)
+[![Axiscope](https://img.shields.io/badge/Axiscope-PF2%20switch-blueviolet.svg)](https://github.com/nic335/Axiscope)
 [![WebUI](https://img.shields.io/badge/WebUI-Mainsail-red.svg)](https://docs.mainsail.xyz/)
 [![Slicer](https://img.shields.io/badge/Slicer-OrcaSlicer-purple.svg)](https://github.com/SoftFever/OrcaSlicer)
 
@@ -22,7 +22,7 @@ Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D pri
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
 | **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
 | **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
-| **Tool-Offset Calibrator**| kTAMV temporary supervised XY trial; removable MF-500 camera | Reviewed upstream commit `72421f2`; ToolVision 3.3.0-rc2 runtime/state preserved inactive for rollback |
+| **Tool-Offset Calibrator**| Axiscope Z-offset measurement with a PF2 microswitch | Switch center $(X=68, Y=-10, Z=7)$; 10 samples per tool; camera backends inactive |
 | **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
 | **Chamber Feedback** | Generic 3950 100K NTC | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
@@ -70,7 +70,7 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
 2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
 3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
-4. **Tool-offset camera:** kTAMV is temporarily active for supervised XY trials with the removable MF-500. It does not calibrate Z or persist camera calibration across a Klipper restart. The PF2 switch and ToolVision learned data remain preserved but inactive for rollback.
+4. **Tool-offset switch:** Axiscope measures each tool against the PF2 microswitch at $(X=68, Y=-10, Z=7)$. It reports Z deltas for review and does not rewrite the split T0–T4 configuration files automatically.
 
 ### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
 * **Purge Bucket:** $X = 320.0, Y = -8.0$
@@ -131,13 +131,12 @@ Voron 5 Tool/
 │   ├── Printer-Setup/        ← Modular printer configuration files
 │   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
-│   │   ├── calibration-probe.cfg ← Cartographer/mesh and temporary kTAMV status routing
+│   │   ├── calibration-probe.cfg ← Cartographer/mesh and active Axiscope PF2 calibration
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
 │   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, single-prompt Filament Dryer
-│   │   ├── tool-crash.cfg    ← Tool presence detector, KTC routing, safe pause
-│   │   └── ktamv.cfg         ← Temporary supervised kTAMV XY trial config
+│   │   └── tool-crash.cfg    ← Tool presence detector, KTC routing, safe pause
 │   │
 │   ├── toolchanger/          ← StealthChanger KTC-Easy toolchanger config
 │   │   ├── toolchanger-config.cfg ← Dropoff/pickup paths & park coords
@@ -181,31 +180,26 @@ Voron 5 Tool/
   deploys it, then removes the archive; All-Config keeps no Git clone on the
   Pi.)*
 
-### Temporary kTAMV Trial
+### Axiscope PF2 Switch Calibration
 
-kTAMV is installed manually from the reviewed official source because its
-upstream installer performs system-wide package/time changes and writes invalid
-or duplicate-prone configuration on this machine:
+Axiscope is the production tool Z-offset measurement backend:
 
-- Source checkout: `~/kTAMV`
-- Repository: `https://github.com/TypQxQ/kTAMV`
-- Reviewed commit: `72421f2d54da0de8701c4f84449c6e6b7d060301`
-- User service: `ktamv-server.service`, port `8086`
-- Machine configuration: `Printer-Setup/ktamv.cfg`
-- Cloud image upload: disabled
-- Scope: XY reporting/centering only; no Z calibration and no automatic offset save
+- Source checkout: `~/axiscope`
+- Repository: `https://github.com/nic335/Axiscope`
+- Klipper module: `~/klipper/klippy/extras/axiscope.py`
+- Switch input: Manta M8P `^PF2` with GND
+- Switch position: `X=68`, `Y=-10`, `Z=7`
+- Measurement: 10 Z samples per tool
+- Scope: Z deltas only; existing production XY offsets remain unchanged
 
-See the supervised machine-specific workflow in
-[extras/docs/huong-dan-su-dung-ktamv.md](extras/docs/huong-dan-su-dung-ktamv.md).
+Run `CALIBRATION_STATUS` or `QUERY_ENDSTOPS` without motion. Use
+`CALIBRATE_ALL_Z_OFFSETS` only with an operator present after homing and checking
+the switch path. Results are reported for review; they are not written directly
+because each tool is maintained in a separate T0–T4 config file.
 
-The ToolVision 3.3.0-rc2 checkout, venv, Klipper links and
-`Generated-Data/ToolVision/` remain preserved but inactive for rollback. Its
-running process is stopped, and its Klipper include/Moonraker updater are
-removed from the active configuration. The installed system unit is retained
-for rollback; keep it stopped during the trial (`sudo systemctl disable --now
-tool-vision` prevents it from returning after a host reboot).
+ToolVision remains installed but inactive, without a Klipper include or
+Moonraker updater. kTAMV and its service/runtime are removed.
 
 `Generated-Data/` is printer-local and deployment-protected. It keeps preserved
-ToolVision JSON and ShakeTune graphs under one clearly named folder; backups and
-downloaded snapshots belong in `~/printer_data/config_backups/`, outside the
-active config root.
+ToolVision JSON and ShakeTune graphs under one clearly named folder. The printer
+keeps only the current rollback snapshot under `~/printer_data/config_backups/`.
