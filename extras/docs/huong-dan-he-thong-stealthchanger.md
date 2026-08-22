@@ -289,13 +289,27 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend production hiện tại là Tool Vision với công tắc PF2 tại X=68, Y=-10,
-Z=7; Axiscope và SexBolt/tools_calibrate đã tắt. Camera MF-500 vẫn dùng để soi
-buồng, khi hiệu chuẩn mới tháo xuống gá nam châm có định vị. Người dùng phải tự
-jog T0 và nhập X/Y/Z/safe-Z trước khi chạy camera-station calibration; khi các
-tọa độ này còn trống, Tool Vision chặn chuyển động tới station. Không bật đồng
-thời `axiscope`, `tools_calibrate` và `tool_vision` vì cả ba cùng sở hữu
-`probe_multi_axis`.
+Backend production hiện tại là ToolVision 3.2.1 từ repository độc lập
+`https://github.com/IDcrazy123/Tool-Vision`; runtime Git nằm tại
+`~/Tool-Vision`, service `tool-vision.service` đang active và có mục cập nhật
+`tool-vision` trong Moonraker/Mainsail. Axiscope và SexBolt/tools_calibrate đã
+tắt. Cấu hình chỉ giữ pin thật `^PF2`; vị trí fixture, detector và transform
+được học một lần rồi lưu trong state cục bộ, không còn nhập tay hàng loạt tham
+số X/Y/Z/OpenCV vào `.cfg`.
+
+Trạng thái đối chiếu ngày 2026-08-22: switch đã setup và sẵn sàng, camera chưa
+setup. Khi cần hoàn tất camera, tháo MF-500 khỏi vị trí soi buồng, đặt lên gá nam
+châm, home XYZ, gắn T0, jog nozzle gần tâm/focus an toàn rồi chạy:
+
+```gcode
+TV_SETUP_CAMERA
+TV_STATUS
+```
+
+Workflow sau khi cả hai station sẵn sàng là `TV_CALIBRATE MODE=XYZ`, sau đó xem
+report bằng `TV_REPORT`. Kết quả chỉ để báo cáo; phải đo lặp và xác nhận bằng bản
+in trước khi áp dụng offset. Không bật đồng thời `axiscope`, `tools_calibrate`
+và `tool_vision` vì cả ba cùng sở hữu `probe_multi_axis`.
 
 Kiểm tra offset:
 
@@ -327,9 +341,15 @@ sudo systemctl restart moonraker
 2. Giải nén source tạm, không tạo Git repository trên Pi.
 3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
 4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ backup máy-local,
-   KTC readonly và dữ liệu Tool Vision.
-5. Đồng bộ riêng `Tool-Vision/tool_vision.cfg` mà không xóa kết quả cục bộ.
+   KTC readonly, state/result và runtime ToolVision.
+5. Đồng bộ riêng `Tool-Vision/tool_vision.cfg` mà không xóa
+   `moonraker_update_manager.conf`, state hoặc kết quả cục bộ.
 6. Xóa toàn bộ source/archive tạm khi kết thúc.
+
+ToolVision không đi theo cơ chế archive tạm của All-Config. Runtime của nó là
+Git checkout `~/Tool-Vision` và được cập nhật riêng tại **Machine → Update
+Manager → tool-vision**. Không sửa source trực tiếp trên máy; thay đổi cấu hình
+máy chỉ thực hiện trong `Tool-Vision/tool_vision.cfg`.
 
 Khôi phục backup:
 

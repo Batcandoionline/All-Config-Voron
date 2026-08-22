@@ -25,18 +25,12 @@ if [[ -e "${CONFIG_DIR}/toolchanger/readonly-configs" ]]; then
 fi
 
 # Deploy only repository-owned configuration. On-printer backups, Tool Vision
-# state/results, ShakeTune output, downloaded snapshots, and printer-local
-# files remain untouched.
+# results, and printer-local files remain untouched.
 rsync -a --delete --itemize-changes \
   --exclude ".codex-backups/" \
   --exclude ".moonraker.conf.bkp" \
-  --exclude "ShakeTune_results/" \
   --exclude "Tool-Vision/" \
   --exclude "Nhat-ky-chinh-sua/" \
-  --exclude "tool_vision_state.json" \
-  --exclude "tool_vision_results.json" \
-  --exclude "config-*.zip" \
-  --exclude "moonraker.conf.pre-*" \
   "${READONLY_EXCLUDE[@]}" \
   --exclude "README.md" \
   --exclude "*.md" \

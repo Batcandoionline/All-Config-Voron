@@ -3,6 +3,7 @@
 [![Klipper](https://img.shields.io/badge/Klipper-v0.13.0-green.svg)](https://www.klipper3d.org/)
 [![Toolchanger](https://img.shields.io/badge/StealthChanger-KTC--Easy-blue.svg)](https://stealthchanger.com/)
 [![Cartographer3D](https://img.shields.io/badge/Cartographer-V3%20fw6.1.0-orange.svg)](https://cartographer3d.com/)
+[![ToolVision](https://img.shields.io/badge/ToolVision-v3.2.1-blueviolet.svg)](https://github.com/IDcrazy123/Tool-Vision)
 [![WebUI](https://img.shields.io/badge/WebUI-Mainsail-red.svg)](https://docs.mainsail.xyz/)
 [![Slicer](https://img.shields.io/badge/Slicer-OrcaSlicer-purple.svg)](https://github.com/SoftFever/OrcaSlicer)
 
@@ -21,7 +22,7 @@ Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D pri
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
 | **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
 | **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
-| **Tool-Offset Calibrator**| Tool Vision active; removable MF-500 camera + PF2 microswitch | Manta M8P `^PF2` + GND at $(X=68.0, Y=-10.0, Z=7.0)$ |
+| **Tool-Offset Calibrator**| ToolVision 3.2.1 active; removable MF-500 camera + PF2 microswitch | Persistent Git runtime at `~/Tool-Vision`; switch taught, camera setup pending |
 | **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
 | **Chamber Feedback** | Generic 3950 100K NTC | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
@@ -69,7 +70,7 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
 2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
 3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
-4. **Tool-offset station (`^PF2`):** Tool Vision owns the switch at $(X=68.0, Y=-10.0, Z=7.0)$ and uses the removable MF-500 camera for XY. The backend is active, but camera-station motion remains blocked until the magnetic mount position is measured and commissioned.
+4. **Tool-offset station (`^PF2`):** ToolVision 3.2.1 owns the PF2 switch and uses the removable MF-500 camera for XY. The switch station is taught and ready; camera setup is still pending. Mount the camera, jog T0 near its center, then run `TV_SETUP_CAMERA`—ToolVision learns the station and detector instead of storing manual X/Y/Z values in the `.cfg`.
 
 ### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
 * **Purge Bucket:** $X = 320.0, Y = -8.0$
@@ -134,7 +135,7 @@ Voron 5 Tool/
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
-│   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, Filament Dryer suite & presets
+│   │   ├── print-macros.cfg  ← PRINT_START, PRINT_END, single-prompt Filament Dryer
 │   │   └── tool-crash.cfg    ← Tool presence detector, KTC routing, safe pause
 │   │
 │   ├── toolchanger/          ← StealthChanger KTC-Easy toolchanger config
@@ -142,7 +143,7 @@ Voron 5 Tool/
 │   │   ├── tools/ (T0–T4.cfg)     ← Individual tool definitions (EBB36 pins, offsets)
 │   │   └── readonly-configs/      ← Managed by KTC-Easy (DO NOT EDIT)
 │   │
-│   ├── Tool-Vision/tool_vision.cfg ← Staged machine config; include is disabled
+│   ├── Tool-Vision/tool_vision.cfg ← Active ToolVision 3 teach-once machine config
 │   │
 │   └── scripts/              ← Deployment & maintenance scripts
 │       ├── install.sh        ← First-time install script (auto-excludes *.md)
@@ -177,5 +178,22 @@ Voron 5 Tool/
   bash scripts/update.sh
   sudo systemctl restart moonraker klipper
   ```
-  *(Downloads a temporary archive, creates a timestamped backup, deploys it,
-  then removes the archive; no Git clone remains on the Pi.)*
+  *(Downloads a temporary All-Config archive, creates a timestamped backup,
+  deploys it, then removes the archive; All-Config keeps no Git clone on the
+  Pi.)*
+
+### Installed ToolVision Development Runtime
+
+ToolVision is intentionally managed as a separate development repository:
+
+- Source/runtime checkout: `~/Tool-Vision`
+- Repository: `https://github.com/IDcrazy123/Tool-Vision`
+- Installed version: `v3.2.1` (`42202a2`)
+- Host service: `tool-vision.service`
+- Editable machine configuration: `~/printer_data/config/Tool-Vision/tool_vision.cfg`
+- Updates: **Machine → Update Manager → tool-vision** in Mainsail
+
+The ToolVision installer owns the generated
+`Tool-Vision/moonraker_update_manager.conf`; All-Config preserves that file and
+only synchronizes the editable `tool_vision.cfg`. Do not enable `[axiscope]` or
+`[tools_calibrate]` while `[tool_vision]` is active.
