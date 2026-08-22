@@ -536,3 +536,54 @@ dọn an toàn. Runtime ngoài config vẫn hoạt động và có thể cập n
   tại trong runtime đang cài.
 - Không chạy homing, toolchange, calibration hoặc bất kỳ lệnh chuyển động nào
   trong lần rà soát này.
+
+## 7. Chẩn đoán kTAMV camera calibration thất bại
+
+### Hiện tượng người dùng ghi nhận
+
+- `KTAMV_CALIB_CAMERA` đậu các điểm 1, 2, 4, 8, 9, 10; trượt các điểm 3, 5,
+  6, 7 rồi báo `More than 25% of the calibration points failed`.
+- Các scale đậu là `0.028, 0.041, 0.041, 0.043, 0.044, 0.043`; center return
+  thêm `0.043`. Điểm đầu `0.028` lệch rõ khỏi cụm ổn định `0.041–0.044`.
+- Sau lỗi, kTAMV vẫn `calibrated=False`, `mm_per_pixels=None`, origin `None`;
+  máy dừng đúng X175 Y45 Z35 và Klipper vẫn ready.
+
+### Bằng chứng detector
+
+- kTAMV chỉ có 6/10 điểm vòng tròn hợp lệ; cộng frame center cuối thành bảy
+  sample, vẫn nhỏ hơn yêu cầu tám nên abort đúng theo source.
+- Camera raw là 1280×720 nhưng kTAMV ép thành 640×480, làm đổi aspect ratio của
+  các hình tròn. Khoảng 26.4% frame raw có ít nhất một channel gần clipping.
+- Frame xử lý cuối cho thấy marker kTAMV nằm trên vùng phản xạ sáng phía dưới
+  lỗ nozzle thật. Trên frame hiện tại, super-relaxed detector thấy hai blob tại
+  xấp xỉ `(299.8,238.1,size=67.9)` và `(539.4,132.8,size=24.1)`; cả năm pipeline
+  không nhận lỗ nozzle thật làm candidate.
+- Log calibration cho thấy detector thường trả `None` suốt timeout 20 giây tại
+  bốn hướng. Khi có kết quả, tọa độ quanh vùng phản xạ thay đổi theo góc jog;
+  đây là lý do scale đầu sai và các hướng khác mất detection.
+
+### So sánh với ToolVision 3.3.0-rc2
+
+- ToolVision camera trước đó chưa setup thành công: state bảo toàn có
+  `vision: {}` và results chỉ chứa mode Z/PF2.
+- Log ToolVision cùng camera lần lượt báo `two different center objects look
+  like the nozzle`, `multiple distinct objects match the learned nozzle
+  profile` và `no stable nozzle found near image center`.
+- ToolVision dùng frame native resolution, học profile qua năm frame và từ chối
+  nhiều object khác vị trí. kTAMV dùng detector/threshold cố định ở 640×480,
+  yêu cầu ba lần lặp với `detection_tolerance=0`; một blob phản xạ đơn độc gần
+  tâm có thể được chấp nhận tạm thời.
+
+### Kết luận
+
+Nguyên nhân chính là cảnh quang học mơ hồ: lỗ nozzle thật chưa nằm ở crosshair,
+đèn phản xạ trực tiếp tạo blob giả và vùng cháy sáng; resize sai aspect ratio và
+ngưỡng lặp tuyệt đối của kTAMV làm vấn đề nặng hơn. Không phải lỗi chuyển động,
+Klipper, server port hay patch cài đặt. Chỉ tăng `detection_tolerance` không giải
+quyết việc nhận sai vật thể và có thể làm kết quả giả dễ được chấp nhận hơn.
+
+### Phạm vi thao tác chẩn đoán
+
+- Chỉ đọc log/state/source, tải frame raw/processed và chạy detector offline trên
+  frame tĩnh.
+- Không chạy thêm G-code, không làm máy chuyển động và không sửa config/runtime.
