@@ -289,7 +289,7 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend production hiện tại là ToolVision 3.2.1 từ repository độc lập
+Backend production hiện tại là ToolVision 3.2.2 từ repository độc lập
 `https://github.com/IDcrazy123/Tool-Vision`; runtime Git nằm tại
 `~/Tool-Vision`, service `tool-vision.service` đang active và có mục cập nhật
 `tool-vision` trong Moonraker/Mainsail. Axiscope và SexBolt/tools_calibrate đã
@@ -340,16 +340,24 @@ sudo systemctl restart moonraker
 1. Tạo thư mục tạm bằng `mktemp` và tải archive nhánh `main` từ GitHub.
 2. Giải nén source tạm, không tạo Git repository trên Pi.
 3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
-4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ backup máy-local,
-   KTC readonly, state/result và runtime ToolVision.
+4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ
+   `Generated-Data/`, KTC readonly và runtime ToolVision.
 5. Đồng bộ riêng `Tool-Vision/tool_vision.cfg` mà không xóa
-   `moonraker_update_manager.conf`, state hoặc kết quả cục bộ.
+   `moonraker_update_manager.conf` hoặc dữ liệu sinh tự động.
 6. Xóa toàn bộ source/archive tạm khi kết thúc.
 
 ToolVision không đi theo cơ chế archive tạm của All-Config. Runtime của nó là
 Git checkout `~/Tool-Vision` và được cập nhật riêng tại **Machine → Update
 Manager → tool-vision**. Không sửa source trực tiếp trên máy; thay đổi cấu hình
 máy chỉ thực hiện trong `Tool-Vision/tool_vision.cfg`.
+
+Dữ liệu sinh tự động trên máy được gom về:
+
+- `~/printer_data/config/Generated-Data/ToolVision/` — state đã học và kết quả
+  đo ToolVision.
+- `~/printer_data/config/Generated-Data/ShakeTune/` — đồ thị/kết quả cộng hưởng.
+- `~/printer_data/config_backups/` — backup cấu hình và ZIP snapshot; không đặt
+  các file này trong root `config`.
 
 Khôi phục backup:
 

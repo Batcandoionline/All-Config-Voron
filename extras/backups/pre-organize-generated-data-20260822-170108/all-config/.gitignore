@@ -1,6 +1,5 @@
 # Local backups and generated archives
 _backups/
-Generated-Data/
 *.zip
 *backup*
 *.bak
@@ -22,3 +21,4 @@ desktop.ini
 *.secrets
 moonraker.secrets
 wpa_supplicant.conf
+

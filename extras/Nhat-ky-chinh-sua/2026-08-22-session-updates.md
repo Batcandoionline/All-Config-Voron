@@ -115,3 +115,96 @@ All-Config, máy thật và repository ToolVision đã được đối chiếu v
 - Camera ToolVision chưa setup. Chỉ chạy `TV_SETUP_CAMERA` khi có người tại máy, camera MF-500 đã đặt chắc trên gá, T0 sạch và đường đi an toàn.
 - Sau setup camera, đo lặp bằng `TV_CALIBRATE MODE=XYZ`, xem `TV_REPORT` và xác nhận bằng bản in trước khi áp dụng offset.
 - Installer vẫn cảnh báo KTC readonly configs hiện không phải symlink do installer quản lý. Không chỉnh sửa trực tiếp vùng readonly; xử lý riêng bằng KTC-Easy installer nếu cần nâng KTC.
+
+## 2. Gom dữ liệu sinh tự động và xử lý thư mục ghost trên Mainsail
+
+### Triệu chứng
+
+- Mainsail hiển thị hai dòng `ShakeTune_results`; một dòng có thời gian
+  `01/01/1970`, một dòng có thời gian thật.
+- `tool_vision_state.json`, `tool_vision_results.json`, `.codex-backups`, hai ZIP
+  snapshot và backup `moonraker.conf.pre-tool-vision-*` nằm lẫn trong root
+  `~/printer_data/config`.
+- Người dùng không thể biết mục nào là cấu hình, dữ liệu runtime hay backup.
+
+### Phân tích nhật ký và filesystem
+
+- Kiểm tra byte-level bằng `ls -labi`/`find` xác nhận chỉ có một thư mục vật lý
+  `ShakeTune_results`, inode `534025`; Linux không có hai tên thật trùng nhau.
+- Moonraker API cũng chỉ trả một cây vật lý. Dòng thời gian 1970 là entry ghost
+  phía Mainsail sau lần rsync xóa/khôi phục thư mục trước đó.
+- Moonraker log lúc `2026-08-22 16:54:58` ghi một yêu cầu move sai từ giao diện:
+  `[Errno 20] Not a directory: '/home/voron/printer_data/config/tool_vision_results.json/tool_vision_results.json'`.
+  Không có dấu hiệu file bị mất.
+- Hai JSON là dữ liệu ToolVision hợp lệ: state schema 2 giữ switch station; file
+  result schema 1 giữ kết quả Z gần nhất. `ShakeTune_results` là thư mục output
+  hợp lệ của Klippain ShakeTune.
+
+### Nguyên nhân gốc
+
+- ToolVision 3.2.1 dùng mặc định hai file JSON ngay trong root `config`.
+- ShakeTune cũng dùng một thư mục output ngay trong root.
+- Backup/snapshot của các lần cài cũ chưa được chuyển sang `config_backups`.
+- Lần đồng bộ trước đã xóa rồi phục hồi `ShakeTune_results` trong cùng phiên
+  Mainsail, để lại metadata entry ghost có mtime epoch.
+
+### Sao lưu
+
+- [Backup PC](<file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-organize-generated-data-20260822-170108/>) — cấu hình All-Config, source ToolVision và bản bảo toàn công việc tài liệu đồng thời.
+- Backup máy thật: `/home/voron/printer_data/config_backups/pre-organize-generated-data-20260822-170108/`.
+- Backup máy thật có `SHA256SUMS` cho 167 file, tổng dung lượng 1.8 MB.
+
+### Hướng khắc phục đã thực hiện
+
+- Gom dữ liệu đang chạy vào một cây printer-local rõ ràng:
+  - `Generated-Data/ToolVision/state.json`
+  - `Generated-Data/ToolVision/results.json`
+  - `Generated-Data/ShakeTune/`
+- Sửa `config/Tool-Vision/tool_vision.cfg` và
+  `config/Printer-Setup/input-shaper.cfg` để dùng các đường dẫn trên.
+- Sửa `config/scripts/install.sh` và `config/.gitignore` để toàn bộ
+  `Generated-Data/` không bị rsync/Git quản lý hoặc xóa.
+- Di chuyển, không xóa, các artifact khỏi root:
+  - `.codex-backups` → `config_backups/codex-backups-20260822-170108/`
+  - ZIP và backup Moonraker → `config_backups/root-artifacts-20260822-170108/`
+- Phát hành ToolVision `v3.2.2`, commit production `dd92a05`:
+  - Default chung chuyển vào `config/Tool-Vision/` thay vì root.
+  - Installer tự migrate file legacy nếu người dùng không đặt path tường minh.
+  - Backup install/uninstall chuyển vào `config_backups/tool-vision/`.
+- Update Manager nâng máy thật từ `v3.2.1` lên `v3.2.2` một lần và restart
+  ToolVision, Klipper, Moonraker để nạp code/path mới.
+- Tag backup của luồng tài liệu đồng thời từng làm Moonraker hiển thị version
+  `?`; không xóa tag backup. Tag `v3.2.2` được làm mới với tagger timestamp mới
+  hơn, sau đó Update Manager nhận đúng `v3.2.2-0`.
+- Hai file tài liệu ToolVision thay đổi đồng thời đã được bảo toàn SHA-256 và
+  khôi phục nguyên byte trên PC ở trạng thái unstaged; không bị lẫn vào release.
+
+### Kiểm tra
+
+- Bash syntax: `install.sh`, `uninstall.sh`, All-Config `install.sh` đạt.
+- ToolVision test: 47/47 đạt cả trước và sau triển khai.
+- CFG strict parse: `input-shaper.cfg` 3 section, `tool_vision.cfg` 6 section.
+- Bốn file thay đổi trên PC/máy thật khớp SHA-256.
+- Dữ liệu sau move được `cmp`/`diff -qr` với backup: đạt, không mất file.
+- Moonraker file API chỉ còn một top-level `Generated-Data`; không còn entry
+  vật lý `ShakeTune_results`, JSON ToolVision, ZIP, `.codex-backups` hoặc backup
+  Moonraker ở root.
+- Services `klipper`, `moonraker`, `tool-vision`: active; journal từ lúc update
+  không có warning.
+- Klipper: ready; printer standby, không pause, bed target 0.
+- `TOOL_VISION_STATUS`: version/service `3.2.2`, switch setup yes, camera setup
+  no, last error none.
+- Update Manager: current/remote `v3.2.2-0`, behind 0, dirty false, pristine true.
+
+### Kết quả
+
+Root cấu hình đã gọn và phân biệt rõ cấu hình với dữ liệu sinh tự động. Entry
+ShakeTune trùng chỉ là ghost UI, không phải dữ liệu trùng; sau restart Moonraker,
+server chỉ trả một cây `Generated-Data`. Dữ liệu ToolVision đã học và kết quả cũ
+được giữ nguyên, đồng thời bản cài ToolVision sau không tái tạo rác ở root.
+
+### Vấn đề còn lại
+
+- Trình duyệt Mainsail đang mở từ trước có thể cần bấm nút Refresh trong widget
+  Config Files hoặc hard refresh một lần để bỏ state frontend cũ.
+- Camera ToolVision vẫn chưa setup; không liên quan đến việc sắp xếp dữ liệu.

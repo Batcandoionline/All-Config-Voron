@@ -30,7 +30,6 @@ fi
 rsync -a --delete --itemize-changes \
   --exclude ".codex-backups/" \
   --exclude ".moonraker.conf.bkp" \
-  --exclude "Generated-Data/" \
   --exclude "ShakeTune_results/" \
   --exclude "Tool-Vision/" \
   --exclude "Nhat-ky-chinh-sua/" \

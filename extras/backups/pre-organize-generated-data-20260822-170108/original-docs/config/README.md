@@ -55,7 +55,7 @@ config/
 | **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
 | **Z Homing & Probe** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Tool-Offset Sensor** | ToolVision 3.2.2 active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`); station positions are learned into printer-local state |
+| **Tool-Offset Sensor** | ToolVision 3.2.1 active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`); station positions are learned into printer-local state |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
 | **Bed Heater & SSR** | AC Silicone 1000W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
@@ -101,16 +101,11 @@ sudo systemctl restart moonraker klipper
 
 `update.sh` downloads a temporary All-Config source archive, creates a backup,
 deploys the managed payload, and removes the archive. All-Config does not keep a
-Git clone on the printer. ToolVision is different by design: its active v3.2.2
+Git clone on the printer. ToolVision is different by design: its active v3.2.1
 runtime is the persistent `~/Tool-Vision` Git checkout and is updated through
 Mainsail's Update Manager. This repository synchronizes only the editable
 `Tool-Vision/tool_vision.cfg`; the ToolVision installer owns and regenerates
 `Tool-Vision/moonraker_update_manager.conf`, which deployment preserves.
-
-Generated runtime data is grouped under `Generated-Data/ToolVision/` and
-`Generated-Data/ShakeTune/` on the printer. `install.sh` excludes the entire
-`Generated-Data/` tree, while historical backups and downloaded config archives
-are stored under `~/printer_data/config_backups/` rather than the config root.
 
 ---
 
