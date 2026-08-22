@@ -420,3 +420,77 @@ dọn an toàn. Runtime ngoài config vẫn hoạt động và có thể cập n
 - Chờ task ToolVision hoàn tất migration installer và sửa version metadata để
   reinstall/update không tái tạo layout cũ và Mainsail hiển thị version đúng.
 - Camera ToolVision vẫn chưa setup; không liên quan đến thay đổi layout này.
+
+## 5. Tạm dừng ToolVision và cài kTAMV để thử nghiệm
+
+### Phạm vi và kiểm tra nguồn
+
+- Đọc toàn bộ source/config/installer của repository chính thức
+  `https://github.com/TypQxQ/kTAMV` tại commit
+  `72421f2d54da0de8701c4f84449c6e6b7d060301` trước khi cài.
+- Không chạy `install.sh` upstream: script gọi dịch vụ ngoài để chỉnh giờ, chạy
+  `apt` toàn hệ thống, mặc định chiếm port 8085 của ToolVision, sinh header
+  Moonraker thừa dấu `]`, và kiểm tra include không idempotent.
+- Xác nhận kTAMV chỉ hỗ trợ căn/đo XY; không đo Z, không tự lưu tool offset và
+  không giữ camera calibration/origin qua Klipper restart.
+- Sửa tối thiểu hai lỗi chọn blob khi detector thấy nhiều đối tượng trong
+  `ktamv_server_dm.py`; patch canonical được lưu tại
+  `config/scripts/patches/ktamv-multi-object-selection.patch`.
+
+### Sao lưu
+
+- Backup PC trước thay đổi:
+  `extras/backups/pre-switch-toolvision-to-ktamv-20260822-201156/`.
+- Snapshot đầy đủ máy thật:
+  `/home/voron/printer_data/config_backups/pre-switch-toolvision-to-ktamv-20260822-201156/`
+  (367 file, 3.4 MB), gồm config, checkout ToolVision, Git bundle toàn bộ refs,
+  venv metadata, service unit, symlink manifest, health report và SHA-256.
+- Backup tự động khi deploy:
+  `/home/voron/printer_data/config_backups/config-install-20260822-202117/`.
+- `Generated-Data/ToolVision/state.json` và `results.json` được giữ nguyên trên
+  máy thật; không xóa checkout `~/Tool-Vision`, venv hoặc bốn Klipper symlink.
+
+### Cài đặt và cấu hình
+
+- Clone source chính thức vào `~/kTAMV`, pin đúng commit đã review và áp patch
+  multi-object; checkout cố ý ở trạng thái dirty do patch cục bộ đã kiểm tra.
+- Tạo `~/ktamv-env` bằng system site packages, cài Flask 3.1.3, Waitress 3.0.2
+  và Jinja2 3.1.6; dùng OpenCV/Numpy/Pillow/Matplotlib/Requests sẵn có của
+  MainsailOS.
+- Tạo hai symlink Klipper `ktamv.py`, `ktamv_utl.py`; cài user service
+  `ktamv-server.service` trên port 8086 và bật login linger.
+- Thêm `Printer-Setup/ktamv.cfg`, đổi include trong `printer.cfg`, bỏ include
+  `tool_vision.cfg` và updater ToolVision khỏi `moonraker.conf`.
+- Bổ sung preflight vào `config/scripts/install.sh`: từ chối deploy khi runtime
+  kTAMV hoặc hai marker của patch detector không tồn tại.
+- Dừng ToolVision qua Moonraker; cổng 8085 đã đóng. Unit hệ thống vẫn được giữ
+  để rollback và còn `enabled` vì host yêu cầu mật khẩu sudo. Cần chạy thủ công
+  `sudo systemctl disable --now tool-vision` để nó không tự bật sau host reboot.
+
+### Kiểm tra máy thật
+
+- `py_compile` toàn bộ client/server Python dùng trong trial: đạt.
+- `bash -n` cho `install.sh` và `update.sh`: đạt; patch kiểm tra apply/reverse
+  sạch trên source upstream; ba template Jinja trong `ktamv.cfg` compile đạt.
+- Chạy All-Config installer đúng một lần; hash `ktamv.cfg`, `printer.cfg`,
+  `moonraker.conf` và `install.sh` khớp giữa staging, PC và máy thật.
+- Moonraker không warning/failed component; Klipper `ready`; object list có
+  `ktamv`, `KTAMV_SETUP`, `KTAMV_STATUS` và không có object ToolVision.
+- Update Manager không còn entry ToolVision/kTAMV. kTAMV user service active,
+  enabled và chỉ port 8086 lắng nghe; ToolVision inactive, port 8085 đóng.
+- `KTAMV_SETUP` và `KTAMV_STATUS` chạy thành công, không gây chuyển động. Test
+  detector với ảnh camera tĩnh trả về `No nozzle found` như dự kiến vì MF-500
+  chưa được đặt dưới nozzle; server không crash.
+- Hai traceback lúc 20:21:35 là race kết nối khi Moonraker lên trước lúc Klipper
+  restart xong (`Connection reset by peer`/`Klippy Host not connected`). Kết nối
+  tự phục hồi lúc 20:21:43; từ 20:22 không tái diễn lỗi Klipper/Moonraker.
+- Không chạy homing, toolchange, camera calibration, heater hoặc bất kỳ macro
+  nào làm máy chuyển động.
+
+### Rollback
+
+1. Dừng/disable `ktamv-server.service` của user.
+2. Khôi phục snapshot trước trial hoặc revert commit này rồi deploy lại để nạp
+   `Printer-Setup/tool_vision.cfg` và updater ToolVision.
+3. Start/enable `tool-vision.service`, sau đó restart Klipper và Moonraker.
+4. Xác nhận ToolVision đọc lại state/result đã bảo toàn trước khi chạy motion.

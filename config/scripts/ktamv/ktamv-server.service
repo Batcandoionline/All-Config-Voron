@@ -1,0 +1,13 @@
+[Unit]
+Description=kTAMV machine-vision server (temporary supervised trial)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/voron/kTAMV/server
+ExecStart=/home/voron/ktamv-env/bin/python /home/voron/kTAMV/server/ktamv_server.py --port 8086
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

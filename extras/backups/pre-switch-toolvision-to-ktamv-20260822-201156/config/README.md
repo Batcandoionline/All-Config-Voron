@@ -13,20 +13,20 @@ This directory is the **active Klipper configuration payload**. Its contents are
 config/
 ├── printer.cfg                   ← Main entry point (includes sub-configs, kinematics, SAVE_CONFIG block)
 ├── KlipperScreen.conf            ← KlipperScreen settings (language: vi, screen blanking)
-├── moonraker.conf                ← Moonraker API server; ToolVision updater disabled during kTAMV trial
+├── moonraker.conf                ← Moonraker API server and ToolVision updater
 ├── crowsnest.conf                ← Camera streaming config (WebRTC)
 ├── mainsail.cfg                  ← Mainsail web interface macros
 │
 ├── Printer-Setup/                ← Hardware, probe, fans, input shaper & macros
 │   ├── hardware.cfg              ← MCU definitions (Manta M8P V2 + Cartographer), X/Y/Z steppers, bed heater, chamber sensor
-│   ├── calibration-probe.cfg     ← Cartographer/mesh plus temporary kTAMV status and Axiscope rollback data
+│   ├── calibration-probe.cfg     ← Cartographer/mesh plus Tool Vision PF2 ownership and Axiscope rollback data
 │   ├── fans-leds.cfg             ← Enclosure/CM4 fans, toolhead NeoPixels, LED status macros
 │   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)
 │   ├── prime-lines.cfg           ← Per-tool prime line macros (T0–T4)
 │   ├── print-macros.cfg          ← PRINT_START, PRINT_END, G32, single-prompt Filament Dryer presets
 │   ├── tool-crash.cfg            ← tool_crash detector, KTC routing, and safe-pause handler
-│   └── ktamv.cfg                 ← Temporary supervised kTAMV XY trial config
+│   └── tool_vision.cfg           ← Active ToolVision 3 teach-once config; PF2 switch ready, camera setup pending
 │
 ├── toolchanger/                  ← StealthChanger KTC-Easy config & tool definitions
 │   ├── toolchanger-config.cfg    ← StealthChanger motion paths, switch position, toolchanger logic
@@ -54,7 +54,7 @@ config/
 | **Mainboard** | BTT Manta M8P V2.0 + CM4 | CAN Bridge `mcu` (`canbus_uuid: 19b203d75137`) |
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | CAN bus (`EBB0`–`EBB4`) |
 | **Z Homing & Probe** | Cartographer V3 fw6.1.0 (Touch + Scan) | CAN bus `cartographer` (`canbus_uuid: da13d909ce34`) |
-| **Tool-Offset Sensor** | kTAMV supervised XY trial active; ToolVision 3.3.0-rc2 preserved inactive | MF-500 camera; PF2 state retained for rollback but not used by kTAMV |
+| **Tool-Offset Sensor** | ToolVision 3.3.0-rc1 active; removable MF-500 camera + PF2 microswitch | Manta M8P `PF2` (GND + `^PF2`); station positions are learned into printer-local state |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Bucket | Bucket ($X=320, Y=-8$), Pad ($X: 277 \rightarrow 312$, $Y: -7 \rightarrow -10$, $Z=1.2\text{mm}$) |
 | **Chamber Thermistor** | Generic 3950 100K NTC | Manta M8P `PB1` (THB port) |
 | **Bed Heater & SSR** | AC Silicone 1000W + SSR | Manta M8P `PB0` (NTC 100K MGB18) / Heater `PA1` |
@@ -99,15 +99,13 @@ sudo systemctl restart moonraker klipper
 ```
 
 `update.sh` downloads a temporary All-Config source archive, creates a backup,
-deploys the managed payload, and removes the archive. The temporary kTAMV trial
-uses the reviewed `~/kTAMV` checkout, a dedicated `~/ktamv-env`, and a user
-service on port 8086. The upstream installer is intentionally not run.
-
-ToolVision remains available for rollback at `~/Tool-Vision`, with its venv,
-Klipper links and generated state intact, but its config include, updater and
-running process are inactive during the trial. Its installed system unit is
-retained for rollback; disable autostart with
-`sudo systemctl disable --now tool-vision` on the printer host.
+deploys the managed payload, and removes the archive. All-Config does not keep a
+Git clone on the printer. ToolVision is different by design: its active 3.3.0-rc1
+runtime is the persistent `~/Tool-Vision` Git checkout and is updated through
+Mainsail's Update Manager. This repository synchronizes the editable
+`Printer-Setup/tool_vision.cfg` and keeps `[update_manager tool-vision]`
+directly in `moonraker.conf`; it does not create a ToolVision subdirectory in
+the Klipper config root.
 
 Generated runtime data is grouped under `Generated-Data/ToolVision/` and
 `Generated-Data/ShakeTune/` on the printer. `install.sh` excludes the entire

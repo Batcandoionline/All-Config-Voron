@@ -24,10 +24,10 @@ File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
 
 1. `mainsail.cfg`: macro Mainsail chuẩn như `PAUSE`, `RESUME`, `CANCEL_PRINT`.
 2. `toolchanger/readonly-configs/toolchanger-include.cfg`: nạp KTC-Easy readonly, homing, toolchanger, macro M104/M109, calibration, crash detection gốc và toàn bộ `T*.cfg`.
-3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, quyền sở hữu PF2 của Tool Vision, dữ liệu rollback Axiscope và các macro trạng thái calibration.
+3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, trạng thái trial kTAMV và dữ liệu rollback PF2/Axiscope.
 4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
 5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
-6. `Printer-Setup/tool_vision.cfg` là backend offset active; Axiscope được giữ dạng comment để rollback.
+6. `Printer-Setup/ktamv.cfg` là backend XY trial active; ToolVision và Axiscope được giữ để rollback.
 
 Nguyên tắc quan trọng:
 
@@ -289,27 +289,32 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend production hiện tại là ToolVision 3.3.0-rc1 từ repository độc lập
-`https://github.com/IDcrazy123/Tool-Vision`; runtime Git nằm tại
-`~/Tool-Vision`, service `tool-vision.service` đang active và có mục cập nhật
-`tool-vision` trong Moonraker/Mainsail. Axiscope và SexBolt/tools_calibrate đã
-tắt. Cấu hình chỉ giữ pin thật `^PF2`; vị trí fixture, detector và transform
-được học một lần rồi lưu trong state cục bộ, không còn nhập tay hàng loạt tham
-số X/Y/Z/OpenCV vào `.cfg`.
+Backend tạm thời hiện tại là kTAMV từ repository chính thức
+`https://github.com/TypQxQ/kTAMV`, pin tại commit `72421f2`. Runtime nằm tại
+`~/kTAMV`, venv tại `~/ktamv-env` và server user-service dùng port 8086.
+Installer upstream không được chạy vì tự gọi `apt`, chỉnh giờ hệ thống, dùng
+port 8085 và có lỗi sinh cấu hình Moonraker. Cloud upload bị tắt.
 
-Trạng thái đối chiếu ngày 2026-08-22: switch đã setup và sẵn sàng, camera chưa
-setup. Khi cần hoàn tất camera, tháo MF-500 khỏi vị trí soi buồng, đặt lên gá nam
-châm, home XYZ, gắn T0, jog nozzle gần tâm/focus an toàn rồi chạy:
+kTAMV chỉ đo/căn XY, không dùng PF2 và không hiệu chuẩn Z. Camera calibration,
+origin và matrix chỉ nằm trong RAM của Klipper/server, mất sau restart. ToolVision
+3.3.0-rc2, PF2 state và kết quả cũ vẫn được giữ nguyên nhưng inactive để rollback.
+
+Khi thử nghiệm có người giám sát, tháo MF-500 khỏi vị trí soi buồng, đặt lên gá
+nam châm, home XYZ, gắn T0, jog nozzle gần tâm/focus an toàn rồi chạy:
 
 ```gcode
-TV_SETUP_CAMERA
-TV_STATUS
+KTAMV_SETUP
+KTAMV_START_PREVIEW
+KTAMV_SIMPLE_NOZZLE_POSITION
+KTAMV_CALIB_CAMERA
+KTAMV_FIND_NOZZLE_CENTER
+KTAMV_SET_ORIGIN
 ```
 
-Workflow sau khi cả hai station sẵn sàng là `TV_CALIBRATE MODE=XYZ`, sau đó xem
-report bằng `TV_REPORT`. Kết quả chỉ để báo cáo; phải đo lặp và xác nhận bằng bản
-in trước khi áp dụng offset. Không bật đồng thời `axiscope`, `tools_calibrate`
-và `tool_vision` vì cả ba cùng sở hữu `probe_multi_axis`.
+Với từng tool còn lại, đưa nozzle gần tâm camera, chạy
+`KTAMV_FIND_NOZZLE_CENTER` rồi `KTAMV_GET_OFFSET`. Chỉ ghi nhận kết quả để so
+sánh; không tự lưu vào tool config và không áp dụng offset nếu chưa đo lặp/xác
+nhận bằng bản in. Dừng preview bằng `KTAMV_STOP_PREVIEW`.
 
 Kiểm tra offset:
 
@@ -341,15 +346,18 @@ sudo systemctl restart moonraker
 2. Giải nén source tạm, không tạo Git repository trên Pi.
 3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
 4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ
-   `Generated-Data/`, KTC readonly và runtime ToolVision bên ngoài config.
-5. Đồng bộ `Printer-Setup/tool_vision.cfg`; updater ToolVision được quản lý
-   trực tiếp trong `moonraker.conf`.
+   `Generated-Data/`, KTC readonly và các runtime bên ngoài config.
+5. Đồng bộ `Printer-Setup/ktamv.cfg`; ToolVision config/updater không active
+   trong thời gian trial.
 6. Xóa toàn bộ source/archive tạm khi kết thúc.
 
-ToolVision không đi theo cơ chế archive tạm của All-Config. Runtime của nó là
-Git checkout `~/Tool-Vision` và được cập nhật riêng tại **Machine → Update
-Manager → tool-vision**. Không sửa source trực tiếp trên máy; thay đổi cấu hình
-máy chỉ thực hiện trong `Printer-Setup/tool_vision.cfg`.
+kTAMV được cài thủ công từ checkout `~/kTAMV` đã review; patch trial nằm tại
+`scripts/patches/ktamv-multi-object-selection.patch`. Không chạy `install.sh`
+upstream hoặc update source trong Mainsail khi chưa review lại. ToolVision vẫn
+nằm tại `~/Tool-Vision`; tiến trình đã dừng và config/updater bị vô hiệu hóa
+tạm. Unit hệ thống được giữ để rollback, vì vậy chạy
+`sudo systemctl disable --now tool-vision` để nó không tự bật sau khi host
+reboot.
 
 Dữ liệu sinh tự động trên máy được gom về:
 
