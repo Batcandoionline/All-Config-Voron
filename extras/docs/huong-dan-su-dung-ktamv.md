@@ -183,4 +183,3 @@ hoặc dây trong vùng chuyển động khi in.
 - Server không phản hồi: kiểm tra `systemctl --user status ktamv-server` và mở
   `http://192.168.1.43:8086/`.
 - Klipper/server restart: chạy lại toàn bộ setup, camera calibration và origin.
-
