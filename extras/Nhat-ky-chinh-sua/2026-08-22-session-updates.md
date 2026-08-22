@@ -252,7 +252,7 @@ server chỉ trả một cây `Generated-Data`. Dữ liệu ToolVision đã họ
   `START_CRASH_DETECTION` vào hook RESUME sau khi KTC initialize/verify thành công.
 - Upstream `tool_crash.py` gọi crash với mọi cạnh của cả năm detection pin: lưu
   patch tối thiểu tại
-  `extras/klipper-patches/tool_crash-active-tool-validation.patch`; cạnh sensor
+  `config/scripts/patches/tool_crash-active-tool-validation.patch`; cạnh sensor
   nay dùng kiểm tra active-tool và confirmation threshold sẵn có của watchdog.
 - `CLEAN_NOZZLE` nhầm `toolhead.extruder` là bằng chứng có tool thật: chuyển guard
   sang `toolchanger.tool_number`; khi không có tool sẽ abort trước SAVE/motion/heat.
@@ -271,6 +271,8 @@ server chỉ trả một cây `Generated-Data`. Dữ liệu ToolVision đã họ
 - Máy thật:
   `/home/voron/printer_data/config_backups/pre-fix-printer-setup-logic-20260822-174512/`.
 - Backup gồm năm CFG thay đổi và `tool_crash.py` đang chạy trước triển khai.
+- Trước khi bổ sung khả năng tái áp patch, `install.sh` cũng được thêm vào cùng
+  backup trên PC và máy thật.
 
 ### Kiểm thử trước triển khai
 
@@ -303,6 +305,13 @@ server chỉ trả một cây `Generated-Data`. Dữ liệu ToolVision đã họ
 - Không chạy lệnh gia nhiệt, vệ sinh nozzle, dryer hoặc toolchange để thử. Thư mục
   kiểm thử `/tmp/codex-printer-setup-audit-20260822-1815` đã được xác minh đúng
   target và xóa sau khi hoàn tất.
+- Để lần update sau không làm quên bản sửa Python, `install.sh` preflight patch
+  với `--fuzz=0`, bỏ qua nếu marker đã tồn tại, backup runtime trước khi áp và
+  dừng an toàn nếu source upstream không còn tương thích.
+- Bash syntax và bốn nhánh installer được kiểm thử trên máy thật: source chuẩn
+  được chấp nhận, source giả lập lệch bị từ chối, runtime đã patch được bỏ qua
+  idempotent. `install.sh` và patch canonical đã chép vào `config/scripts/`,
+  khớp SHA-256 với PC; không chạy installer lần hai và không restart thêm.
 
 ### Kết quả
 

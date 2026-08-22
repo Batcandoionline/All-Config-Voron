@@ -9,5 +9,6 @@
   - `input-shaper.cfg` — đồng bộ fallback T0.
   - `calibration-probe.cfg` — loại bỏ trạng thái ToolVision hard-code đã cũ.
   - `tool_crash.py` — lọc cạnh sensor qua trạng thái active tool/watchdog.
+  - `install.sh` — tái áp dụng patch runtime an toàn sau lần cài/update sau.
 - **Nhật ký liên quan:** `extras/Nhat-ky-chinh-sua/2026-08-22-session-updates.md`
 - **Backup máy thật:** `/home/voron/printer_data/config_backups/pre-fix-printer-setup-logic-20260822-174512/`

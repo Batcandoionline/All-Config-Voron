@@ -41,7 +41,8 @@ config/
 │   └── tool_vision.cfg           ← Active ToolVision 3 teach-once config; PF2 switch ready, camera setup pending
 │
 └── scripts/                      ← Deployment and maintenance scripts
-    ├── install.sh                ← First-time install script (excludes *.md)
+    ├── install.sh                ← First-time install script; validates/applies the reviewed tool_crash runtime patch
+    ├── patches/                  ← Minimal machine runtime patches applied by install.sh
     ├── update.sh                 ← Pull & apply updates (auto-backup & excludes *.md)
     └── cleanup-voron.sh          ← Clean up legacy backup directories
 ```
@@ -111,6 +112,11 @@ Generated runtime data is grouped under `Generated-Data/ToolVision/` and
 `Generated-Data/ShakeTune/` on the printer. `install.sh` excludes the entire
 `Generated-Data/` tree, while historical backups and downloaded config archives
 are stored under `~/printer_data/config_backups/` rather than the config root.
+
+`install.sh` also preflights `scripts/patches/tool_crash-active-tool-validation.patch`
+against the installed `~/klipper/klippy/extras/tool_crash.py`. It skips an
+already-patched runtime, backs up an unpatched matching source before applying,
+and refuses deployment when the installed upstream source is incompatible.
 
 ---
 
