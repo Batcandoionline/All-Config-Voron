@@ -11,36 +11,9 @@ TOOL_CRASH_PATCH="${SCRIPT_DIR}/patches/tool_crash-active-tool-validation.patch"
 TOOL_CRASH_PATCH_MARKER="Every tool detection pin is registered with this same callback"
 TOOL_CRASH_PATCH_NEEDED=0
 AXISCOPE_MODULE="${HOME}/klipper/klippy/extras/axiscope.py"
-KTC_READONLY_DIR="${CONFIG_DIR}/toolchanger/readonly-configs"
-KTC_READONLY_FILES=(
-  "calibrate-offsets.cfg"
-  "crash-detection.cfg"
-  "homing.cfg"
-  "toolchanger-include.cfg"
-  "toolchanger-macros.cfg"
-  "toolchanger.cfg"
-)
 
 if [[ ! -f "${SOURCE_CONFIG_DIR}/printer.cfg" ]]; then
   echo "ERROR: printer.cfg was not found in ${SOURCE_CONFIG_DIR}" >&2
-  exit 1
-fi
-
-# KTC-Easy is the sole owner of readonly-configs. All-Config deploys only the
-# user-owned toolchanger-config.cfg and tools/T*.cfg files. Refuse deployment
-# when the official installer-managed links are missing or have broken targets.
-KTC_INVALID_LINKS=()
-for file in "${KTC_READONLY_FILES[@]}"; do
-  path="${KTC_READONLY_DIR}/${file}"
-  if [[ ! -L "${path}" || ! -e "${path}" ]]; then
-    KTC_INVALID_LINKS+=("${path}")
-  fi
-done
-if (( ${#KTC_INVALID_LINKS[@]} )); then
-  echo "ERROR: KTC-Easy readonly links are missing, not symlinks, or broken:" >&2
-  printf '  - %s\n' "${KTC_INVALID_LINKS[@]}" >&2
-  echo "Run bash ~/klipper-toolchanger-easy/install.sh while the printer is idle," >&2
-  echo "then retry this deployment. No configuration was changed." >&2
   exit 1
 fi
 
@@ -78,10 +51,16 @@ if [[ -d "${CONFIG_DIR}" ]]; then
   rsync -a "${CONFIG_DIR}/" "${BACKUP_DIR}/"
 fi
 
+# Preserve installer-owned KTC links when they already exist. A fresh payload
+# may copy the bundled baseline so printer.cfg never points at missing files.
+READONLY_EXCLUDE=()
+if [[ -e "${CONFIG_DIR}/toolchanger/readonly-configs" ]]; then
+  READONLY_EXCLUDE=(--exclude "toolchanger/readonly-configs/")
+fi
+
 # Deploy only repository-owned configuration. On-printer backups, calibration
 # state/results, ShakeTune output, downloaded snapshots, and printer-local
-# files remain untouched. KTC-Easy owns readonly-configs and external Git
-# runtimes live outside CONFIG_DIR.
+# files remain untouched. External Git runtimes live outside CONFIG_DIR.
 rsync -a --delete --itemize-changes \
   --exclude ".codex-backups/" \
   --exclude ".moonraker.conf.bkp" \
@@ -92,7 +71,7 @@ rsync -a --delete --itemize-changes \
   --exclude "/tool_vision_results.json" \
   --exclude "config-*.zip" \
   --exclude "moonraker.conf.pre-*" \
-  --exclude "toolchanger/readonly-configs/" \
+  "${READONLY_EXCLUDE[@]}" \
   --exclude "README.md" \
   --exclude "*.md" \
   "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
@@ -108,5 +87,8 @@ fi
 
 echo "Installed configuration from ${SOURCE_CONFIG_DIR}"
 echo "Backup: ${BACKUP_DIR}"
-echo "KTC-Easy readonly symlinks were verified and preserved."
+if [[ ! -L "${CONFIG_DIR}/toolchanger/readonly-configs/toolchanger.cfg" ]]; then
+  echo "WARNING: KTC readonly configs are not installer-managed symlinks." >&2
+  echo "Repair them with the installed KTC-Easy installer before upgrading KTC." >&2
+fi
 echo "Review changes, then restart Moonraker and Klipper only while the printer is idle."

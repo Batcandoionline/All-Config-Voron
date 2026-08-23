@@ -1,0 +1,3 @@
+[submodule "extras/tool_crash"]
+	path = extras/tool_crash
+	url = https://github.com/cekim-git/tool_crash.git

@@ -1,3 +1,6 @@
 [submodule "extras/tool_crash"]
 	path = extras/tool_crash
 	url = https://github.com/cekim-git/tool_crash.git
+[submodule "extras/Axiscope-reference"]
+	path = extras/Axiscope-reference
+	url = https://github.com/nic335/Axiscope.git

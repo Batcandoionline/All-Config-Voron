@@ -9,6 +9,11 @@
 
 Full production configuration repository for a **Voron 2.4 350mm CoreXY** 3D printer running an automated **5-Tool StealthChanger** system powered by **Klipper**, **Manta M8P V2.0 + CM4**, **5× EBB36 CAN toolheads**, **Cartographer V3**, and a **1000W AC Heated Bed**.
 
+Production status confirmed by the operator on 2026-08-23: the Cartographer and
+T4 sensor faults are resolved, and all per-tool Input Shaper profiles are
+calibrated. KTC-Easy is the sole owner of `toolchanger/readonly-configs/`;
+All-Config manages only the user-editable KTC overrides and tool definitions.
+
 ---
 
 ## 🛠️ 1. Master Hardware Specifications
@@ -160,6 +165,11 @@ Voron 5 Tool/
 
 ### Deployment Commands
 
+KTC-Easy must be installed first. Its installer creates the six managed
+symlinks in `~/printer_data/config/toolchanger/readonly-configs/`. Run KTC and
+All-Config installers only while the printer is idle; both may require a
+Klipper restart.
+
 * **First-Time Install Without a Persistent Clone:**
   ```bash
   tmp_dir="$(mktemp -d /tmp/all-config-voron.XXXXXX)"
@@ -179,6 +189,13 @@ Voron 5 Tool/
   *(Downloads a temporary All-Config archive, creates a timestamped backup,
   deploys it, then removes the archive; All-Config keeps no Git clone on the
   Pi.)*
+
+`install.sh` validates all six KTC-Easy readonly symlinks before creating a
+backup or changing the live configuration. It then excludes the complete
+readonly directory from `rsync`, so KTC updates cannot be overwritten by this
+repository. If validation fails, rerun
+`bash ~/klipper-toolchanger-easy/install.sh` while the printer is idle and then
+retry the All-Config deployment.
 
 ### Axiscope PF2 Switch Calibration
 

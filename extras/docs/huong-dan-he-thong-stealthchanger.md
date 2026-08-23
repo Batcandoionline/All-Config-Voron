@@ -2,6 +2,15 @@
 
 Tài liệu này tổng hợp cách cấu hình trong repository `All-Config-Voron` hoạt động, các luồng vận hành chính, các điểm cần chú ý khi sửa, và danh sách rủi ro phát hiện khi rà soát mã cấu hình.
 
+Trạng thái production được người vận hành xác nhận ngày 2026-08-23:
+
+- Lỗi Cartographer đã hết.
+- Lỗi cảm biến T4 đã hết.
+- Input Shaper đã hiệu chỉnh riêng cho T0–T4.
+- Axiscope PF2 là backend đo Z-offset đang dùng; ToolVision inactive và kTAMV đã gỡ.
+- Các việc còn mở là tối ưu Pressure Advance, quạt và giám sát nhiệt độ; đây là
+  hạng mục cải tiến, không phải lỗi đang chặn vận hành.
+
 ## 1. Phạm vi cấu hình
 
 Máy hiện tại là Voron 2.4 StealthChanger dùng 5 toolhead độc lập:
@@ -24,10 +33,10 @@ File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
 
 1. `mainsail.cfg`: macro Mainsail chuẩn như `PAUSE`, `RESUME`, `CANCEL_PRINT`.
 2. `toolchanger/readonly-configs/toolchanger-include.cfg`: nạp KTC-Easy readonly, homing, toolchanger, macro M104/M109, calibration, crash detection gốc và toàn bộ `T*.cfg`.
-3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh, trạng thái trial kTAMV và dữ liệu rollback PF2/Axiscope.
+3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh và Axiscope PF2 đang dùng để đo Z-offset.
 4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
 5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
-6. `Printer-Setup/ktamv.cfg` là backend XY trial active; ToolVision và Axiscope được giữ để rollback.
+6. Không có include camera calibration đang active; ToolVision được giữ inactive để tham khảo và kTAMV đã gỡ.
 
 Nguyên tắc quan trọng:
 
@@ -289,36 +298,18 @@ File:
 - `toolchanger/readonly-configs/calibrate-offsets.cfg`
 - `toolchanger/toolchanger-config.cfg`
 
-Backend tạm thời hiện tại là kTAMV từ repository chính thức
-`https://github.com/TypQxQ/kTAMV`, pin tại commit `72421f2`. Runtime nằm tại
-`~/kTAMV`, venv tại `~/ktamv-env` và server user-service dùng port 8086.
-Installer upstream không được chạy vì tự gọi `apt`, chỉnh giờ hệ thống, dùng
-port 8085 và có lỗi sinh cấu hình Moonraker. Cloud upload bị tắt.
+Backend production hiện tại là Axiscope dùng microswitch Manta M8P `^PF2` tại
+`X=68`, `Y=-10`, `Z=7`. Axiscope đo 10 mẫu Z cho từng tool và chỉ báo delta để
+người vận hành duyệt. Không khai báo `config_file_path` vì T0–T4 nằm trong năm
+file riêng; cho module tự ghi có thể tạo section tool trùng.
 
-Quy trình thao tác chi tiết, phân loại lệnh có/không có chuyển động và cách ghi
-nhận T0–T4 nằm tại
-[`huong-dan-su-dung-ktamv.md`](huong-dan-su-dung-ktamv.md).
+Cartographer V3 tiếp tục đảm nhiệm Touch Z0 và bed mesh. Axiscope không thay thế
+Cartographer và không đo XY. ToolVision được giữ installed nhưng inactive,
+không có Klipper include hoặc Moonraker updater. kTAMV, service và runtime đã gỡ.
 
-kTAMV chỉ đo/căn XY, không dùng PF2 và không hiệu chuẩn Z. Camera calibration,
-origin và matrix chỉ nằm trong RAM của Klipper/server, mất sau restart. ToolVision
-3.3.0-rc2, PF2 state và kết quả cũ vẫn được giữ nguyên nhưng inactive để rollback.
-
-Khi thử nghiệm có người giám sát, tháo MF-500 khỏi vị trí soi buồng, đặt lên gá
-nam châm, home XYZ, gắn T0, jog nozzle gần tâm/focus an toàn rồi chạy:
-
-```gcode
-KTAMV_SETUP
-KTAMV_START_PREVIEW
-KTAMV_SIMPLE_NOZZLE_POSITION
-KTAMV_CALIB_CAMERA
-KTAMV_FIND_NOZZLE_CENTER
-KTAMV_SET_ORIGIN
-```
-
-Với từng tool còn lại, đưa nozzle gần tâm camera, chạy
-`KTAMV_FIND_NOZZLE_CENTER` rồi `KTAMV_GET_OFFSET`. Chỉ ghi nhận kết quả để so
-sánh; không tự lưu vào tool config và không áp dụng offset nếu chưa đo lặp/xác
-nhận bằng bản in. Dừng preview bằng `KTAMV_STOP_PREVIEW`.
+Có thể dùng `CALIBRATION_STATUS` hoặc `QUERY_ENDSTOPS` để xem trạng thái mà không
+gây chuyển động. Chỉ chạy `CALIBRATE_ALL_Z_OFFSETS` khi máy rảnh, đã home, có
+người đứng máy và đã kiểm tra đường đi tới công tắc.
 
 Kiểm tra offset:
 
@@ -349,19 +340,24 @@ sudo systemctl restart moonraker
 1. Tạo thư mục tạm bằng `mktemp` và tải archive nhánh `main` từ GitHub.
 2. Giải nén source tạm, không tạo Git repository trên Pi.
 3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
-4. Deploy file repo quản lý bằng `rsync --delete`, nhưng bảo vệ
-   `Generated-Data/`, KTC readonly và các runtime bên ngoài config.
-5. Đồng bộ `Printer-Setup/ktamv.cfg`; ToolVision config/updater không active
-   trong thời gian trial.
+4. Trước khi backup/deploy, kiểm tra đủ 6 symlink KTC-Easy hợp lệ. Nếu thiếu,
+   script dừng mà chưa thay đổi cấu hình.
+5. Deploy file repo quản lý bằng `rsync --delete`, luôn loại trừ toàn bộ
+   `toolchanger/readonly-configs/` và bảo vệ `Generated-Data/` cùng dữ liệu máy.
 6. Xóa toàn bộ source/archive tạm khi kết thúc.
 
-kTAMV được cài thủ công từ checkout `~/kTAMV` đã review; patch trial nằm tại
-`scripts/patches/ktamv-multi-object-selection.patch`. Không chạy `install.sh`
-upstream hoặc update source trong Mainsail khi chưa review lại. ToolVision vẫn
-nằm tại `~/Tool-Vision`; tiến trình đã dừng và config/updater bị vô hiệu hóa
-tạm. Unit hệ thống được giữ để rollback, vì vậy chạy
-`sudo systemctl disable --now tool-vision` để nó không tự bật sau khi host
-reboot.
+KTC-Easy là chủ sở hữu duy nhất của `toolchanger/readonly-configs/`. Sáu file
+`calibrate-offsets.cfg`, `crash-detection.cfg`, `homing.cfg`,
+`toolchanger-include.cfg`, `toolchanger-macros.cfg` và `toolchanger.cfg` trên máy
+phải là symlink do installer KTC tạo. All-Config chỉ quản lý
+`toolchanger-config.cfg`, `tools/T*.cfg` và các override trong `Printer-Setup/`.
+Nếu preflight báo lỗi, đợi máy in rảnh rồi chạy:
+
+```bash
+bash ~/klipper-toolchanger-easy/install.sh
+```
+
+Sau khi KTC hoàn tất và Klipper ổn định, mới chạy lại update All-Config.
 
 Dữ liệu sinh tự động trên máy được gom về:
 
@@ -384,7 +380,7 @@ sudo systemctl restart klipper
 
 Mức nguy hiểm: Trung bình.
 
-Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
+Trạng thái: Đã sửa và được người vận hành xác nhận đã hiệu chỉnh ngày 2026-08-23.
 
 Trước đó `input-shaper.cfg` ghi chú không dùng global `[input_shaper]`, nhưng `after_change_gcode` chỉ gọi `SET_INPUT_SHAPER` khi `input_shaper` tồn tại trong `printer.configfile.config`.
 
@@ -401,14 +397,15 @@ Sửa đã áp dụng:
 ```ini
 [input_shaper]
 shaper_type_x: 3hump_ei
-shaper_freq_x: 88.4
-damping_ratio_x: 0.078
-shaper_type_y: 2hump_ei
-shaper_freq_y: 58.4
-damping_ratio_y: 0.164
+shaper_freq_x: 98.6
+damping_ratio_x: 0.081
+shaper_type_y: mzv
+shaper_freq_y: 35.0
+damping_ratio_y: 0.076
 ```
 
-Cần kiểm chứng sau restart Klipper: đổi tool và xem input shaper có thay đổi theo từng tool không.
+Bộ fallback T0 và profile riêng T0–T4 hiện đã được ghi đúng trong cấu hình.
+KTC áp dụng `params_input_shaper_*` của tool active sau mỗi lần đổi tool.
 
 ### R2 - RESUME có nhiều nguồn khai báo
 
@@ -478,34 +475,26 @@ variable_prime_amount: 13.33
 
 Với 3 pass song song, chiều dài này đang cho đường prime đẹp hơn bản 40 mm và có đủ thời gian ra nhựa. Macro vẫn tự co lại nếu số tool nhiều làm vùng X không đủ chỗ.
 
-### R5 - T2 có offset Z rất lớn và từng có dấu hiệu cơ khí/nhiệt
+### R5 - Ghi chú offset T2 lịch sử không còn khớp production
 
-Mức nguy hiểm: Cao nếu dùng T2 cho print quan trọng.
+Mức nguy hiểm: Thấp; lỗi nằm ở tài liệu cũ.
 
-`SAVE_CONFIG` hiện có:
+Trạng thái: Đã sửa tài liệu ngày 2026-08-23.
+
+Tài liệu trước đây ghi nhầm `gcode_z_offset = -0.746`, trong khi cấu hình
+production hiện tại là:
 
 ```ini
 [tool T2]
-gcode_z_offset = -0.746...
+gcode_x_offset = 0.746
+gcode_y_offset = 0.086
+gcode_z_offset = -0.295
 ```
 
-Độ lệch này lớn hơn nhiều so với T1/T3/T4 và trước đó T2 từng có hiện tượng bẹp sợi nhựa sau khoảng 20 phút.
-
-Rủi ro:
-
-- Có thể không chỉ là offset phần mềm.
-- Có thể do heat creep, dòng extruder, ép idler, đường filament, hotend, quạt hotend, hoặc cơ khí dock/tool chưa ổn.
-
-Đề xuất:
-
-- Tạm không dùng T2 cho print dài nhiều màu.
-- Test riêng T2:
-  - kiểm tra fan hotend chạy đủ;
-  - kiểm tra lực ép idler;
-  - kiểm tra nhiệt motor extruder;
-  - test extrude 100 mm ở nhiệt in;
-  - test first layer riêng;
-  - sau khi ổn mới chạy lại `CALIBRATE_ALL_OFFSETS` hoặc chỉnh Z bằng Ellis first layer.
+Giá trị `0.746` thuộc trục X, không phải Z. Không còn lý do chặn T2 chỉ dựa trên
+con số ghi nhầm này. Nếu hiện tượng bẹp sợi hoặc heat creep tái xuất hiện thì
+kiểm tra fan hotend, idler, đường filament và nhiệt extruder như một sự cố mới,
+không tự thay offset khi chưa có phép đo lặp và bản in xác nhận.
 
 ### R6 - Tốc độ Z và gia tốc Z đã nâng cao
 
@@ -633,6 +622,9 @@ Rủi ro:
 
 Sau khi pull/update:
 
+Chỉ thực hiện toàn bộ checklist này khi máy in ở trạng thái idle, không pause và
+không có bản in đang chạy.
+
 1. Chạy:
 
 ```bash
@@ -668,7 +660,7 @@ FIRMWARE_RESTART
 
 ## 15. Quy tắc sửa cấu hình an toàn
 
-- Không sửa readonly trừ khi có lý do rất rõ.
+- Không sửa hoặc deploy đè `readonly-configs`; luôn để installer KTC-Easy quản lý.
 - Sửa trong `Printer-Setup/` hoặc `toolchanger/toolchanger-config.cfg`.
 - Sau khi sửa macro động, restart Klipper.
 - Sau khi sửa dock path, test pickup/dropoff không filament, nhiệt thấp, tay gần nút emergency.

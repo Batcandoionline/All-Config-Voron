@@ -80,10 +80,6 @@ PURGE_AND_CLEAN PURGE=15 PURGE_TEMP=240   ; Purge 15mm @ 240°C into bucket -> c
 
 ## 🚀 Deployment & Updates
 
-Install KTC-Easy first, while the printer is idle. The KTC installer creates
-the managed symlinks under `toolchanger/readonly-configs/`; All-Config owns only
-`toolchanger-config.cfg`, `tools/T*.cfg`, and its separate override files.
-
 ### First-Time Install Without a Persistent Clone
 ```bash
 tmp_dir="$(mktemp -d /tmp/all-config-voron.XXXXXX)"
@@ -105,12 +101,6 @@ sudo systemctl restart moonraker klipper
 deploys the managed payload, and removes the archive. The installer refuses to
 deploy an active `[axiscope]` section unless the machine-local Klipper module is
 present.
-
-Before any backup or deployment, `install.sh` also requires the six KTC-Easy
-readonly files to be valid symlinks with valid targets. The entire
-`toolchanger/readonly-configs/` directory is always excluded from `rsync`. If
-the check fails, run `bash ~/klipper-toolchanger-easy/install.sh` only after the
-printer becomes idle, then retry the All-Config update.
 
 Axiscope uses the PF2 microswitch to report Z deltas. It intentionally has no
 `config_file_path`: the tool definitions are split across T0–T4 files, so
