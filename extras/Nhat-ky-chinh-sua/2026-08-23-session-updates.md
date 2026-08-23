@@ -260,3 +260,41 @@ và ToolVision service đều `active`; filesystem còn khoảng 14 GiB trống.
 - Đây mới là một phép đo ở 150 °C. Cần chạy lặp lại cùng điều kiện trước khi
   đánh giá độ lặp, đặc biệt vì T3 lệch `-0.100 mm` so với dữ liệu ToolVision cũ
   (`-0.054 mm`).
+
+## 5. Đánh giá kết quả Z và đề xuất UX cho ToolVision
+
+### Phát hiện từ log thực tế
+
+- Sau phép đo PF2 ở mục 4, người vận hành vào Setup, teach Cartographer Touch và
+  chạy thêm một phép đo Z ở 150 °C. Phép đo thứ hai hoàn tất bình thường với T0
+  `+0.000`, T1 `+0.242`, T2 `-0.256`, T3 `-0.160`, T4 `+0.102 mm`; T0 return
+  drift `-0.008 mm`.
+- Phép đo Cartographer ghi đè `results.json` của phép đo PF2 chỉ vài phút trước.
+  Dữ liệu PF2 phải khôi phục từ console history. Đây là bằng chứng thực tế cho
+  việc cần lưu lịch sử theo timestamp và method.
+- Giá trị production đang in có hình thức tốt là T0 `+0.000`, T1 `+0.228`, T2
+  `-0.295`, T3 `-0.268`, T4 `-0.014 mm`. So với production, Cartographer lệch
+  lần lượt T1 `+0.014`, T2 `+0.039`, T3 `+0.108`, T4 `+0.116 mm`; PF2 lệch T1
+  `-0.130`, T2 `-0.089`, T3 `+0.114`, T4 `+0.092 mm`.
+- Source xác nhận ToolVision tính Z bằng `trigger_z - reference_trigger_z`.
+  Đây là giá trị tương đối so với T0 để xem như ứng viên absolute, không phải
+  correction delta cộng vào offset hiện tại.
+- Chưa có cơ sở thay production offsets: một lần chạy không đủ đánh giá độ lặp,
+  T3/T4 lệch trên 0.10 mm ở Cartographer, còn first layer hiện tại đã tốt bằng
+  mắt. Không chạy thêm chuyển động và không áp dụng bất kỳ offset nào.
+
+### Đề xuất đã tạo
+
+- Tạo `extras/docs/toolvision-z-calibration-ux-proposal.md` bằng tiếng Anh để
+  chuyển cho task phát triển ToolVision.
+- Đề xuất ưu tiên P0: tách routine calibration khỏi Advanced Setup, đưa method
+  vào tên nút và confirmation, yêu cầu method explicit thay vì chỉ dựa vào
+  state đã lưu.
+- Đề xuất ưu tiên P1: quiet/normal/debug console verbosity, một progress status
+  ngắn, lỗi luôn hiển thị, không lặp trạng thái heater/tool từ macro khác.
+- Đề xuất lưu mỗi run thành file timestamp/method riêng, giữ `results.json` để
+  tương thích; kết quả phải ghi rõ `Not applied` và phân biệt candidate absolute
+  với delta-to-apply.
+- Tiêu chí nghiệm thu gồm giới hạn tối đa sáu message do ToolVision phát cho
+  một UI run thành công (không tính log Klipper/macro ngoài), giữ lịch sử hai
+  method, tương thích CLI và test invariant report-only.
