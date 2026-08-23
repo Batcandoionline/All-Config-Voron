@@ -201,3 +201,62 @@ Cartographer/T4 không còn lỗi mở và Input Shaper T0–T4 đã hiệu ch�
   cả `tool` lẫn `detected_tool` đều là `null`. Dừng trước homing để người vận
   hành xác nhận carriage thực sự rỗng, T0-T4 ở đúng dock và nút dừng khẩn cấp
   sẵn sàng. Chưa chạy home, pickup, toolchange hoặc probe Z.
+
+## 3. Dọn backup cũ trên CM4
+
+### Phạm vi và kiểm kê
+
+- Người vận hành yêu cầu chỉ giữ vài backup mới nhất trên CM4. Không thay đổi
+  backup Git-tracked trong `extras/backups/` của workspace.
+- Trước khi xóa đã kiểm kê theo đường dẫn, loại file và dung lượng. Phần backup
+  chỉ khoảng 9 MiB; phần lớn 3.3 GiB trong `printer_data` là G-code và không nằm
+  trong phạm vi dọn.
+- Dry-run xác nhận từng target là thư mục thật, không phải symlink, có realpath
+  nằm dưới `/home/voron/printer_data/` và không trùng config production.
+
+### Đã giữ lại
+
+- `/home/voron/printer_data/config_backups/config-install-20260823-212901/`
+- `/home/voron/printer_data/config_backups/pre-toolvision-z-canary-20260823-211716/`
+- `/home/voron/printer_data/config_backups/config-install-20260823-084215/`
+
+Ba điểm phục hồi còn lại có tổng dung lượng 1.4 MiB. Bản pre-ToolVision được
+giữ là bản đã kiểm tra Git bundle và SHA-256; bản `...211658` không hoàn tất
+verify không được giữ.
+
+### Đã xóa vĩnh viễn
+
+- 16 thư mục `config.update-backup-*`/`config.backup-*` từ 2026-05 đến
+  2026-06 nằm trực tiếp dưới `printer_data`.
+- `tool-vision.pre-v3.2.0-20260821-215201/`.
+- `config_backups/pre-toolvision-z-canary-20260823-211658/`.
+- `config_backups/pre-ktc-ownership-20260823-083950/`.
+- `config_backups/config-install-20260822-211338/`.
+
+Tổng cộng xóa đúng 20 thư mục, thu hồi 7,942,144 byte. Không xóa G-code, log,
+runtime, config đang chạy hoặc ba backup được giữ. Sau dọn, Moonraker, Klipper
+và ToolVision service đều `active`; filesystem còn khoảng 14 GiB trống.
+
+## 4. Phép đo ToolVision Z 150 °C đầu tiên
+
+- Trong lúc kiểm tra sau dọn backup, người vận hành tự home máy và bấm chạy Z
+  calibration từ panel ToolVision. Lần gọi trước khi initialize toolchanger đã
+  báo lỗi chọn tool; lần chạy sau có KTC `ready`, T0 active/detected và bắt đầu
+  gia nhiệt đủ T0-T4 lên 150 °C.
+- Theo dõi toàn bộ toolchange/probe trực tiếp: mỗi pickup đều được detection pin
+  xác nhận; PF2 đi từ open sang trigger/retract; không pause hoặc last error;
+  nhiệt độ giữ quanh 150 °C.
+- Kết quả report-only được ghi vào
+  `Generated-Data/ToolVision/results.json`:
+  - T0 `+0.000 mm`, trigger Z `1.629311 mm`.
+  - T1 `+0.098 mm`, trigger Z `1.727311 mm`.
+  - T2 `-0.384 mm`, trigger Z `1.245311 mm`.
+  - T3 `-0.154 mm`, trigger Z `1.475311 mm`.
+  - T4 `+0.078 mm`, trigger Z `1.707311 mm`.
+  - T0 return trigger Z `1.657311 mm`; reference drift `+0.028 mm`.
+- Sau hoàn tất: ToolVision `busy=false`, no last error, PF2 `open`, KTC
+  `ready`, active/detected T0, printer standby tại `[67.5, -8.0, 2.0]`, mọi
+  heater target bằng 0. Không áp dụng hoặc sửa production XYZ offsets.
+- Đây mới là một phép đo ở 150 °C. Cần chạy lặp lại cùng điều kiện trước khi
+  đánh giá độ lặp, đặc biệt vì T3 lệch `-0.100 mm` so với dữ liệu ToolVision cũ
+  (`-0.054 mm`).
