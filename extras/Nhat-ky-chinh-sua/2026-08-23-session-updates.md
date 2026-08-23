@@ -173,3 +173,31 @@ Cartographer/T4 không còn lỗi mở và Input Shaper T0–T4 đã hiệu ch�
   updater config mới sẽ được nạp ở lần restart có kiểm soát sau deploy.
 - Tiếp tục dừng trước mọi chuyển động cho tới khi commit/push, installer và
   smoke test không chuyển động đều đạt.
+
+### Commit, deploy và smoke test production
+
+- Commit `3b8d2cb` (`config: enable ToolVision PF2 Z-offset canary`) được push
+  lên `origin/main`. Hai mục `extras/Config download/config-20260821-172111*`
+  không liên quan không được stage hoặc sửa.
+- Máy chạy `bash ~/printer_data/config/scripts/update.sh` đúng một lần. Preflight
+  ToolVision/KTC/tool_crash đạt và tạo backup tự động:
+  `/home/voron/printer_data/config_backups/config-install-20260823-212901/`.
+- Năm Git blob production (`printer.cfg`, `moonraker.conf`,
+  `calibration-probe.cfg`, `install.sh`, `tool_vision.cfg`) khớp chính xác commit
+  đã push.
+- Moonraker được restart trước: không warning/failed component, kết nối lại
+  Klipper ở trạng thái ready, nhận `tool-vision` trong `available_services` và
+  báo service `active/running`.
+- Klipper được restart đúng một lần: state `ready`, không warning/failed
+  component. Object `tool_vision` được nạp; object `axiscope` không còn được
+  nạp; mọi heater target tiếp tục bằng 0.
+- Smoke test không chuyển động đạt:
+  - `QUERY_ENDSTOPS`: `ToolVision switch:open`.
+  - `TOOL_VISION_STATUS`: host online `3.4.0-rc1`, Z method `switch`, Z setup
+    ready, camera chưa setup, không last error.
+  - Moonraker updater: branch `main`, local/remote cùng
+    `v3.3.0-rc1-11-g2b3bf2c6`, checkout sạch và không detached.
+- `INITIALIZE_TOOLCHANGER` không tạo chuyển động và đưa KTC về `ready`, nhưng
+  cả `tool` lẫn `detected_tool` đều là `null`. Dừng trước homing để người vận
+  hành xác nhận carriage thực sự rỗng, T0-T4 ở đúng dock và nút dừng khẩn cấp
+  sẵn sàng. Chưa chạy home, pickup, toolchange hoặc probe Z.
