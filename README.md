@@ -3,7 +3,7 @@
 [![Klipper](https://img.shields.io/badge/Klipper-v0.13.0-green.svg)](https://www.klipper3d.org/)
 [![Toolchanger](https://img.shields.io/badge/StealthChanger-KTC--Easy-blue.svg)](https://stealthchanger.com/)
 [![Cartographer3D](https://img.shields.io/badge/Cartographer-V3%20fw6.1.0-orange.svg)](https://cartographer3d.com/)
-[![Axiscope](https://img.shields.io/badge/Axiscope-PF2%20switch-blueviolet.svg)](https://github.com/nic335/Axiscope)
+[![ToolVision](https://img.shields.io/badge/ToolVision-PF2%20canary-blueviolet.svg)](https://github.com/IDcrazy123/Tool-Vision)
 [![WebUI](https://img.shields.io/badge/WebUI-Mainsail-red.svg)](https://docs.mainsail.xyz/)
 [![Slicer](https://img.shields.io/badge/Slicer-OrcaSlicer-purple.svg)](https://github.com/SoftFever/OrcaSlicer)
 
@@ -27,7 +27,7 @@ All-Config manages only the user-editable KTC overrides and tool definitions.
 | **Toolhead MCUs** | 5× BTT EBB36 V1.2 | Dedicated CAN node per toolhead |
 | **Extruders & Hotends**| 5× WW BMG + 5× TZ V6 2.0 | TMC2209 @ 0.6A per tool, 3950 NTC thermistors |
 | **Z-Probe & Mesh** | Cartographer V3 Flat (fw6.1.0) | CAN UUID: `da13d909ce34` (Touch Z0 + $55 \times 55$ Scan Mesh) |
-| **Tool-Offset Calibrator**| Axiscope Z-offset measurement with a PF2 microswitch | Switch center $(X=68, Y=-10, Z=7)$; 10 samples per tool; camera backends inactive |
+| **Tool-Offset Calibrator**| ToolVision report-only Z canary with a PF2 microswitch | 5-sample median with retry and T0 return-drift evidence; camera XY remains disabled |
 | **Heated Bed** | 1000W 220V AC Silicone Pad + SSR | SSR Pin `PA1`, Thermistor `PB0` (NTC 100K MGB18) |
 | **Nozzle Cleaner** | Bambu A1 Silicone Pad + Purge Bucket | Bucket at $(X=320, Y=-8)$, Silicone Pad at $X: 277 \rightarrow 312$ |
 | **Chamber Feedback** | Generic 3950 100K NTC | Thermistor port `THB` (`PB1`) + Under-bed fan `bed_fan` (`PF8`) |
@@ -75,7 +75,7 @@ Empirically calibrated for perfect first-layer squish across all 5 nozzles:
 1. **Quad Gantry Leveling (`QUAD_GANTRY_LEVEL`):** 4-point mechanical gantry tramming with `0.0075mm` retry tolerance.
 2. **Axis Twist Compensation:** Corrects X-axis extrusion twist ($X: 20 \rightarrow 320\text{mm}$).
 3. **Cartographer Touch & Scan:** Direct physical Touch at $(174, 168)$ for absolute Z0 reference, followed by high-speed $55 \times 55$ adaptive bed scanning ($3,025$ points).
-4. **Tool-offset switch:** Axiscope measures each tool against the PF2 microswitch at $(X=68, Y=-10, Z=7)$. It reports Z deltas for review and does not rewrite the split T0–T4 configuration files automatically.
+4. **Tool-offset switch:** ToolVision measures each tool against the PF2 microswitch, repeats T0 for return-drift evidence, and reports relative Z deltas without rewriting the split T0–T4 configuration files.
 
 ### Bambu A1 Nozzle Cleaning System (`nozzle-clean.cfg`)
 * **Purge Bucket:** $X = 320.0, Y = -8.0$
@@ -133,10 +133,11 @@ Voron 5 Tool/
 │   ├── crowsnest.conf        ← Camera streamer configuration (WebRTC)
 │   ├── mainsail.cfg          ← Mainsail web interface macro bundle
 │   │
+│   ├── tool_vision.cfg       ← Report-only ToolVision PF2 canary and Mainsail panel
 │   ├── Printer-Setup/        ← Modular printer configuration files
 │   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
-│   │   ├── calibration-probe.cfg ← Cartographer/mesh and active Axiscope PF2 calibration
+│   │   ├── calibration-probe.cfg ← Cartographer/mesh and ToolVision backend routing
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
@@ -197,25 +198,30 @@ repository. If validation fails, rerun
 `bash ~/klipper-toolchanger-easy/install.sh` while the printer is idle and then
 retry the All-Config deployment.
 
-### Axiscope PF2 Switch Calibration
+### ToolVision PF2 Report-Only Canary
 
-Axiscope is the production tool Z-offset measurement backend:
+ToolVision is the attended tool Z-offset measurement backend during this
+development canary:
 
-- Source checkout: `~/axiscope`
-- Repository: `https://github.com/nic335/Axiscope`
-- Klipper module: `~/klipper/klippy/extras/axiscope.py`
+- Source checkout: `~/Tool-Vision`
+- Repository: `https://github.com/IDcrazy123/Tool-Vision`
+- Isolated runtime: `~/tool-vision-env`
+- Klipper modules: five `tool_vision*.py` symlinks into the reviewed checkout
+- Host API: `tool-vision.service`, loopback only on port `8085`
 - Switch input: Manta M8P `^PF2` with GND
-- Switch position: `X=68`, `Y=-10`, `Z=7`
-- Measurement: 10 Z samples per tool
-- Scope: Z deltas only; existing production XY offsets remain unchanged
+- Measurement: five samples per tool, median, `0.05 mm` tolerance and two retries
+- Evidence: a final T0 repeat records reference return drift
+- Scope: report-only Z deltas; production XYZ offsets remain unchanged
 
 Run `CALIBRATION_STATUS` or `QUERY_ENDSTOPS` without motion. Use
-`CALIBRATE_ALL_Z_OFFSETS` only with an operator present after homing and checking
-the switch path. Results are reported for review; they are not written directly
-because each tool is maintained in a separate T0–T4 config file.
+`TOOL_VISION_CALIBRATE MODE=Z TEMP=0` for an initial cold run only with an
+operator present after homing, initializing the toolchanger and checking the
+complete switch path. Repeat measurements before considering any manual offset
+change. The canary never writes the individual T0–T4 config files.
 
-ToolVision remains installed but inactive, without a Klipper include or
-Moonraker updater. kTAMV and its service/runtime are removed.
+Axiscope remains installed with its section commented out for immediate
+rollback. Camera XY setup is intentionally deferred. kTAMV and its
+service/runtime remain removed.
 
 `Generated-Data/` is printer-local and deployment-protected. It keeps preserved
 ToolVision JSON and ShakeTune graphs under one clearly named folder. The printer

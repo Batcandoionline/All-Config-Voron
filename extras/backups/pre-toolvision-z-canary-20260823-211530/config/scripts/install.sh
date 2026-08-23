@@ -10,16 +10,7 @@ TOOL_CRASH_SOURCE="${HOME}/klipper/klippy/extras/tool_crash.py"
 TOOL_CRASH_PATCH="${SCRIPT_DIR}/patches/tool_crash-active-tool-validation.patch"
 TOOL_CRASH_PATCH_MARKER="Every tool detection pin is registered with this same callback"
 TOOL_CRASH_PATCH_NEEDED=0
-TOOL_VISION_RUNTIME="${HOME}/Tool-Vision"
-TOOL_VISION_VENV="${HOME}/tool-vision-env/bin/python"
-TOOL_VISION_SERVICE="/etc/systemd/system/tool-vision.service"
-TOOL_VISION_MODULES=(
-  "tool_vision.py"
-  "tool_vision_client.py"
-  "tool_vision_state.py"
-  "tool_vision_toolchanger.py"
-  "tool_vision_z.py"
-)
+AXISCOPE_MODULE="${HOME}/klipper/klippy/extras/axiscope.py"
 KTC_READONLY_DIR="${CONFIG_DIR}/toolchanger/readonly-configs"
 KTC_READONLY_FILES=(
   "calibrate-offsets.cfg"
@@ -53,26 +44,14 @@ if (( ${#KTC_INVALID_LINKS[@]} )); then
   exit 1
 fi
 
-# ToolVision owns the PF2 switch during this canary. Refuse to deploy the
-# include unless the reviewed Git runtime, isolated Python and all five Klipper
-# extension links already exist on the machine.
-if grep -Eq '^[[:space:]]*\[include[[:space:]]+tool_vision\.cfg\][[:space:]]*$' \
-    "${SOURCE_CONFIG_DIR}/printer.cfg"; then
-  if [[ ! -d "${TOOL_VISION_RUNTIME}/.git" || ! -x "${TOOL_VISION_VENV}" || \
-        ! -f "${TOOL_VISION_SERVICE}" ]]; then
-    echo "ERROR: ToolVision runtime, venv, or systemd unit is missing." >&2
-    echo "Expected: ${TOOL_VISION_RUNTIME}, ${TOOL_VISION_VENV}, ${TOOL_VISION_SERVICE}" >&2
+# Axiscope owns the PF2 switch in the active production config. Refuse to
+# deploy that section unless the machine-local Klipper module is installed.
+if grep -Eq '^[[:space:]]*\[axiscope\][[:space:]]*$' \
+    "${SOURCE_CONFIG_DIR}/Printer-Setup/calibration-probe.cfg"; then
+  if [[ ! -f "${AXISCOPE_MODULE}" ]]; then
+    echo "ERROR: active Axiscope module is missing: ${AXISCOPE_MODULE}" >&2
     exit 1
   fi
-  for module in "${TOOL_VISION_MODULES[@]}"; do
-    source_path="${TOOL_VISION_RUNTIME}/klippy/extras/${module}"
-    link_path="${HOME}/klipper/klippy/extras/${module}"
-    if [[ ! -f "${source_path}" || ! -L "${link_path}" || ! -e "${link_path}" || \
-          "$(readlink -f "${link_path}")" != "$(readlink -f "${source_path}")" ]]; then
-      echo "ERROR: ToolVision Klipper link is missing or invalid: ${link_path}" >&2
-      exit 1
-    fi
-  done
 fi
 
 # Preflight the machine-local tool_crash runtime before deploying config. The

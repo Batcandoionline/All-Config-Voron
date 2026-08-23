@@ -92,3 +92,84 @@ Cartographer/T4 không còn lỗi mở và Input Shaper T0–T4 đã hiệu ch�
 - Giám sát nhiệt độ Cartographer là tùy chọn phòng ngừa, không phải lỗi đang mở.
 - Chưa chạy thử chuyển động pickup/dropoff trong phiên này; không cần thiết vì
   chỉ đổi quyền sở hữu readonly và nội dung KTC được lấy từ checkout đang cài.
+
+## 2. Đánh giá mã nguồn và chuẩn bị canary ToolVision PF2
+
+### Mục tiêu
+
+- Đọc trực tiếp mã nguồn ToolVision, không chỉ tài liệu Markdown, trước khi cho
+  phép nạp vào Klipper production.
+- Chuẩn bị canary đo Z-offset bằng microswitch PF2 theo chế độ report-only;
+  không tự ghi đè offset đang dùng.
+- Chỉ cho phép chuyển sang bước homing/toolchange/probe sau khi runtime, dịch vụ
+  và cấu hình đều vượt kiểm tra không chuyển động.
+
+### Đánh giá mã nguồn
+
+- Đã kiểm tra installer/uninstaller, năm module Klipper, state/config layout,
+  server camera/API, detection/transform và toàn bộ test liên quan.
+- Điểm an toàn đạt: kết quả chỉ được báo cáo; không gọi `SAVE_CONFIG` hoặc
+  `SAVE_TOOL_PARAMETER`; chuyển động đi lên safe-Z trước; switch phải ở trạng
+  thái open; mỗi tool lấy năm mẫu, dùng median, tolerance 0.05 mm và tối đa hai
+  lần retry; file state được ghi atomic; API mặc định chỉ bind loopback.
+- Rủi ro chưa đóng của upstream: HTTP đồng bộ trong Klipper reactor; chưa
+  preflight envelope của mọi tool trước khi bắt đầu; nhánh lỗi probe chưa luôn
+  retract; khôi phục tool/G-code state và tắt heater vẫn là best-effort; adapter
+  offset có đường fallback về 0 khi lookup thất bại.
+- T0 production đang có XYZ offset bằng 0 nên thỏa giả định reference tool của
+  mã nguồn. Tọa độ station đã lưu cộng offset T0-T4 đều nằm trong giới hạn máy;
+  đây mới là kiểm tra số học, chưa thay thế quan sát trực tiếp khi chạy.
+- Checkout upstream được khóa ở commit
+  `2b3bf2c6a0e2cad3f579fe755cefca65c69c3dc3`. Mã tự nhận
+  `3.4.0-rc1` nhưng chưa có tag tương ứng; `git describe` là
+  `v3.3.0-rc1-11-g2b3bf2c6`, vì vậy chỉ được xem là development canary.
+
+### Sao lưu
+
+- Backup local trước khi chuẩn bị config:
+  `extras/backups/pre-toolvision-z-canary-20260823-211530/`.
+- Backup máy đã kiểm tra bundle và toàn bộ SHA-256:
+  `/home/voron/printer_data/config_backups/pre-toolvision-z-canary-20260823-211716/`.
+- Lần thử backup trước đó tại
+  `/home/voron/printer_data/config_backups/pre-toolvision-z-canary-20260823-211658/`
+  không hoàn tất bước verify Git bundle và được giữ nguyên để truy vết; không sử
+  dụng làm điểm phục hồi chính.
+
+### Chuẩn bị local và runtime máy
+
+- `config/printer.cfg`: chuẩn bị include `tool_vision.cfg`.
+- `config/tool_vision.cfg`: thêm section PF2 và panel Mainsail; giữ nguyên nguyên
+  tắc report-only.
+- `config/Printer-Setup/calibration-probe.cfg`: chuẩn bị tắt section Axiscope
+  nhưng giữ nguyên nội dung comment để rollback.
+- `config/moonraker.conf`: chuẩn bị updater ToolVision theo nhánh `main`.
+- `config/scripts/install.sh`: thêm preflight checkout, venv, systemd unit và đủ
+  năm symlink module Klipper trước khi cho deploy.
+- Runtime `/home/voron/Tool-Vision` đã cập nhật tới commit khóa; venv giữ độc
+  lập và đủ năm symlink module trỏ chính xác vào checkout.
+
+### Kiểm tra đã đạt
+
+- Máy phát triển: 104/104 test đạt, `compileall` đạt và `pip check` đạt.
+- Máy in: 104/104 test đạt, `compileall`, `pip check`, parse shell installer và
+  `git diff --check` đều đạt.
+- Checkout máy sạch sau cập nhật; không sửa source upstream.
+- Máy trước canary ở trạng thái standby, chưa home, toolchanger chưa initialize,
+  mọi heater target đã được đưa về 0; chưa chạy homing/toolchange/probe.
+- Config local đạt `git diff --check`; chưa commit, push hoặc deploy.
+
+### Kích hoạt dịch vụ và điểm dừng trước deploy
+
+- Người vận hành đã tự chạy
+  `sudo systemctl enable --now tool-vision.service`; không chia sẻ hoặc lưu mật
+  khẩu sudo. Unit sau đó ở trạng thái `enabled`, `active/running`, PID `2210`,
+  exit status `0`.
+- Health API loopback trả `ok: true`, version `3.4.0-rc1`, chưa configured,
+  không có camera/job/transform đang chạy; đây là trạng thái đúng trước khi
+  Klipper nạp config canary.
+- Máy vẫn standby, không pause, chưa home, toolchanger uninitialized, mọi heater
+  target bằng 0; T0-T3 khoảng 27-30 °C, T4 khoảng 34 °C và bed khoảng 25 °C.
+- Moonraker đang chạy chưa liệt kê `tool-vision` trong `available_services`;
+  updater config mới sẽ được nạp ở lần restart có kiểm soát sau deploy.
+- Tiếp tục dừng trước mọi chuyển động cho tới khi commit/push, installer và
+  smoke test không chuyển động đều đạt.
