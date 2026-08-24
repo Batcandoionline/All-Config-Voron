@@ -61,3 +61,41 @@
 - Cập nhật `README.md` và `config/README.md` để liên kết trực tiếp tới cả hai
   ngôn ngữ. Tài liệu ghi rõ mọi JSON ToolVision phải ở
   `Generated-Data/ToolVision/` và không được tạo JSON rỗng thủ công.
+
+## 3. Deploy bố cục ToolVision mới lên CM4
+
+### Preflight và deploy
+
+- Trước deploy: Klipper `ready`, printer `standby`, không pause, ToolVision
+  `busy=false`, no last error; bed và T0-T4 đều target `0`.
+- Xác nhận live còn `config/tool_vision.cfg`, chưa có file mới trong
+  `Printer-Setup/`, và ghi SHA-256 của hai JSON trước khi thay đổi.
+- Chạy đúng một lần `bash ~/printer_data/config/scripts/update.sh`. Installer
+  kiểm tra KTC-Easy symlink và tool_crash patch thành công, xóa file root cũ,
+  tạo `Printer-Setup/tool-vision.cfg` và tạo rollback snapshot:
+  `/home/voron/printer_data/config_backups/config-install-20260824-153138/`.
+- `bash -n` trên `scripts/install.sh` live đạt. Include mới, state/result path và
+  exclude `Generated-Data/` đều khớp cấu hình đã push.
+
+### Bảo toàn dữ liệu và restart
+
+- SHA-256 của JSON không đổi trước/sau deploy và restart:
+  - `state.json`: `506273e699fbc9a8d9d539afb7141a1fad643a40d9a94e18660bbdc602d1fdca`.
+  - `results.json`: `6f91a57179071ecb8d70d58f8af35701d162df1c4b9bce536b430b7712680466`.
+- Restart Moonraker qua API chính thức; service active lại lúc
+  `2026-08-24 15:32:35 +07`. Sau đó gọi `FIRMWARE_RESTART` đúng một lần và chờ
+  Klipper trở lại `ready`.
+
+### Smoke test không chuyển động
+
+- Klipper, Moonraker và `tool-vision.service` đều active; Moonraker không có
+  warning hoặc failed component; 300 dòng cuối `klippy.log` không có mẫu lỗi
+  startup/config được kiểm tra.
+- Object `tool_vision` và macro `TOOL_VISION` đều được nạp. Status báo service
+  online `3.4.0-rc1`, method `cartographer_touch`, Z ready, switch ready,
+  Cartographer Touch ready và no last error.
+- `QUERY_ENDSTOPS`: `ToolVision switch:open`; X/Y/Z endstop đều open.
+- Sau cùng printer vẫn `standby`, không pause, ToolVision `busy=false`, mọi
+  heater target `0`. Không home, probe, toolchange, setup hoặc calibration.
+- CM4 hiện có bốn rollback snapshot nhỏ sau khi installer tạo bản mới; không
+  xóa thêm backup trong tác vụ này.
