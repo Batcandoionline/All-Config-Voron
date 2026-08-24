@@ -172,3 +172,58 @@
   implemented but not production-deployed UX branch (`2d936f3`).
 - Local-link validation and `git diff --check` passed; no printer motion,
   service restart, deployment or generated-data mutation was required.
+
+## 5. Mở rộng README thành tài liệu tham khảo đầy đủ
+
+### Mục tiêu
+
+- Người vận hành yêu cầu viết lại `README.md` chi tiết để người mới, operator và
+  maintainer có thể tra cứu mà không phải tự ghép thông tin từ nhiều file.
+- Giữ nguyên chính sách tài liệu song ngữ nên cập nhật đồng thời `README.md` và
+  `README.vi.md`.
+- Thay đổi chỉ liên quan Markdown; không sửa `.cfg`, `.conf` hoặc `.sh`, vì vậy
+  không tạo snapshot cấu hình mới và không có thao tác trên máy in.
+
+### Source đã đối chiếu
+
+- Đọc lại rule project, known issues, decisions và TODO hiện hành.
+- Đối chiếu trực tiếp `hardware.cfg`, `fans-leds.cfg`,
+  `calibration-probe.cfg`, `input-shaper.cfg`, `nozzle-clean.cfg`,
+  `prime-lines.cfg`, `print-macros.cfg`, `tool-crash.cfg`,
+  `toolchanger-config.cfg`, T0–T4, `printer.cfg`, `moonraker.conf`,
+  `crowsnest.conf`, `install.sh`, `update.sh`, `cleanup-voron.sh` và ba machine
+  profile OrcaSlicer.
+- Không lấy giá trị từ README cũ làm nguồn nếu có thể đọc trực tiếp từ config
+  hoặc code.
+
+### Nội dung mới
+
+- Thêm bảng “Start here” theo nhu cầu người dùng và quy ước Active/Observed/
+  Development/Retired.
+- Ghi rõ ranh giới ownership KTC-Easy, ToolVision, Cartographer và generated
+  data.
+- Bổ sung pinout Manta/EBB, CAN UUID, dock, rotation distance, offset production
+  và Input Shaper từng tool.
+- Bổ sung giới hạn chuyển động, điểm QGL, Cartographer Touch/mesh và include
+  order.
+- Mô tả đầy đủ hợp đồng Orca `PRINT_START`, thứ tự `PRINT_START`/`PRINT_END`,
+  runout/crash recovery và bảng macro có phân loại chuyển động/nhiệt.
+- Ghi geometry/parameter cho nozzle cleaning, prime line và toàn bộ preset/
+  override dryer.
+- Phân biệt ToolVision runtime đang deploy với UX feature branch chưa HIL; giữ
+  bảng kết quả Z thực và semantics report-only.
+- Thêm quy trình install/update, post-update smoke test không chuyển động,
+  backup/rollback/cleanup, troubleshooting, limitation/TODO và documentation
+  map.
+
+### Kiểm tra
+
+- `README.md` và `README.vi.md` có cấu trúc tương ứng, lần lượt khoảng 780 và
+  760 dòng.
+- Mọi link Markdown local trong hai README đều resolve.
+- Các giá trị pin, CAN, dock, offset, shaper, QGL, mesh, nhiệt, dryer và macro
+  đã được đối chiếu lại với source.
+- `git diff --check` đạt; chỉ có cảnh báo line-ending LF/CRLF thông thường trên
+  Windows.
+- Hai mục untracked `extras/Config download/config-20260821-172111*` tiếp tục
+  không được sửa hoặc stage.
