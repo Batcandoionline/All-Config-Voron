@@ -116,6 +116,107 @@
 - Hai mục untracked `extras/Config download/config-20260821-172111*` tiếp tục
   không được sửa hoặc stage.
 
+## 7. HIL Z offset Cartographer, phân tích phép tính và cập nhật bản sửa lỗi
+
+### Phạm vi và điều kiện thử
+
+- Người vận hành hiện diện, đã xử lý nhựa rỉ ở T3 và yêu cầu chạy lại ba lần.
+- Trước **mỗi** lần đo đều chạy full `G28`, xác minh XYZ homed, T0 active và
+  detected, sau đó mới chạy Z calibration report-only bằng Cartographer Touch.
+- Cả năm đầu được giữ ở `150 C`; Touch model `default`; không gọi
+  `SAVE_CONFIG`, không bật apply và không sửa offset production.
+- Trước chuỗi cuối có nhiều run `INVALID` vì Cartographer không thu được ba
+  touch sample trong cửa sổ `0.010 mm`, tập trung ở T3 khi nhựa mới tiếp tục rỉ.
+  Các run này dừng fail-closed, không sinh offset để áp và vẫn lưu bằng chứng.
+
+### Ba run hợp lệ cuối
+
+| Run | History | T1 | T2 | T3 | T4 | T0 return drift |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | `20260824-144628-534-z-cartographer_touch-01.json` | `+0.256` | `-0.282` | `-0.172` | `+0.116` | `+0.010` |
+| 2 | `20260824-145142-725-z-cartographer_touch-01.json` | `+0.248` | `-0.268` | `-0.180` | `+0.106` | `+0.014` |
+| 3 | `20260824-145648-209-z-cartographer_touch-01.json` | `+0.240` | `-0.262` | `-0.188` | `+0.124` | `-0.002` |
+
+- Cả ba run hoàn tất toàn bộ T0-T4 rồi đo lại T0, `applied=false`,
+  `configuration_changed=false`, `cleanup_errors=[]` và cùng configuration
+  fingerprint `sha256:0a7355...`.
+- Trạng thái `WARNING` chỉ do máy chưa cấu hình ngưỡng
+  `max_reference_z_drift`; đây không phải lỗi probe hoặc lỗi tính offset.
+
+| Tool | Mean | Range | Sample SD |
+| --- | ---: | ---: | ---: |
+| T1 | `+0.248000` | `0.016` | `0.008000` |
+| T2 | `-0.270667` | `0.020` | `0.010263` |
+| T3 | `-0.180000` | `0.016` | `0.008000` |
+| T4 | `+0.115333` | `0.018` | `0.009018` |
+| T0 return drift | `+0.007333` | `0.016` | `0.008327` |
+
+### So sánh logic và kết luận Z
+
+- Cartographer Touch trả median của các contact hợp lệ dưới dạng
+  `trigger_position - model.z_offset`. ToolVision dùng cùng Touch model cho
+  T0 và tool cần đo rồi tính `candidate_result - T0_result`; do đó
+  `model.z_offset` triệt tiêu đại số. Dấu của kết quả đúng với semantic offset
+  tuyệt đối của tool so với T0.
+- T0 cuối run chỉ là signed drift evidence, không được cộng ngược vào kết quả.
+  Qua ba full-home độc lập, trigger tuyệt đối có thể dịch nhưng offset tương đối
+  vẫn lặp lại trong range `0.016..0.020 mm`, phù hợp với phép triệt tiêu trên.
+- Không phát hiện lỗi logic, dấu hoặc phép tính Z. Không tự áp mean vào
+  production: so với offset hiện hành, delta là T1 `+0.020`, T2 `+0.024333`,
+  T3 `+0.088` và T4 `+0.129333 mm`; T3/T4 cần print validation hoặc phép đo
+  độc lập trước khi có change request riêng.
+
+### Lỗi phục hồi toolchanger được phát hiện và sửa ở ToolVision
+
+- Khi nested Cartographer command lỗi, KTC-Easy đặt toolchanger thành
+  `uninitialized`. Cleanup cũ thử gọi trực tiếp original tool nên thất bại với
+  `Cannot select tool, toolchanger status is uninitialized`, dù heater cleanup
+  vẫn độc lập và đưa mọi target về `0`.
+- Đã gửi bằng chứng HIL và yêu cầu sửa tới task dự án ToolVision. Bản sửa
+  `5ee2152d77b8ed90e00096b1ad78c62d5322b29c`
+  (`fix: recover toolchanger state before restore`) thêm hook phục hồi tùy chọn,
+  chỉ gọi khi active state bị mất, xác minh lại state trước restore và ghi rõ
+  lý do safe-skip nếu hook thiếu hoặc thất bại.
+- Test dự án tăng từ `158` lên `163`; `163/163` đạt. Python compile, Ruff safety
+  subset, focused Ruff, `git diff --check` và GitHub Security gate đều đạt.
+- Hook theo máy `INITIALIZE_TOOLCHANGER` **chưa bật** trong live config. Cần một
+  HIL fault-injection có giám sát riêng trước khi cho phép tự động gọi hook này;
+  việc cập nhật code không được xem là bằng chứng xác nhận đường phục hồi vật lý.
+
+### Bằng chứng, cập nhật live và trạng thái bàn giao
+
+- Trước update cuối đã sao lưu 8 history ngày 2026-08-24, state, result, config
+  và runtime commit; xác minh `12/12` checksum:
+  - CM4: `/home/voron/printer_data/config_backups/tool-vision/manual-post-hil-before-5ee2152-20260824-220123/`.
+  - Off-device: `D:/Desktop/Tool-Vision/.local-backups/printer-post-hil-before-5ee2152-20260824-220123/`.
+- Moonraker Update Manager chỉ nâng component `tool-vision` từ `6059149` lên
+  `5ee2152`; runtime `3.4.0-rc2`, branch
+  `codex/correctness-safety-evidence`, clean/pristine và không còn commit behind.
+- Sau restart, `klipper`, `moonraker` và `tool-vision.service` đều active;
+  Klipper `ready`, printer `standby`, ToolVision `busy=false`, `z_ready=true`.
+  Máy chưa home lại, toolchanger `uninitialized` như trạng thái restart bình
+  thường; detector vẫn thấy T0. Không có chuyển động sau update.
+- Checksum không đổi qua update:
+  - `state.json`: `398b6a54600932f2148ecc922635f9943921324e02b84197f9d7c5f68c7dc9c3`.
+  - `results.json`: `686c02449492e24e219edf047c21f90264273e2fe45fbdf7abc9bb83ba5369d7`.
+  - `tool-vision.cfg`: `4a24f095abf647442f8a6a911dff5a2a65d0ec2048b22c4de571ed4ea70caa66`.
+- Tất cả heater target/power bằng `0`; production Z offsets và source config
+  All-Config không thay đổi.
+
+### English summary
+
+- Three independent full-home Cartographer Touch runs completed report-only;
+  relative Z ranges were `0.016..0.020 mm`, and the calculation/sign contract
+  was confirmed correct without changing production offsets.
+- A real error-path defect was reproduced: KTC-Easy invalidates toolchanger
+  state before ToolVision restores the original tool. ToolVision commit
+  `5ee2152` adds verified, opt-in state recovery and passes all 163 tests plus
+  CI; the per-machine recovery hook remains disabled pending supervised fault
+  injection.
+- The live canary was updated to `5ee2152` with generated-data and config hashes
+  unchanged; the printer was handed back standby, unhomed after restart, with
+  every heater target and power at zero.
+
 ## 6. Cài ToolVision RC2 canary và preflight Cartographer Touch
 
 ### Mục tiêu
