@@ -16,11 +16,10 @@ config/
 ├── moonraker.conf                ← Moonraker API server and managed component updaters
 ├── crowsnest.conf                ← Camera streaming config (WebRTC)
 ├── mainsail.cfg                  ← Mainsail web interface macros
-├── tool_vision.cfg               ← Report-only ToolVision PF2 canary and Mainsail panel
-│
 ├── Printer-Setup/                ← Hardware, probe, fans, input shaper & macros
 │   ├── hardware.cfg              ← MCU definitions (Manta M8P V2 + Cartographer), X/Y/Z steppers, bed heater, chamber sensor
 │   ├── calibration-probe.cfg     ← Cartographer/mesh plus ToolVision backend routing
+│   ├── tool-vision.cfg           ← Machine-specific ToolVision configuration and Mainsail panel
 │   ├── fans-leds.cfg             ← Enclosure/CM4 fans, toolhead NeoPixels, LED status macros
 │   ├── input-shaper.cfg          ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   ├── nozzle-clean.cfg          ← Bambu A1 silicone brush & bucket nozzle cleaning macros (`CLEAN_NOZZLE`)

@@ -56,7 +56,7 @@ fi
 # ToolVision owns the PF2 switch during this canary. Refuse to deploy the
 # include unless the reviewed Git runtime, isolated Python and all five Klipper
 # extension links already exist on the machine.
-if grep -Eq '^[[:space:]]*\[include[[:space:]]+Printer-Setup/tool-vision\.cfg\][[:space:]]*$' \
+if grep -Eq '^[[:space:]]*\[include[[:space:]]+tool_vision\.cfg\][[:space:]]*$' \
     "${SOURCE_CONFIG_DIR}/printer.cfg"; then
   if [[ ! -d "${TOOL_VISION_RUNTIME}/.git" || ! -x "${TOOL_VISION_VENV}" || \
         ! -f "${TOOL_VISION_SERVICE}" ]]; then

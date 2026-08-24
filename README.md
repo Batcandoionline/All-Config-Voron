@@ -133,11 +133,11 @@ Voron 5 Tool/
 │   ├── crowsnest.conf        ← Camera streamer configuration (WebRTC)
 │   ├── mainsail.cfg          ← Mainsail web interface macro bundle
 │   │
-│   ├── tool_vision.cfg       ← Report-only ToolVision PF2 canary and Mainsail panel
 │   ├── Printer-Setup/        ← Modular printer configuration files
 │   │   ├── hardware.cfg      ← Steppers, MCUs, 1000W bed, chamber thermistor
 │   │   ├── fans-leds.cfg     ← Chamber fans, bed fans, tool NeoPixels & status macros
 │   │   ├── calibration-probe.cfg ← Cartographer/mesh and ToolVision backend routing
+│   │   ├── tool-vision.cfg   ← Machine-specific ToolVision config and Mainsail panel
 │   │   ├── input-shaper.cfg  ← Global input shaper defaults (per-tool overrides in T0–T4.cfg)
 │   │   ├── nozzle-clean.cfg  ← Bambu A1 silicone brush & purge bucket macros
 │   │   ├── prime-lines.cfg   ← Per-tool prime line macros (T0–T4)
@@ -223,6 +223,8 @@ Axiscope remains installed with its section commented out for immediate
 rollback. Camera XY setup is intentionally deferred. kTAMV and its
 service/runtime remain removed.
 
-`Generated-Data/` is printer-local and deployment-protected. It keeps preserved
-ToolVision JSON and ShakeTune graphs under one clearly named folder. The printer
-keeps only the current rollback snapshot under `~/printer_data/config_backups/`.
+`Generated-Data/` is printer-local and deployment-protected. ToolVision writes
+its learned state to `Generated-Data/ToolVision/state.json` and its latest
+measurement to `Generated-Data/ToolVision/results.json`; ShakeTune graphs remain
+in their own folder. The printer keeps only the current rollback snapshot under
+`~/printer_data/config_backups/`.
