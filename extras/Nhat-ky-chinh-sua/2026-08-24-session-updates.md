@@ -35,3 +35,14 @@
 - `git diff --check`: đạt; chỉ có cảnh báo chuyển LF/CRLF của Git trên Windows.
 - PC không cài Bash/WSL. Kiểm tra `bash -n` qua CM4 chưa thực hiện được vì SSH
   `192.168.1.43:22` timeout; chưa deploy hoặc restart dịch vụ nào.
+
+### Commit và trạng thái deploy
+
+- Commit `e45c738` (`config: move ToolVision into Printer-Setup`) đã được push
+  lên `origin/main`; chỉ stage các file của tác vụ và snapshot bắt buộc.
+- Kiểm tra mạng lần hai xác nhận `ping=false`, SSH port 22 và Moonraker port
+  7125 đều không truy cập được. Vì vậy chưa chạy `update.sh`, chưa restart
+  Moonraker/Klipper và cấu trúc file live trên CM4 chưa thay đổi.
+- Dữ liệu JSON live đã nằm đúng `Generated-Data/ToolVision/` từ cấu hình trước;
+  phần deploy còn lại chỉ chuyển file cấu hình vào `Printer-Setup/` và nạp lại
+  include khi CM4 online.
