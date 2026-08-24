@@ -46,3 +46,18 @@
 - Dữ liệu JSON live đã nằm đúng `Generated-Data/ToolVision/` từ cấu hình trước;
   phần deploy còn lại chỉ chuyển file cấu hình vào `Printer-Setup/` và nạp lại
   include khi CM4 online.
+
+## 2. Hướng dẫn tích hợp ToolVision song ngữ
+
+- Sau khi máy được bật lại, kiểm tra trước deploy xác nhận SSH hoạt động; Klipper,
+  Moonraker và ToolVision service đều active; printer `ready`/`standby`, không
+  pause, ToolVision `busy=false`, no last error và mọi heater target bằng 0.
+- Tạo hai tài liệu đồng bộ:
+  - `extras/docs/toolvision-integration-guide.en.md` — English.
+  - `extras/docs/toolvision-integration-guide.vi.md` — Tiếng Việt.
+- Hai bản cùng mô tả ownership của runtime/config/generated data, include mới,
+  preflight installer, quy trình update/restart, smoke test không chuyển động,
+  Z-method semantics, backup/rollback và troubleshooting.
+- Cập nhật `README.md` và `config/README.md` để liên kết trực tiếp tới cả hai
+  ngôn ngữ. Tài liệu ghi rõ mọi JSON ToolVision phải ở
+  `Generated-Data/ToolVision/` và không được tạo JSON rỗng thủ công.

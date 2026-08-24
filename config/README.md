@@ -118,6 +118,9 @@ measurements and repeats T0 for return-drift evidence. Axiscope remains
 installed but commented out for rollback; camera XY remains inactive and kTAMV
 is fully removed.
 
+Machine-specific integration guide: [English](../extras/docs/toolvision-integration-guide.en.md)
+| [Tiếng Việt](../extras/docs/toolvision-integration-guide.vi.md).
+
 Generated runtime data is grouped under `Generated-Data/ToolVision/` and
 `Generated-Data/ShakeTune/` on the printer. `install.sh` excludes the entire
 `Generated-Data/` tree. Only the current rollback snapshot is retained under

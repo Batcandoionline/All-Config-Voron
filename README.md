@@ -203,6 +203,9 @@ retry the All-Config deployment.
 ToolVision is the attended tool Z-offset measurement backend during this
 development canary:
 
+- Integration guides: [English](extras/docs/toolvision-integration-guide.en.md)
+  | [Tiếng Việt](extras/docs/toolvision-integration-guide.vi.md)
+
 - Source checkout: `~/Tool-Vision`
 - Repository: `https://github.com/IDcrazy123/Tool-Vision`
 - Isolated runtime: `~/tool-vision-env`
