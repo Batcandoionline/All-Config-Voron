@@ -1,46 +1,54 @@
-# ToolVision Integration Guide — Private Voron Installation
+# ToolVision integration — private five-tool Voron
 
 [English](toolvision-integration-guide.en.md) | [Tiếng Việt](toolvision-integration-guide.vi.md)
 
-## Scope
+## Verified scope
 
-This guide documents the machine-specific ToolVision integration used by this
-five-tool Voron 2.4. ToolVision is an independent runtime; this repository owns
-only the printer-specific Klipper configuration, deployment checks, and data
-placement rules.
+This guide describes the All-Config integration, not every capability in the
+independent ToolVision repository. Source review was refreshed on 2026-08-24
+against:
 
-ToolVision is report-only. It measures candidate XYZ offsets and reference
-drift but never writes production tool offsets automatically.
+- deployed machine configuration commit `9d848f04`;
+- the development-canary runtime recorded on the printer at ToolVision commit
+  `2b3bf2c6`, version `3.4.0-rc1`;
+- the newer, not-yet-deployed UX branch `codex/z-calibration-ux` at `2d936f3`.
 
-## Owned paths
+ToolVision remains report-only. It measures candidate relative offsets and
+never calls `SAVE_CONFIG` or writes T0–T4 production offsets.
 
-| Path | Owner | Purpose |
+## Runtime and data ownership
+
+| Path | Owner | Current purpose |
 | --- | --- | --- |
-| `~/Tool-Vision/` | ToolVision Git checkout | Host service and Klipper extension source |
-| `~/tool-vision-env/` | ToolVision installer | Isolated Python environment |
-| `/etc/systemd/system/tool-vision.service` | ToolVision installer | Loopback host API service |
-| `~/printer_data/config/Printer-Setup/tool-vision.cfg` | All-Config | Machine pin, JSON paths, and Mainsail panel |
-| `~/printer_data/config/Generated-Data/ToolVision/state.json` | ToolVision runtime | Learned station and selected-method state |
-| `~/printer_data/config/Generated-Data/ToolVision/results.json` | ToolVision runtime | Latest completed measurement report |
+| `~/Tool-Vision/` | ToolVision/Moonraker Git updater | Host and Klipper extension source |
+| `~/tool-vision-env/` | ToolVision installer | Isolated host Python environment |
+| `/etc/systemd/system/tool-vision.service` | ToolVision installer | Loopback-only host API |
+| `Printer-Setup/tool-vision.cfg` | All-Config | PF2, JSON paths and current Mainsail panel |
+| `Generated-Data/ToolVision/state.json` | ToolVision runtime | Learned station/method state |
+| `Generated-Data/ToolVision/results.json` | ToolVision runtime | Backward-compatible latest successful result |
 
-All future ToolVision-generated JSON for this printer must remain under
-`Generated-Data/ToolVision/`. Do not place generated data beside `printer.cfg`
-or inside `Printer-Setup/`.
+`Generated-Data/` is excluded from Git and All-Config's `rsync --delete`, so a
+configuration update does not remove learned state or results.
 
-The complete `Generated-Data/` tree is ignored by Git and excluded from the
-configuration deployer's `rsync --delete`. Updating All-Config therefore does
-not delete the learned state or measurement result.
+When the newer history implementation is eventually reviewed and deployed,
+its default history directory follows the parent of the configured result file:
 
-## Required integration
+```text
+Generated-Data/ToolVision/tool-vision-history/
+```
 
-The active include in `printer.cfg` is:
+That directory is **not** evidence that the current production runtime already
+has history. The recorded runtime at `2b3bf2c6` keeps only `results.json`.
+
+## Active machine configuration
+
+`printer.cfg` loads:
 
 ```ini
 [include Printer-Setup/tool-vision.cfg]
 ```
 
-The machine configuration pins ToolVision's physical switch to Manta M8P
-`^PF2` and routes runtime files explicitly:
+The machine-specific section is:
 
 ```ini
 [tool_vision]
@@ -49,99 +57,148 @@ state_file: ~/printer_data/config/Generated-Data/ToolVision/state.json
 result_file: ~/printer_data/config/Generated-Data/ToolVision/results.json
 ```
 
-Before deploying that include, `config/scripts/install.sh` verifies the
-ToolVision Git checkout, isolated Python interpreter, systemd unit, and all five
-Klipper extension symlinks. It also preserves KTC-Easy's installer-managed
-`toolchanger/readonly-configs/` directory.
+The physical-switch method depends on `tools_calibrate.py` being installed by
+KTC-Easy, but its `[tools_calibrate]` section must remain disabled while
+`[tool_vision]` is active. Axiscope is also disabled. Cartographer remains the
+production Z/mesh probe.
+
+Camera discovery exists in ToolVision, but this All-Config file does not set a
+camera source/name and the recorded printer status said camera setup was not
+ready. Do not document camera XY as active until an attended setup and evidence
+are recorded.
+
+## Current UI versus development UI
+
+The deployed All-Config panel groups Setup and Calibrate and uses generic Z/XYZ
+run buttons. Teaching Switch or Cartographer changes the stored default method;
+the generic `MODE=Z` action then uses that state. Always read the method shown
+in the panel before motion.
+
+The ToolVision branch at `2d936f3` implements but has not production-deployed:
+
+- method-specific `Measure Z - Physical switch` and `Measure Z - Cartographer
+  Touch` actions;
+- Advanced Setup separated from routine measurement;
+- explicit `METHOD=` on UI-generated Z runs;
+- `VERBOSITY=QUIET` for fewer ToolVision-owned console messages;
+- immutable method-labelled history with fixed retention 20;
+- final `NOT APPLIED` and `Configuration changed: No` metadata.
+
+Its tests are L0–L2/component/fake evidence. ToolVision's own documentation says
+Mainsail, simulator and printer HIL are still outstanding. See
+[the implementation-status report](toolvision-z-calibration-ux-proposal.md).
 
 ## Safe update procedure
 
-Perform updates only while the printer is idle. Do not run this procedure during
-a print, a pause, a ToolVision job, or an attended calibration.
+All-Config update, while the printer is idle:
 
 ```bash
 cd ~/printer_data/config
 bash scripts/update.sh
 ```
 
-The updater downloads the reviewed `main` archive, executes the backup-first
-installer, deploys repository-owned files, and removes its temporary archive.
-It does not restart services automatically.
+The installer verifies the ToolVision checkout, isolated interpreter, systemd
+unit and five exact Klipper extension symlinks before it deploys the include.
+It also verifies KTC-Easy's six readonly symlinks and creates a configuration
+snapshot. The script does not restart services.
 
-After reviewing the installer output, restart Moonraker first and Klipper
-second:
+After reviewing output:
 
 ```bash
 sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-No homing, probing, toolchange, or heater command is required for this layout
-update.
+Do not update the ToolVision Git runtime to `2d936f3` merely because these docs
+describe it. Its feature branch is not the `main` updater channel, and deploying
+it changes Klipper orchestration and result storage; that requires its own
+backup, review and attended HIL plan.
 
 ## Non-motion verification
 
-Confirm the services and Klipper state:
+On the host:
 
 ```bash
-systemctl is-active tool-vision.service moonraker klipper
+systemctl is-active tool-vision moonraker klipper
+curl --fail --silent http://127.0.0.1:8085/api/v2/health
 ```
 
-From the Mainsail console, run:
+In Mainsail:
 
 ```text
-TOOL_VISION_STATUS
+CALIBRATION_STATUS
 QUERY_ENDSTOPS
+TOOL_VISION_STATUS
 ```
 
-Expected results:
+Expected before a measurement:
 
-- Klipper is `ready` and the printer is `standby`.
-- ToolVision reports `busy=false` and no last error.
-- `ToolVision switch` is normally `open` when nothing presses PF2.
-- All heater targets remain `0` unless the operator intentionally starts a
-  calibration.
-- `state.json` and `results.json` remain under
-  `Generated-Data/ToolVision/`.
+- Klipper is ready and printer is idle.
+- ToolVision is not busy and has no unexplained last error.
+- `ToolVision switch` is normally open when PF2 is not pressed.
+- Heater targets are 0.
+- State/result remain under `Generated-Data/ToolVision/`.
 
-Opening the `TOOL_VISION` Mainsail macro only displays the panel. Setup and
-calibration actions can move the printer and must still be attended.
+These checks do not intentionally home, heat, probe or change tools. Opening
+the `TOOL_VISION` macro only opens a prompt; Setup/Calibrate actions can move
+and heat the printer.
 
-## Z-method note
+## Reading Z results
 
-ToolVision may store `switch` or `cartographer_touch` as the selected Z method.
-Teaching one method can replace the selected method in `state.json`. Always
-confirm the displayed method before starting a Z run.
+The implemented sign is:
 
-Reported Z is measured relative to the reference tool. Treat it as a candidate
-absolute relative value, not as a correction delta to add to the current
-production offset. Repeat the same method and temperature at least three times
-before evaluating a manual `0.01 mm` print adjustment.
+```text
+measured Z(tool) = raw contact Z(tool) - raw contact Z(reference)
+```
+
+Treat the value as a candidate absolute offset relative to T0, not a correction
+to add to the configured offset. Match method and temperature when comparing
+runs. Review T0 return drift as diagnostic evidence; ToolVision does not define
+a universal drift pass/fail threshold.
+
+On 2026-08-23, one 150 °C PF2 run and one 150 °C Cartographer Touch run
+completed. Both returned the printer to a safe idle state with heater targets
+at 0, but the second run replaced the first `results.json`. The print-tested
+production offsets were not changed. Values and comparison are preserved in
+[the UX status report](toolvision-z-calibration-ux-proposal.md).
 
 ## Backup and rollback
 
-Every deployment creates a timestamped snapshot under:
+All-Config deployment snapshots use:
 
 ```text
 ~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/
 ```
 
-To roll back this layout change, restore `printer.cfg`, the former root
-`tool_vision.cfg`, and `scripts/install.sh` from the matching snapshot, then
-restart Moonraker and Klipper while the printer is idle. Do not restore or erase
-`Generated-Data/ToolVision/` unless the learned state itself is the intended
-rollback target.
+The three printer backups explicitly retained after the 2026-08-23 cleanup are
+recorded in that day's immutable journal. The scripts do not enforce a general
+“keep N newest” policy.
+
+Before changing the ToolVision runtime/schema or teaching a station, separately
+back up:
+
+- `Printer-Setup/tool-vision.cfg`;
+- `Generated-Data/ToolVision/state.json`;
+- `Generated-Data/ToolVision/results.json`;
+- future `Generated-Data/ToolVision/tool-vision-history/`, if it exists;
+- the ToolVision commit hash and service status.
+
+Do not erase generated data when rolling back only an All-Config file layout.
+Restore state/results only when that data is the intended rollback target and
+its schema is compatible with the selected runtime.
 
 ## Troubleshooting
 
-- **Unknown section `tool_vision`:** verify all five Klipper extension symlinks
-  and restart Klipper after installing the runtime.
-- **Include file not found:** confirm the exact case-sensitive path
+- **Unknown section `tool_vision`:** verify all five extension symlinks, then
+  restart Klipper while idle.
+- **Include not found:** verify exact case
   `Printer-Setup/tool-vision.cfg`.
-- **Setup appears lost:** verify `Generated-Data/ToolVision/state.json` exists
-  and is readable by the `voron` user before teaching again.
-- **No latest result:** inspect
-  `Generated-Data/ToolVision/results.json` and `TOOL_VISION_STATUS`; do not
-  create placeholder JSON manually.
-- **Update preflight refuses deployment:** fix the named runtime, symlink, or
-  KTC-Easy ownership problem first. Do not bypass the check.
+- **Setup appears lost:** check `Generated-Data/ToolVision/state.json` before
+  teaching again.
+- **Latest PF2 run disappeared after Cartographer:** this is expected behavior
+  of the recorded `2b3bf2c6` runtime; recover evidence from the original log,
+  not by fabricating JSON.
+- **Too much console output:** current production UI does not pass quiet mode.
+  The reduction exists only on the un-deployed `2d936f3` branch.
+- **Deployment preflight fails:** fix the named runtime/symlink/KTC ownership
+  issue; do not bypass it.

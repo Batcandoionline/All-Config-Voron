@@ -1,5 +1,16 @@
 # Axiscope
 
+> **Local status / Trạng thái local (2026-08-24):** Axiscope is not loaded by
+> the active printer configuration. ToolVision owns PF2 and Cartographer owns
+> production Z/mesh. This directory is retained only for rollback and source
+> history. Do not follow the installation section unless a separate reviewed
+> rollback plan explicitly re-enables Axiscope.
+>
+> Axiscope không được cấu hình máy hiện tại nạp. ToolVision sở hữu PF2 và
+> Cartographer đảm nhiệm Z/mesh production. Thư mục này chỉ được giữ cho
+> rollback và lịch sử source. Không làm theo phần cài đặt nếu chưa có kế hoạch
+> rollback riêng đã review để bật lại Axiscope.
+
 Maintained fork for Cartographer touch probing on a StealthChanger / KTC-Easy printer.
 
 Source and version details are recorded in [`FORK_INFO.md`](FORK_INFO.md).

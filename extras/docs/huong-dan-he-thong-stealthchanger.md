@@ -1,669 +1,202 @@
-# Hướng dẫn hệ thống Voron 2.4 StealthChanger 5 tool
+# Hướng dẫn vận hành hệ thống StealthChanger năm tool
 
-Tài liệu này tổng hợp cách cấu hình trong repository `All-Config-Voron` hoạt động, các luồng vận hành chính, các điểm cần chú ý khi sửa, và danh sách rủi ro phát hiện khi rà soát mã cấu hình.
+[Tiếng Việt](huong-dan-he-thong-stealthchanger.md) | [English](huong-dan-he-thong-stealthchanger.en.md)
 
-Trạng thái production được người vận hành xác nhận ngày 2026-08-23:
+Tài liệu này được viết lại ngày 2026-08-24 sau khi đọc `printer.cfg`, toàn bộ
+`Printer-Setup/*.cfg`, `toolchanger-config.cfg`, T0–T4 và script triển khai.
+Nó mô tả cấu hình đang được Git theo dõi tại `9d848f04`; nhật ký cũ không được
+viết lại thành hiện trạng mới.
 
-- Lỗi Cartographer đã hết.
-- Lỗi cảm biến T4 đã hết.
-- Input Shaper đã hiệu chỉnh riêng cho T0–T4.
-- Axiscope PF2 là backend đo Z-offset đang dùng; ToolVision inactive và kTAMV đã gỡ.
-- Các việc còn mở là tối ưu Pressure Advance, quạt và giám sát nhiệt độ; đây là
-  hạng mục cải tiến, không phải lỗi đang chặn vận hành.
+## 1. Ranh giới sở hữu
 
-## 1. Phạm vi cấu hình
+- KTC-Easy sở hữu `toolchanger/readonly-configs/` và sáu symlink do installer
+  của nó tạo. Không sửa các file này trong All-Config.
+- All-Config sở hữu `toolchanger-config.cfg`, `tools/T0.cfg`…`T4.cfg` và các
+  override trong `Printer-Setup/`.
+- Cartographer đang hoạt động cho Z homing và bed mesh.
+- ToolVision đang hoạt động như canary chỉ báo cáo offset; PF2 là switch đo Z.
+- Axiscope và `[tools_calibrate]` đã tắt, chỉ giữ comment để rollback.
 
-Máy hiện tại là Voron 2.4 StealthChanger dùng 5 toolhead độc lập:
+## 2. Include và thứ tự override
 
-- Mainboard: BIGTREETECH Manta M8P V2.0 + Raspberry Pi CM4.
-- Toolhead board: 5x BIGTREETECH EBB36 V1.2 qua CAN bus.
-- Probe chính: Cartographer V3 gắn trên shuttle, không gắn trên từng tool.
-- Toolchanger: StealthChanger dùng KTC-Easy.
-- Hotend/extruder: TZ V6 2.0 + WW BMG.
-- Tool: T0 là tool tham chiếu, T1-T4 có offset so với T0.
+Thứ tự đang nạp trong `printer.cfg` là:
 
-Repository được chia làm hai phần:
-
-- `config/`: payload thật, được copy về `~/printer_data/config` trên máy Voron.
-- `extras/`: tài liệu, log, hình ảnh, G-code, Axiscope tham khảo. Phần này không được copy vào máy Voron khi chạy `install.sh` hoặc `update.sh`.
-
-## 2. Thứ tự include và nguyên tắc override
-
-File gốc là `config/printer.cfg`. Thứ tự include hiện tại:
-
-1. `mainsail.cfg`: macro Mainsail chuẩn như `PAUSE`, `RESUME`, `CANCEL_PRINT`.
-2. `toolchanger/readonly-configs/toolchanger-include.cfg`: nạp KTC-Easy readonly, homing, toolchanger, macro M104/M109, calibration, crash detection gốc và toàn bộ `T*.cfg`.
-3. `Printer-Setup/calibration-probe.cfg`: Cartographer, mesh và Axiscope PF2 đang dùng để đo Z-offset.
-4. Các file còn lại trong `Printer-Setup/`: hardware, fan/LED, input shaper, nozzle clean, prime line, print macro.
-5. `Printer-Setup/tool-crash.cfg`: plugin `tool_crash`, override START/STOP và handler pause an toàn.
-6. Không có include camera calibration đang active; ToolVision được giữ inactive để tham khảo và kTAMV đã gỡ.
-
-Nguyên tắc quan trọng:
-
-- Không sửa trực tiếp các file trong `toolchanger/readonly-configs/`.
-- Muốn thay đổi hành vi KTC-Easy thì thêm/ghi đè trong `toolchanger/toolchanger-config.cfg` hoặc `Printer-Setup/*.cfg`.
-- Không đổi thứ tự include nếu chưa hiểu rõ. Nhiều section trùng tên là cố ý để Klipper merge/override, ví dụ `M109`, `START_CRASH_DETECTION`, `STOP_CRASH_DETECTION`, `homing_override_config`.
-
-## 3. Tool definitions T0-T4
-
-Mỗi tool nằm trong `config/toolchanger/tools/Tn.cfg` và gồm:
-
-- MCU EBB riêng: `[mcu EBBn]`.
-- ADXL345 riêng: `[adxl345 Tn]`.
-- Extruder riêng: `[extruder]`, `[extruder1]` ... `[extruder4]`.
-- TMC2209 extruder.
-- Hotend fan và part fan.
-- `[tool Tn]` của KTC-Easy:
-  - `tool_number`
-  - `extruder`
-  - `fan`
-  - `detection_pin`
-  - `params_park_x/y/z`
-  - `params_standby_temp`
-  - input shaper params riêng từng tool
-- Macro `Tn` gọi `SELECT_TOOL T=n`.
-- Filament sensor riêng từng tool, debounce bằng `delayed_gcode`.
-
-T0 là tool tham chiếu:
-
-- `gcode_x_offset: 0`
-- `gcode_y_offset: 0`
-- `gcode_z_offset` không khai báo trực tiếp trong T0 cfg.
-
-Offset T1-T4 hiện được lưu trong block `SAVE_CONFIG` cuối `printer.cfg`.
-
-## 4. Toolchange hoạt động như thế nào
-
-KTC-Easy quản lý pickup/dropoff bằng `[toolchanger]`.
-
-Các thông số quan trọng trong `toolchanger/toolchanger-config.cfg`:
-
-- `params_safe_y: 120`: trước khi chạy ngang vùng dock, gantry phải về Y an toàn.
-- `params_close_y: 30`: vị trí tiếp cận trước dock.
-- `params_fast_speed: 15000`: tốc độ di chuyển nhanh ngoài vùng dock.
-- `params_path_speed: 900`: tốc độ trong đường pickup/dropoff.
-- `require_tool_present: False`: cho phép homing/probing bằng Cartographer ngay cả khi shuttle không có tool.
-- `params_dropoff_path` và `params_pickup_path`: đường cơ khí để thả/nhấc tool.
-
-Luồng dropoff:
-
-1. Nâng Z thêm 1 mm so với vị trí hiện tại.
-2. Về `safe_y`.
-3. Di chuyển X tới dock của tool.
-4. Di chuyển Z/Y theo `params_dropoff_path`.
-5. Tắt crash detection trong lúc dock.
-6. Đặt LED tool vừa thả về standby.
-
-Luồng pickup:
-
-1. Về vùng trước dock.
-2. Di chuyển X/Z/Y vào vị trí bắt đầu pickup.
-3. Nếu tool có extruder, `M109 Tn S<target>` sẽ chờ tool đạt target đang đặt.
-4. Chạy `params_pickup_path`.
-5. `VERIFY_TOOL_DETECTED` tại điểm có `verify: 1`.
-6. Khôi phục vị trí theo axis được KTC yêu cầu.
-
-## 5. Homing, QGL và Cartographer
-
-Homing được override bởi `toolchanger/readonly-configs/homing.cfg`.
-
-Luồng `G28`:
-
-1. `INITIALIZE_TOOLCHANGER`.
-2. Vào docking mode.
-3. Reset `GCODE_OFFSET`.
-4. Nếu Z chưa home, set tạm Z=0 rồi nâng Z 10 mm.
-5. Home Y trước, sau đó home X.
-6. Thoát docking mode.
-7. Nếu home Z, di chuyển về gần giữa bàn với offset ngẫu nhiên nhỏ rồi `G28 Z`.
-8. Nâng Z 10 mm.
-
-Macro `QUAD_GANTRY_LEVEL` trong `Printer-Setup/print-macros.cfg` là wrapper:
-
-1. Set LED leveling.
-2. `SAVE_GCODE_STATE`.
-3. `BED_MESH_CLEAR`.
-4. Nếu chưa home XYZ thì chạy `G28`.
-5. Nếu QGL chưa applied, chạy một pass thô `horizontal_move_z=10 retry_tolerance=1`.
-6. Chạy pass tinh `horizontal_move_z=2`.
-7. Chạy `G28 Z` ở cuối.
-8. `RESTORE_GCODE_STATE`.
-
-Vì wrapper QGL đã tự `G28 Z`, không cần gọi thêm `G28 Z` sau `QUAD_GANTRY_LEVEL`.
-
-## 6. PRINT_START hiện tại
-
-Macro chính nằm trong `Printer-Setup/print-macros.cfg`.
-
-OrcaSlicer phải gửi dạng:
-
-```gcode
-PRINT_START TOOL_TEMP={first_layer_temperature[initial_tool]}
-  {if is_extruder_used[0]}T0_TEMP={first_layer_temperature[0]}{endif}
-  {if is_extruder_used[1]}T1_TEMP={first_layer_temperature[1]}{endif}
-  {if is_extruder_used[2]}T2_TEMP={first_layer_temperature[2]}{endif}
-  {if is_extruder_used[3]}T3_TEMP={first_layer_temperature[3]}{endif}
-  {if is_extruder_used[4]}T4_TEMP={first_layer_temperature[4]}{endif}
-  BED_TEMP=[first_layer_bed_temperature] TOOL=[initial_tool]
+```text
+mainsail.cfg
+KTC-Easy readonly toolchanger include
+calibration-probe.cfg
+tool-vision.cfg
+hardware.cfg
+fans-leds.cfg
+input-shaper.cfg
+nozzle-clean.cfg
+prime-lines.cfg
+print-macros.cfg
+tool-crash.cfg
 ```
 
-Luồng PRINT_START:
+`tool-crash.cfg` nằm sau tool definitions để hook active-tool detection vào
+đúng object KTC. Không thay thứ tự chỉ để “gọn” nếu chưa kiểm tra hành vi
+override và parser Klipper.
 
-1. Đọc tham số `TOOL`, `TOOL_TEMP`, `BED_TEMP`, `Tn_TEMP`.
-2. Validate tool tồn tại và nhiệt độ hợp lệ.
-3. `CLEAR_PAUSE`, `BED_MESH_CLEAR`, reset offset, `G90`, `M83`.
-4. `INITIALIZE_TOOLCHANGER`.
-5. Dừng crash detection để tránh báo sai trong homing/chuẩn bị.
-6. Bật nóng bàn bằng `M140 S<BED_TEMP>`.
-7. Preheat tool:
-   - T0: 150 C để phục vụ clean/touch-home.
-   - Tool được slicer dùng: 150 C standby.
-   - Tool không dùng: tắt nhiệt.
-8. Chạy full `G28` bằng Cartographer trên shuttle.
-9. Nâng Z lên safe Z.
-10. Sau khi đã home đủ, chọn T0 nếu cần.
-11. Park T0 ở bucket và clean T0 ở 150 C.
-12. Chờ bàn bằng `M190`.
-13. Bật bed fan/chamber circulation 50%.
-14. Heat soak nếu có `SOAK`, hoặc tự soak 100 s khi ABS/nhiệt bàn cao và bàn đang tăng nhiều.
-15. Chạy QGL sau khi bàn ổn định nhiệt.
-16. Đưa T0 về 150 C và chạy `CARTOGRAPHER_TOUCH_HOME`.
-17. Nâng tool đầu tiên cần prime lên nhiệt in trong lúc chạy adaptive mesh; các tool dùng còn lại giữ standby.
-18. `BED_MESH_CALIBRATE ADAPTIVE=1`.
-19. `PRIME_LINES`, prime mọi tool được slicer dùng, tool in đầu tiên prime cuối.
-20. Bật crash detection.
-21. Đặt `_PRINT_STATE = printing`, set LED printing.
+## 3. Tool và toolchange
 
-Điểm quan trọng:
+T0–T4 đều dùng EBB36, detection pin `^!EBBn:PB6`, run current extruder `0.6 A`
+và thermistor Generic 3950. Dock được đặt ở Z `343 mm`:
 
-- Không toolchange/dock trước khi full `G28`.
-- QGL không chạy khi bàn đang nóng lên nữa; QGL chỉ chạy sau `M190` và heat soak.
-- Touch-home chạy sau QGL, với bàn ổn định và T0 ở 150 C.
+| Tool | Dock X | Dock Y | Rotation distance |
+| --- | ---: | ---: | ---: |
+| T0 | 30.20 | 1.30 | 22.321 |
+| T1 | 104.00 | 1.10 | 22.500 |
+| T2 | 176.00 | 1.60 | 22.277 |
+| T3 | 249.50 | 2.50 | 22.727 |
+| T4 | 321.50 | 2.60 | 22.059 |
 
-## 7. PRIME_LINES
+`toolchanger-config.cfg` dùng `safe_y: 120`, `close_y: 30`, tốc độ nhanh
+`15000 mm/min` và tốc độ path `900 mm/min`. `require_tool_present` là `False`,
+nhưng `tool-crash.cfg` vẫn kiểm tra detection pin, định tuyến qua KTC và pause
+an toàn khi đang in. Safe pause không tự di chuyển XYZ.
 
-File: `Printer-Setup/prime-lines.cfg`.
+Đổi input shaper chỉ phát lệnh khi target khác profile đang active, nhờ biến
+`_ACTIVE_INPUT_SHAPER`; cách này giảm log lặp. M109 dùng deadband mặc định 4 °C
+(±2 °C).
 
-Mục tiêu:
+## 4. Homing, QGL và Cartographer
 
-- Prime tất cả tool có `Tn_TEMP > 0`.
-- Tool in đầu tiên được prime cuối cùng để sau prime nó vẫn đang active và sẵn sàng in layer 1.
-- Vẽ prime line ở phía trước giữa bàn, tránh quá gần góc.
+Giới hạn chuyển động chính:
 
-Thông số hiện tại:
+- X `0..348`, endstop `PF0`.
+- Y `-10..336`, endstop `PF1`.
+- Z cấu hình `-5..347`; tốc độ Z tối đa `60 mm/s`, gia tốc Z `700 mm/s²`.
+- Tốc độ XY tối đa `300 mm/s`, gia tốc `4000 mm/s²`.
 
-- `variable_line_length: 52.0`
-- `variable_line_passes: 3`
-- `variable_prime_amount: 13.33`
-- `variable_prime_z: 0.28`
-- `variable_retract_amount: 1.8`
-- `variable_final_retract_amount: 0.6`
-- `variable_wipe_distance: 12.0`
+Cartographer có offset X `0`, Y `35`. Bed mesh cấu hình X `20..320`,
+Y `45..325`, 55 × 55 mẫu. Touch lấy mốc tại
+`bed_mesh.zero_reference_position`; không dùng ToolVision như probe Z
+production.
 
-Luồng mỗi tool:
+`G32` thực hiện home/QGL theo macro hiện hành. Với mọi thao tác bảo trì thủ
+công, kiểm tra carriage/tool/dock và khoảng hở trước khi home hoặc di chuyển.
 
-1. Set target nhiệt tool.
-2. `Tn` để pickup tool.
-3. `M109 Tn S<temp>` chờ tool đủ nhiệt.
-4. Nếu biết tool kế tiếp, `M104` nâng nhiệt tool kế tiếp sớm.
-5. Di chuyển tới slot prime.
-6. Vẽ 3 pass song song theo trục X.
-7. Retract để xả áp.
-8. Nếu không phải tool cuối, hạ tool về standby.
-9. Wipe ngang ở Z thấp để giảm string.
-10. Nâng Z về travel Z.
+## 5. `PRINT_START`
 
-## 8. PRINT_END, CANCEL, PAUSE/RESUME
+Trình tự thực trong `print-macros.cfg`:
 
-`PRINT_END`:
+1. Parse và kiểm tra tool, bed/nozzle temperature và tool list từ slicer.
+2. Hủy callback dryer cũ, reset trạng thái và tắt crash detection.
+3. Khởi động gia nhiệt bed và các tool cần dùng.
+4. Home toàn bộ trục trước bất kỳ toolchange nào.
+5. Chọn T0, gia nhiệt/đợi mức vệ sinh và chạy `CLEAN_NOZZLE`.
+6. Đợi bed; thực hiện heat soak tự động hoặc `SOAK=` override.
+7. Chạy QGL, vệ sinh T0 lần nữa và home Touch bằng Cartographer.
+8. Tạo adaptive bed mesh.
+9. Prime mọi tool slicer dùng; prime tool khởi đầu cuối cùng.
+10. Bật crash detection và bắt đầu in.
 
-1. Set `_PRINT_STATE = idle`.
-2. Reset tốc độ/flow/pressure advance.
-3. Dừng crash detection.
-4. Nếu XYZ đã home:
-   - Retract hai giai đoạn.
-   - Nâng Z tối thiểu lên 50 mm hoặc thêm 10 mm.
-   - Tắt toàn bộ heater tool.
-   - Nếu đang cầm T1-T4 thì chuyển về T0.
-   - Park sau bàn.
-5. Reset offset.
-6. Tắt heater, fan, stepper extruder.
-7. Tắt bed sau đó hẹn tắt bed fan sau 180 s.
-8. Clear mesh/pause, LED complete.
+Heat soak lạnh mặc định: PLA/TPU 30 giây, PETG 60 giây,
+ABS/ASA/PC/NYLON/PA 90 giây. Chênh target không quá 5 °C thì bỏ qua; chênh
+5–15 °C dùng 20% thời gian. `AUTO_SOAK=0` tắt tự động.
 
-`CANCEL_PRINT` dùng hook trong `mainsail.cfg`:
+## 6. Prime, vệ sinh và kết thúc
 
-- `_CLIENT_VARIABLE.variable_user_cancel_macro = "_CUSTOM_CANCEL_CLEANUP"`.
-- Cleanup reset state, dừng crash detection, nâng Z an toàn, chuyển về T0 nếu cần, park sau bàn, tắt fan/stepper, clear mesh/offset.
+`PRIME_LINES` dùng line dài 52 mm, ba pass, lượng extrusion 13.33 mm cho mỗi
+pass đủ 52 mm, Z `0.28`, retract `1.8` và retract cuối `0.6`. Nó prime từng tool tại
+vị trí riêng; không tự xem purge tower là bắt buộc.
 
-`PAUSE` và `RESUME`:
+`CLEAN_NOZZLE` yêu cầu KTC có active tool, có thể home khi cần, di chuyển tới
+bucket/pad và vệ sinh tại vùng Y âm đã cấu hình. `PURGE_AND_CLEAN` purge vào
+bucket rồi hạ nhiệt để chà. Không chạy các macro này nếu vật cản hoặc bucket/pad
+không đúng vị trí cơ khí.
 
-- `PAUSE` và `CANCEL_PRINT` vẫn dùng logic Mainsail chuẩn qua hook trong `_CLIENT_VARIABLE`.
-- `RESUME` được override ở cuối trong `fans-leds.cfg` để kết hợp hai yêu cầu:
-  - KTC-Easy: `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED`.
-  - Mainsail: khôi phục nhiệt/idle timeout, kiểm tra runout, hook LED, `_CLIENT_EXTRUDE`, rồi `RESUME_BASE`.
-- Cách này tránh mất logic Mainsail do KTC readonly cũng khai báo macro `RESUME`.
+`PRINT_END` dừng crash detection, tắt heater/fan thuộc job, drop active tool và
+park shuttle rỗng. `CANCEL_PRINT` đi qua đường cleanup tương ứng. Không viết tài
+liệu hoặc slicer script dựa trên giả định T0 sẽ luôn còn gắn sau khi kết thúc.
 
-## 9. Crash detection
+## 7. Dryer
 
-Hệ này dùng plugin `tool_crash` vì Cartographer là probe chính và mỗi tool có `detection_pin`.
+`START_DRYER` từ chối chạy nếu printer đang in. Với `PARK=1`, macro có thể home,
+dock tool và park trước khi gia nhiệt. Preset thực trong code:
 
-File liên quan: `Printer-Setup/tool-crash.cfg`.
+| Material | Bed | Chamber | Time | Fan |
+| --- | ---: | ---: | ---: | ---: |
+| PLA | 50 °C | 40 °C | 240 min | 40% |
+| TPU | 60 °C | 45 °C | 300 min | 40% |
+| PETG | 70 °C | 55 °C | 240 min | 50% |
+| ABS/ASA | 90 °C | 65 °C | 240 min | 60% |
+| NYLON | 100 °C | 70 °C | 360 min | 70% |
+| PC | 105 °C | 75 °C | 360 min | 70% |
 
-Ý tưởng:
+Các lệnh công khai là `START_DRYER`, `STOP_DRYER`, `DRYER_STATUS`. Macro có
+handoff an toàn khi bắt đầu in; vẫn phải dọn nắp carton/vật liệu khỏi vùng
+chuyển động trước job in.
 
-- Readonly KTC gốc chỉ hỗ trợ `tool_probe_endstop`.
-- Override mới kiểm tra nếu `[tool_crash]` có trong config thì gọi:
-  - `START_TOOL_CRASH_DETECTION`
-  - `STOP_TOOL_CRASH_DETECTION`
-- Nếu không có `[tool_crash]`, fallback về `START_TOOL_PROBE_CRASH_DETECTION`/`STOP_TOOL_PROBE_CRASH_DETECTION`.
+## 8. Calibration và offset
 
-Trong print:
+Offset production hiện nằm trong `SAVE_CONFIG` của `printer.cfg`:
 
-- `PRINT_START` dừng crash detection trong giai đoạn home/clean/QGL/mesh/prime.
-- Sau prime mới bật crash detection.
-- Trong dropoff, crash detection bị dừng.
-- Sau toolchange, nếu `_PRINT_STATE == printing`, `after_change_gcode` bật lại crash detection.
+| Tool | X | Y | Z |
+| --- | ---: | ---: | ---: |
+| T0 | 0.000 | 0.000 | 0.000 |
+| T1 | -0.243 | -0.252 | +0.228 |
+| T2 | +0.746 | +0.086 | -0.295 |
+| T3 | +0.304 | +0.449 | -0.268 |
+| T4 | +0.041 | +0.352 | -0.014 |
 
-## 10. LED state machine
+Người vận hành đã đánh giá first layer của baseline này tốt bằng mắt. Hai phép
+đo ToolVision ngày 2026-08-23 chỉ là evidence chẩn đoán:
 
-File: `Printer-Setup/fans-leds.cfg`.
+| Tool | Production | PF2 switch | Cartographer Touch |
+| --- | ---: | ---: | ---: |
+| T0 | +0.000 | +0.000 | +0.000 |
+| T1 | +0.228 | +0.098 | +0.242 |
+| T2 | -0.295 | -0.384 | -0.256 |
+| T3 | -0.268 | -0.154 | -0.160 |
+| T4 | -0.014 | +0.078 | +0.102 |
 
-Mỗi tool có 3 LED WS2812:
+ToolVision tính Z theo `raw(tool) - raw(reference)`. Đây là candidate absolute
+tương đối so với T0, không phải delta để cộng vào offset đang có. PF2 run có
+T0 return drift `+0.028 mm`; Cartographer run `-0.008 mm`. Một run không đủ để
+thay baseline đang in tốt; cần lặp cùng method/nhiệt độ và kiểm chứng độc lập.
 
-- LED 1: trạng thái tool.
-- LED 2-3: chiếu sáng vùng in/hotend.
+Xem [hướng dẫn ToolVision](toolvision-integration-guide.vi.md) và
+[trạng thái cải tiến UX](toolvision-z-calibration-ux-proposal.vi.md).
 
-Các state chính:
+## 9. Input shaper
 
-- `standby`
-- `ready`
-- `heating`
-- `toolchange`
-- `leveling`
-- `calibrating`
-- `cleaning`
-- `printing`
-- `pause`
-- `complete`
-- `error`
+Fallback T0 trong `input-shaper.cfg` là X `3hump_ei` 98.6 Hz/damping 0.081 và
+Y `mzv` 35 Hz/damping 0.076. Profile riêng từng tool nằm trong T0–T4. Resonance
+tester đang trỏ `adxl345 T4`; ShakeTune lưu data dưới
+`Generated-Data/ShakeTune` và giữ tối đa năm kết quả theo cấu hình.
 
-`_PRINT_STATE` là biến nội bộ dùng để phân biệt `printing`, `paused`, `idle`, vì `printer.print_stats.state` không đủ tin cậy trong toolchange.
+## 10. Cập nhật và kiểm tra
 
-## 11. Calibration và tool offset
-
-File:
-
-- `Printer-Setup/calibration-probe.cfg`
-- `toolchanger/readonly-configs/calibrate-offsets.cfg`
-- `toolchanger/toolchanger-config.cfg`
-
-Backend production hiện tại là Axiscope dùng microswitch Manta M8P `^PF2` tại
-`X=68`, `Y=-10`, `Z=7`. Axiscope đo 10 mẫu Z cho từng tool và chỉ báo delta để
-người vận hành duyệt. Không khai báo `config_file_path` vì T0–T4 nằm trong năm
-file riêng; cho module tự ghi có thể tạo section tool trùng.
-
-Cartographer V3 tiếp tục đảm nhiệm Touch Z0 và bed mesh. Axiscope không thay thế
-Cartographer và không đo XY. ToolVision được giữ installed nhưng inactive,
-không có Klipper include hoặc Moonraker updater. kTAMV, service và runtime đã gỡ.
-
-Có thể dùng `CALIBRATION_STATUS` hoặc `QUERY_ENDSTOPS` để xem trạng thái mà không
-gây chuyển động. Chỉ chạy `CALIBRATE_ALL_Z_OFFSETS` khi máy rảnh, đã home, có
-người đứng máy và đã kiểm tra đường đi tới công tắc.
-
-Kiểm tra offset:
-
-```gcode
-CHECK_OFFSETS
-```
-
-Offset hiện tại đang lưu trong `SAVE_CONFIG` cuối `printer.cfg`, không nằm trực tiếp trong `T1.cfg` đến `T4.cfg`.
-
-## 12. Cập nhật từ GitHub lên máy Voron
-
-Trên máy Voron:
+Chỉ cập nhật khi máy idle:
 
 ```bash
 cd ~/printer_data/config
 bash scripts/update.sh
-sudo systemctl restart klipper
+sudo systemctl restart moonraker klipper
 ```
 
-Chỉ restart Moonraker khi có thay đổi `moonraker.conf`:
+`update.sh` tải archive `main` tạm và gọi installer. Installer kiểm tra KTC,
+ToolVision, patch tool-crash, tạo backup rồi mới `rsync`. Nó không tự restart.
 
-```bash
-sudo systemctl restart moonraker
+Kiểm tra không chuyển động sau deploy:
+
+```text
+CALIBRATION_STATUS
+QUERY_ENDSTOPS
+TOOL_VISION_STATUS
 ```
 
-`update.sh` làm các việc:
-
-1. Tạo thư mục tạm bằng `mktemp` và tải archive nhánh `main` từ GitHub.
-2. Giải nén source tạm, không tạo Git repository trên Pi.
-3. `install.sh` backup config hiện tại vào `~/printer_data/config_backups/`.
-4. Trước khi backup/deploy, kiểm tra đủ 6 symlink KTC-Easy hợp lệ. Nếu thiếu,
-   script dừng mà chưa thay đổi cấu hình.
-5. Deploy file repo quản lý bằng `rsync --delete`, luôn loại trừ toàn bộ
-   `toolchanger/readonly-configs/` và bảo vệ `Generated-Data/` cùng dữ liệu máy.
-6. Xóa toàn bộ source/archive tạm khi kết thúc.
-
-KTC-Easy là chủ sở hữu duy nhất của `toolchanger/readonly-configs/`. Sáu file
-`calibrate-offsets.cfg`, `crash-detection.cfg`, `homing.cfg`,
-`toolchanger-include.cfg`, `toolchanger-macros.cfg` và `toolchanger.cfg` trên máy
-phải là symlink do installer KTC tạo. All-Config chỉ quản lý
-`toolchanger-config.cfg`, `tools/T*.cfg` và các override trong `Printer-Setup/`.
-Nếu preflight báo lỗi, đợi máy in rảnh rồi chạy:
-
-```bash
-bash ~/klipper-toolchanger-easy/install.sh
-```
-
-Sau khi KTC hoàn tất và Klipper ổn định, mới chạy lại update All-Config.
-
-Dữ liệu sinh tự động trên máy được gom về:
-
-- `~/printer_data/config/Generated-Data/ToolVision/` — state đã học và kết quả
-  đo ToolVision.
-- `~/printer_data/config/Generated-Data/ShakeTune/` — đồ thị/kết quả cộng hưởng.
-- `~/printer_data/config_backups/` — backup cấu hình và ZIP snapshot; không đặt
-  các file này trong root `config`.
-
-Khôi phục backup:
-
-```bash
-rsync -a --delete ~/printer_data/config_backups/config-YYYYMMDD-HHMMSS/ ~/printer_data/config/
-sudo systemctl restart klipper
-```
-
-## 13. Rủi ro và đề xuất sửa
-
-### R1 - Input shaper có thể chưa thật sự được áp dụng theo từng tool
-
-Mức nguy hiểm: Trung bình.
-
-Trạng thái: Đã sửa và được người vận hành xác nhận đã hiệu chỉnh ngày 2026-08-23.
-
-Trước đó `input-shaper.cfg` ghi chú không dùng global `[input_shaper]`, nhưng `after_change_gcode` chỉ gọi `SET_INPUT_SHAPER` khi `input_shaper` tồn tại trong `printer.configfile.config`.
-
-Rủi ro:
-
-- Nếu không có `[input_shaper]`, dynamic input shaper trong `T0.cfg` đến `T4.cfg` có thể không được apply.
-- In vẫn chạy, nhưng ringing/ghosting có thể không đúng theo từng tool.
-
-Sửa đã áp dụng:
-
-- Thêm section `[input_shaper]` mặc định dùng thông số T0 để Klipper tải module input shaper.
-- Toolchange vẫn override bằng `params_input_shaper_*` của tool đang active.
-
-```ini
-[input_shaper]
-shaper_type_x: 3hump_ei
-shaper_freq_x: 98.6
-damping_ratio_x: 0.081
-shaper_type_y: mzv
-shaper_freq_y: 35.0
-damping_ratio_y: 0.076
-```
-
-Bộ fallback T0 và profile riêng T0–T4 hiện đã được ghi đúng trong cấu hình.
-KTC áp dụng `params_input_shaper_*` của tool active sau mỗi lần đổi tool.
-
-### R2 - RESUME có nhiều nguồn khai báo
-
-Mức nguy hiểm: Trung bình đến cao nếu merge sai.
-
-Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05 bằng final `RESUME` override trong `fans-leds.cfg`.
-
-Có `RESUME` trong:
-
-- `mainsail.cfg`
-- `toolchanger/readonly-configs/toolchanger.cfg`
-- `toolchanger/toolchanger-config.cfg` chỉ thêm description
-
-Rủi ro:
-
-- Nếu macro `RESUME` cuối cùng chỉ là logic Mainsail, có thể thiếu `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED`.
-- Nếu macro `RESUME` cuối cùng chỉ là wrapper KTC readonly, có thể mất logic Mainsail như khôi phục nhiệt, runout check, hook LED và `_CLIENT_EXTRUDE`.
-
-Sửa đã áp dụng:
-
-- Thêm final `[gcode_macro RESUME]` trong `Printer-Setup/fans-leds.cfg`, tức phần override do repo này quản lý, không sửa `readonly-configs`.
-- Final override khai báo rõ `rename_existing: RESUME_BASE`, giống pattern KTC-Easy/Mainsail, để `RESUME_BASE` luôn còn tồn tại và không phụ thuộc vào việc option này được merge từ section trước đó.
-- Macro mới chạy `INITIALIZE_TOOLCHANGER` và `VERIFY_TOOL_DETECTED` trước khi resume.
-- Sau đó chạy lại đầy đủ logic Mainsail: idle timeout restore, temperature restore, runout check, `user_resume_macro`, `_CLIENT_EXTRUDE`, `RESUME_BASE`.
-
-Cần kiểm chứng sau khi máy rảnh:
-
-- Pause một print nhỏ.
-- Resume từ Mainsail.
-- Console không được báo mất tool.
-- LED phải về trạng thái printing.
-- Nếu nozzle chưa đủ nóng, resume phải bị chặn như logic Mainsail.
-
-### R3 - Tài liệu crash detection trong `tool-crash.cfg`
-
-Mức nguy hiểm: Thấp đến trung bình.
-
-Trạng thái: Đã sửa comment trong cấu hình ngày 2026-06-05.
-
-Comment trong file vẫn mô tả kiểu bật detection trước G28/QGL/mesh rồi tắt sau đó. Macro thật hiện dừng detection trong chuẩn bị, chỉ bật lại sau prime.
-
-Rủi ro:
-
-- Người sửa sau có thể bật crash detection quá sớm trong homing/QGL/prime và gây false positive.
-
-Sửa đã áp dụng:
-
-- Comment trong `tool-crash.cfg` được cập nhật theo logic hiện tại:
-  - Stop trong homing/clean/QGL/mesh/prime.
-  - Start sau `PRIME_LINES`.
-  - Stop khi dropoff/cancel/end.
-  - Start lại trong `after_change_gcode` nếu `_PRINT_STATE == printing`.
-
-### R4 - Prime line dài 52 mm mỗi pass
-
-Mức nguy hiểm: Thấp.
-
-Trạng thái: Đã giữ lại theo bản thực tế cho đường prime đẹp và ra nhựa ổn.
-
-`prime-lines.cfg` hiện là:
-
-```ini
-variable_line_length: 52.0
-variable_line_passes: 3
-variable_prime_amount: 13.33
-```
-
-Với 3 pass song song, chiều dài này đang cho đường prime đẹp hơn bản 40 mm và có đủ thời gian ra nhựa. Macro vẫn tự co lại nếu số tool nhiều làm vùng X không đủ chỗ.
-
-### R5 - Ghi chú offset T2 lịch sử không còn khớp production
-
-Mức nguy hiểm: Thấp; lỗi nằm ở tài liệu cũ.
-
-Trạng thái: Đã sửa tài liệu ngày 2026-08-23.
-
-Tài liệu trước đây ghi nhầm `gcode_z_offset = -0.746`, trong khi cấu hình
-production hiện tại là:
-
-```ini
-[tool T2]
-gcode_x_offset = 0.746
-gcode_y_offset = 0.086
-gcode_z_offset = -0.295
-```
-
-Giá trị `0.746` thuộc trục X, không phải Z. Không còn lý do chặn T2 chỉ dựa trên
-con số ghi nhầm này. Nếu hiện tượng bẹp sợi hoặc heat creep tái xuất hiện thì
-kiểm tra fan hotend, idler, đường filament và nhiệt extruder như một sự cố mới,
-không tự thay offset khi chưa có phép đo lặp và bản in xác nhận.
-
-### R6 - Tốc độ Z và gia tốc Z đã nâng cao
-
-Mức nguy hiểm: Trung bình đến cao nếu cơ khí chưa ổn.
-
-Trong `printer.cfg`:
-
-```ini
-max_z_velocity: 60
-max_z_accel: 700
-```
-
-Rủi ro:
-
-- Nếu cơ khí Z, belt, pulley, motor hoặc driver không ổn, có thể mất bước khi toolchange hoặc nâng Z nhanh.
-- Mất bước Z sẽ ảnh hưởng QGL, touch-home, first layer và dock.
-
-Đề xuất:
-
-- Sau mỗi thay đổi cơ khí, chạy test Z repeatability.
-- Nếu thấy QGL dao động tăng dần hoặc first layer lệch bất thường, thử giảm tạm:
-
-```ini
-max_z_velocity: 30
-max_z_accel: 350
-```
-
-Sau đó tăng lại từng bước.
-
-### R7 - `tmc_fan` comment và cấu hình có thể gây hiểu nhầm
-
-Mức nguy hiểm: Thấp đến trung bình.
-
-Trạng thái: Đã sửa trong cấu hình ngày 2026-06-05.
-
-Trước đó trong `fans-leds.cfg`:
-
-```ini
-[controller_fan tmc_fan]
-idle_speed: 1.0
-idle_timeout: 0
-```
-
-Comment nói muốn quạt chạy 100% kể cả idle, nhưng cũng ghi `0 means off immediately`.
-
-Rủi ro:
-
-- Nếu hiểu sai, quạt TMC có thể không chạy sau khi stepper idle.
-- Điện tử nóng khi máy chờ lâu trong chamber nóng.
-
-Sửa đã áp dụng:
-
-- Làm rõ comment: fan chạy khi stepper active và giữ chạy thêm trong thời gian cooldown.
-- Đổi `idle_timeout` thành 3600 giây để quạt tiếp tục làm mát driver 1 giờ sau khi stepper idle.
-
-Cần kiểm tra thực tế: sau khi stepper idle, quạt TMC còn chạy trong thời gian cooldown không.
-
-### R8 - Nozzle clean dùng tọa độ ngoài vùng bàn
-
-Mức nguy hiểm: Trung bình nếu copy sang máy khác hoặc lệch tọa độ.
-
-`CLEAN_NOZZLE` dùng:
-
-- Bucket: `X320 Y-8`
-- Brush: quanh `Y=-8`
-
-Rủi ro:
-
-- Nếu endstop, dock, brush hoặc position_min/position_max thay đổi, đầu in có thể va bucket/brush/frame.
-
-Đề xuất:
-
-- Không port file này sang máy khác nếu chưa đo lại.
-- Sau thay đổi cơ khí front brush/bucket, test:
-
-```gcode
-G28
-G0 Z20
-G0 X320 Y-8
-```
-
-Quan sát bằng tay trước khi chạy `CLEAN_NOZZLE`.
-
-### R9 - Moonraker trusted_clients mở toàn bộ dải Tailscale
-
-Mức nguy hiểm: Thấp đến trung bình.
-
-`moonraker.conf` cho phép:
-
-```ini
-100.64.0.0/10
-fd7a:115c:a1e0::/48
-```
-
-Rủi ro:
-
-- Mọi thiết bị trong tailnet có thể được Moonraker tin cậy nếu kết nối tới được máy in.
-
-Đề xuất:
-
-- Chỉ dùng tailnet cá nhân đáng tin cậy.
-- Không bật subnet router/exit node lạ trỏ vào máy in nếu không cần.
-- Nếu muốn chặt hơn, dùng Moonraker authorization theo host/token thay vì trusted toàn dải.
-
-### R10 - `update.sh` loại trừ nhật ký chỉnh sửa khỏi máy Voron
-
-Mức nguy hiểm: Thấp.
-
-Script có:
-
-```bash
---exclude "Nhat-ky-chinh-sua/"
-```
-
-Rủi ro:
-
-- Người dùng nhìn trên Mainsail file manager sẽ không thấy nhật ký.
-
-Đề xuất:
-
-- Giữ như hiện tại nếu muốn máy Voron gọn.
-- Nếu muốn đọc nhật ký trên Voron, bỏ exclude này, nhưng không cần thiết cho vận hành.
-
-## 14. Checklist sau mỗi lần cập nhật
-
-Sau khi pull/update:
-
-Chỉ thực hiện toàn bộ checklist này khi máy in ở trạng thái idle, không pause và
-không có bản in đang chạy.
-
-1. Chạy:
-
-```bash
-cd ~/printer_data/config
-bash scripts/update.sh
-sudo systemctl restart klipper
-```
-
-2. Nếu thay `moonraker.conf`:
-
-```bash
-sudo systemctl restart moonraker
-```
-
-3. Trong Mainsail:
-
-```gcode
-FIRMWARE_RESTART
-```
-
-4. Kiểm tra không có lỗi config.
-5. Chạy `G28`.
-6. Chạy `QUAD_GANTRY_LEVEL`.
-7. Test pickup/dropoff từng tool ở Z an toàn.
-8. Test `CLEAN_NOZZLE` nếu có thay đổi tọa độ bucket/brush.
-9. Test `PRIME_LINES` bằng file nhỏ trước khi in nhiều màu dài.
-10. Với print nhiều tool, quan sát console:
-    - tool được heat standby;
-    - QGL chạy sau khi bàn ổn định;
-    - prime đủ nhựa;
-    - crash detection bật lại sau prime;
-    - sau toolchange, crash detection bật lại.
-
-## 15. Quy tắc sửa cấu hình an toàn
-
-- Không sửa hoặc deploy đè `readonly-configs`; luôn để installer KTC-Easy quản lý.
-- Sửa trong `Printer-Setup/` hoặc `toolchanger/toolchanger-config.cfg`.
-- Sau khi sửa macro động, restart Klipper.
-- Sau khi sửa dock path, test pickup/dropoff không filament, nhiệt thấp, tay gần nút emergency.
-- Sau khi sửa offset tool, in test first layer từng tool.
-- Sau khi sửa heat/prime, test file nhỏ một tool trước, rồi mới test nhiều tool.
-- Luôn giữ backup trong `~/printer_data/config_backups`.
+Sau đó mới xem trạng thái service/log. Chỉ home/toolchange/probe khi operator
+đã xác nhận máy rỗng, dock đúng, đường đi an toàn và emergency stop sẵn sàng.
+
+## 11. Quy tắc sửa an toàn
+
+- Sao lưu trước khi sửa `.cfg`, `.conf` hoặc `.sh`.
+- Không sửa `readonly-configs/`.
+- Không thay offset production từ một lần đo.
+- Không deploy khi đang in/paused/calibration.
+- Không xóa `Generated-Data/ToolVision/` khi cập nhật cấu hình.
+- Không viết lại journal/backup cũ; tạo journal hoặc snapshot mới.

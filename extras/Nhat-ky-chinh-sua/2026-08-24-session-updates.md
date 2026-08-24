@@ -99,3 +99,76 @@
   heater target `0`. Không home, probe, toolchange, setup hoặc calibration.
 - CM4 hiện có bốn rollback snapshot nhỏ sau khi installer tạo bản mới; không
   xóa thêm backup trong tác vụ này.
+
+## 4. Viết lại tài liệu hiện hành theo cặp Anh–Việt
+
+### Phạm vi và nguyên tắc
+
+- Người vận hành yêu cầu cập nhật các file Markdown song ngữ và viết sát tiến
+  độ thật sau khi đọc code, không tự suy diễn.
+- Đã kiểm kê 64 file Markdown được Git theo dõi trước thay đổi: tài liệu hiện
+  hành, journal lịch sử, snapshot backup, snapshot tải từ máy, file retired và
+  tài liệu fork Axiscope không còn active.
+- Không sửa nội dung journal cũ, snapshot backup hoặc snapshot tải từ máy vì đó
+  là bằng chứng bất biến. Ba snapshot rollback Git gần nhất chỉ được dẫn link
+  trong chỉ mục mới. Đây là thay đổi chỉ `.md`, không sửa `.cfg`, `.conf` hoặc
+  `.sh`, nên không tạo thêm snapshot cấu hình.
+- Hai mục untracked `extras/Config download/config-20260821-172111*` tiếp tục
+  không được sửa hoặc stage.
+
+### Source đã đọc và sự thật được khóa
+
+- Đọc lại `printer.cfg`, toàn bộ `Printer-Setup/*.cfg`,
+  `toolchanger-config.cfg`, T0–T4, `install.sh`, `update.sh`,
+  `cleanup-voron.sh`, `moonraker.conf`, `crowsnest.conf` và script đồng bộ
+  OrcaSlicer.
+- Xác nhận lại include order, quyền sở hữu readonly của KTC-Easy, CAN UUID,
+  dock, offset production, giới hạn trục, Cartographer mesh/Touch, trình tự
+  `PRINT_START`/`PRINT_END`, prime line, dryer preset, ToolVision PF2 và đường
+  dẫn `Generated-Data/ToolVision/`.
+- Đọc source, test và tài liệu chuẩn của repository ToolVision độc lập. Nhánh
+  `codex/z-calibration-ux` tại `2d936f3` đã cài đặt method Z tường minh,
+  `VERBOSITY=QUIET`, metadata `NOT APPLIED` và history 20 record, nhưng tài liệu
+  test của chính dự án ghi chưa deploy/HIL production. Runtime máy được ghi
+  nhận vẫn là `2b3bf2c6`, vì vậy tài liệu phân biệt rõ hai trạng thái.
+
+### Tài liệu đã cập nhật
+
+- Tạo cặp `README.md` / `README.vi.md` ở root.
+- Tạo cặp `config/README.md` / `config/README.vi.md`.
+- Tạo cặp `Orca Config/README.md` / `Orca Config/README.vi.md` theo hành vi thật
+  của `Sync-OrcaProfiles.ps1` và `.cmd`.
+- Viết lại hướng dẫn StealthChanger tiếng Việt và thêm bản tiếng Anh.
+- Viết lại cặp hướng dẫn tích hợp ToolVision; phân biệt runtime production và
+  feature branch chưa deploy.
+- Chuyển đề xuất UX ToolVision thành báo cáo evidence/trạng thái implementation
+  và thêm bản tiếng Việt.
+- Thêm chỉ mục tài liệu `extras/docs/README.md` / `README.vi.md` để liên kết các
+  cặp hiện hành, nội dung retired và ba snapshot gần nhất mà không sửa backup.
+- `FORK_INFO.md` Axiscope và README retired được bổ sung song ngữ. README dài
+  của fork Axiscope chỉ được thêm banner Anh–Việt báo rõ inactive/rollback,
+  không viết lại nội dung upstream lịch sử.
+
+### Kiểm tra
+
+- Bảy cặp tài liệu hiện hành đều tồn tại và liên kết chéo đúng.
+- Link local trong toàn bộ tài liệu hiện hành đã sửa đều resolve.
+- Quét các tuyên bố cũ không còn thấy “camera XY disabled/inactive”, Axiscope là
+  backend active, `PRINT_END` quay về T0 hoặc chỉ giữ đúng một backup.
+- Đối chiếu lại các giá trị số với code và sửa range Z thành `-5..347`, prime
+  amount thành `13.33 mm` cho mỗi pass đủ 52 mm.
+- `git diff --check` đạt. Cảnh báo LF/CRLF của Git trên Windows không phải lỗi
+  whitespace.
+
+### English summary
+
+- Rewrote the current owned documentation as seven English/Vietnamese pairs
+  after checking the active configuration, scripts and independent ToolVision
+  source/tests.
+- Preserved historical journals, backup READMEs and downloaded snapshots as
+  immutable evidence; the new bilingual index links three recent rollback
+  snapshots without editing them.
+- Clearly separated the deployed ToolVision canary (`2b3bf2c6`) from the
+  implemented but not production-deployed UX branch (`2d936f3`).
+- Local-link validation and `git diff --check` passed; no printer motion,
+  service restart, deployment or generated-data mutation was required.
