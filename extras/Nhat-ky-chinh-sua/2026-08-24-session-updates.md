@@ -116,6 +116,85 @@
 - Hai mục untracked `extras/Config download/config-20260821-172111*` tiếp tục
   không được sửa hoặc stage.
 
+## 6. Cài ToolVision RC2 canary và preflight Cartographer Touch
+
+### Mục tiêu
+
+- Đọc lại quy tắc, tài liệu hiện hành của All-Config và handbook bắt buộc của
+  repository ToolVision trước khi thay đổi máy.
+- Xác định bản mới nhất phù hợp để HIL Cartographer, đối chiếu phép tính Z với
+  Cartographer3D đang chạy thật và cài canary mà không áp offset production.
+
+### Baseline và đối chiếu source
+
+- ToolVision production trước update: `main` tại `500dbad`, runtime
+  `3.4.0-rc1`; semantic tag gần nhất vẫn là `v3.3.0-rc1`.
+- Canary mới nhất đã xác minh trực tiếp trên remote:
+  `codex/correctness-safety-evidence` tại `6059149`, runtime `3.4.0-rc2`.
+- Cartographer production: package `cartographer3d-plugin 1.9.0`, Touch model
+  `default`, firmware Cartographer V3 `6.1.0`.
+- Cartographer lấy median của tập touch hợp lệ rồi trả
+  `trigger_position - model.z_offset` qua public status
+  `cartographer.touch.last_z_result`. ToolVision đọc đúng public command/status
+  và tính `raw_contact_z(tool) - raw_contact_z(T0)`. Vì toàn run khóa cùng một
+  Touch model và sensor cố định trên shuttle, `model.z_offset` triệt tiêu trong
+  phép trừ tương đối.
+- RC2 tiếp tục dùng T0 đầu run làm mốc offset, đo lại T0 cuối run chỉ để báo
+  signed drift. Nó không cộng correction, không gọi `SAVE_CONFIG` và không sửa
+  `gcode_z_offset` production.
+
+### Kiểm tra local trước deploy
+
+- `158/158` unit/component/fake-Klipper test: đạt.
+- Python compile, Ruff safety subset và `git diff --check`: đạt.
+- Không phát hiện lỗi contract, dấu hoặc phép tính đủ để chặn canary. Các gate
+  simulator/HIL còn thiếu vẫn được giữ đúng là rủi ro mở.
+
+### Sao lưu
+
+- Backup trên CM4 đã tạo và xác minh toàn bộ SHA-256:
+  [manual-rc2-cartographer-hil-20260824-211500](file:///home/voron/printer_data/config_backups/tool-vision/manual-rc2-cartographer-hil-20260824-211500/).
+- Backup chứa `printer.cfg`, `moonraker.conf`, `tool-vision.cfg`,
+  `moonraker.asvc`, state/result/migration backup, commit/status runtime và Git
+  bundle đã qua `git bundle verify`.
+- Bản off-device đã copy và kiểm tra lại từng checksum tại
+  [printer-rc2-cartographer-hil-20260824-211500](file:///D:/Desktop/Tool-Vision/.local-backups/printer-rc2-cartographer-hil-20260824-211500/).
+
+### Cài đặt canary qua Moonraker
+
+- Live `moonraker.conf` tạm đổi riêng
+  `primary_branch: main` thành
+  `primary_branch: codex/correctness-safety-evidence`; source All-Config chưa
+  đổi vì đây là canary đang chờ HIL và rollback decision.
+- Tạo local canary branch tại chính baseline `500dbad`, đặt upstream remote rồi
+  để Moonraker Update Manager fast-forward đúng hai commit lên `6059149`.
+- Chỉ gọi upgrade `tool-vision`; không update Klipper, Moonraker, OS hoặc
+  component khác. Update Manager restart đúng `tool-vision` và `klipper`.
+
+### Smoke test không chuyển động
+
+- Repository runtime clean, đúng branch/hash `6059149`; host health và Klipper
+  object cùng báo `3.4.0-rc2`.
+- Klipper, Moonraker và `tool-vision.service` active; Klipper trở lại `ready`,
+  printer `standby`, ToolVision `busy=false`, mọi heater target bằng `0`.
+- State/result giữ nguyên checksum trước canary:
+  - `state.json`: `506273e699fbc9a8d9d539afb7141a1fad643a40d9a94e18660bbdc602d1fdca`.
+  - `results.json`: `6f91a57179071ecb8d70d58f8af35701d162df1c4b9bce536b430b7712680466`.
+- RC2 báo `z_ready=false`, `switch_ready=false` theo thiết kế vì station schema
+  3 cũ không có `reference_offset`. Runtime fail-closed và yêu cầu teach lại,
+  không tự đoán snapshot bằng zero.
+- Chạy `CALIBRATION_STATUS`, `CHECK_OFFSETS`, `QUERY_ENDSTOPS` và
+  `TOOL_VISION_STATUS`; không có home, heat, probe, toolchange hoặc ghi JSON.
+
+### Kết quả và bước còn lại
+
+- Cài đặt canary và smoke test đạt; chưa có bằng chứng lỗi mã cần chuyển sang
+  dự án ToolVision.
+- HIL đang dừng an toàn trước chuyển động. Sau restart, toolchanger đang
+  `uninitialized`; cần người vận hành hiện diện, bàn/đường dock trống và
+  emergency stop sẵn sàng trước khi home, chọn T0, teach lại Cartographer và
+  chạy Z report-only ở cùng `150 C` để so với baseline ngày 2026-08-23.
+
 ### Source đã đọc và sự thật được khóa
 
 - Đọc lại `printer.cfg`, toàn bộ `Printer-Setup/*.cfg`,
