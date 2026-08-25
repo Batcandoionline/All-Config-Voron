@@ -488,13 +488,17 @@ chuyển quyền sở hữu an toàn từ timer dryer đang chạy.
 | Switch vật lý | Manta `^PF2` |
 | Learned state | `Generated-Data/ToolVision/state.json` |
 | Kết quả mới nhất | `Generated-Data/ToolVision/results.json` |
-| Bằng chứng runtime production | ToolVision `2b3bf2c6`, báo `3.4.0-rc1` |
+| Bằng chứng runtime production | ToolVision `204ae4c`, báo `3.4.0-rc2` |
 
 ToolVision là backend offset tool đang hoạt động. Axiscope và
-`[tools_calibrate]` tiếp tục tắt. Panel All-Config hiện tại gom Setup và
-Calibrate. Nó có thể teach/dùng PF2 switch hoặc Cartographer Touch; teach một
-method sẽ đổi default đã lưu cho action Z/XYZ chung. Luôn xác nhận method panel
-hiển thị trước mỗi phép đo có người giám sát.
+`[tools_calibrate]` tiếp tục tắt. Panel gọn có hai action Z đặt tên rõ
+`Physical switch` và `Cartographer Touch`, cùng `Latest results` và
+`Advanced setup`. Mỗi action truyền `METHOD=` tường minh và kết quả luôn
+report-only. Mọi entry point của panel chặn `printing/paused`; nút Close gọi
+helper riêng thay vì lồng `RESPOND`.
+
+Máy này bật `INITIALIZE_TOOLCHANGER` làm hook recovery KTC sau lỗi ToolVision.
+Đây là setting riêng đã review, không phải default để sao chép sang máy khác.
 
 Camera XY tồn tại trong ToolVision nhưng chưa ready ở status máy gần nhất và
 file này không cấu hình camera source/name. Không xem camera XY là đường
@@ -512,30 +516,34 @@ measured Z(tool) = raw contact Z(tool) - raw contact Z(reference T0)
 vào offset production đang cấu hình. ToolVision không ghi file production
 T0–T4.
 
-Hai run 150 °C có người giám sát ngày 2026-08-23:
+Ba lượt 150 °C cho mỗi phương pháp ngày 2026-08-25 có mean sau:
 
-| Tool | Z production | Kết quả PF2 | Kết quả Cartographer Touch |
+| Tool | Z production | PF2 mean (range) | Cartographer mean (range) |
 | --- | ---: | ---: | ---: |
 | T0 | +0.000 | +0.000 | +0.000 |
-| T1 | +0.228 | +0.098 | +0.242 |
-| T2 | -0.295 | -0.384 | -0.256 |
-| T3 | -0.268 | -0.154 | -0.160 |
-| T4 | -0.014 | +0.078 | +0.102 |
+| T1 | +0.228 | +0.121 (+0.114..+0.130) | +0.243 (+0.238..+0.248) |
+| T2 | -0.295 | -0.385 (-0.386..-0.384) | -0.268 (-0.270..-0.266) |
+| T3 | -0.268 | -0.179 (-0.186..-0.164) | -0.186 (-0.196..-0.178) |
+| T4 | -0.014 | +0.093 (+0.090..+0.096) | +0.105 (+0.102..+0.108) |
 
-T0 return drift PF2 là `+0.028 mm`; Cartographer Touch là `-0.008 mm`. Run thứ
-hai ghi đè `results.json` của runtime hiện tại, vì vậy số đo chỉ còn là evidence
-lịch sử. Chúng không thay offset đã thử nghiệm in tốt bằng mắt.
+Năm lượt Cartographer bổ sung dùng `G28` đầy đủ riêng trước mỗi lượt, bàn giữ
+ở target PETG `70 °C` và nozzle đo ở `150 °C`. Mean (range) là T1 `+0.2464`
+(`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`) và T4 `+0.1028 mm`
+(`0.020`). Mean từng tool chỉ đổi dưới `0.004 mm` so với bộ bàn nguội trước đó;
+T0 return drift nằm trong `0.000..0.020 mm`. Cả năm history có
+`cleanup_errors=[]`, `applied=false` và không đổi cấu hình.
 
-### UX đang phát triển chưa có trên máy này
+### Canary UI và console
 
-Nhánh ToolVision `codex/z-calibration-ux` tại `2d936f3` đã cài nút Z có tên
-method rõ, tách Advanced Setup, `VERBOSITY=QUIET`, metadata `NOT APPLIED` và
-history 20 record có tên method. Tài liệu test của ToolVision ghi evidence mới
-ở mức L0–L2/fake; nhánh chưa deploy hoặc HIL trên máy production này.
+Nhánh `codex/compact-mainsail-output` tại `204ae4c` đã qua GitHub Security Gate
+và HIL. Guard mới ngăn prompt/action ToolVision khi đang in hoặc pause. Một
+dialog đã cache vẫn do KlipperScreen sở hữu và có thể cần refresh frontend sau
+khi bản in kết thúc. Không lọc `action:prompt_*`, warning hoặc error bằng regex
+vì đây là giao thức prompt và bằng chứng chẩn đoán.
 
 Đọc [hướng dẫn tích hợp](extras/docs/toolvision-integration-guide.vi.md) và
-[báo cáo trạng thái implementation](extras/docs/toolvision-z-calibration-ux-proposal.vi.md)
-trước khi đổi runtime hoặc panel.
+[nhật ký 2026-08-25](extras/Nhat-ky-chinh-sua/2026-08-25-session-updates.md)
+trước khi đổi runtime, station hoặc panel.
 
 ## Camera và giao diện người dùng
 

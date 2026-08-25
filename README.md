@@ -496,7 +496,7 @@ dryer timer.
 | Physical switch | Manta `^PF2` |
 | Learned state | `Generated-Data/ToolVision/state.json` |
 | Latest result | `Generated-Data/ToolVision/results.json` |
-| Production runtime evidence | ToolVision `dd645103`, reported `3.4.0-rc2` |
+| Production runtime evidence | ToolVision `204ae4c`, reported `3.4.0-rc2` |
 
 ToolVision is the active report-only tool-offset backend. Axiscope and
 `[tools_calibrate]` remain disabled. The compact panel exposes explicit
@@ -542,14 +542,28 @@ Touch. Cartographer minus PF2 differed by `+0.121 mm` on T1, `+0.117 mm` on T2,
 request to average or apply the methods. Dated immutable history preserves all
 runs; the print-tested production offsets above were not changed.
 
+Five additional Cartographer Touch runs were completed after a separate full
+`G28` before each run, with the bed held at the PETG production target of
+`70 °C` and every nozzle measured at `150 °C`. Their means (ranges) were T1
+`+0.2464` (`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`) and T4
+`+0.1028 mm` (`0.020`). Each mean moved by less than `0.004 mm` from the earlier
+room-temperature-bed Cartographer mean. T0 return drift ranged `0.000..0.020
+mm`; all five sessions had empty cleanup errors and did not apply or change
+configuration. This supports Touch homing after the bed reaches its print
+temperature, while showing no material thermal correction to the relative tool
+offsets on this pilot.
+
 ### Canary UI and console evidence
 
-The canary branch `codex/compact-mainsail-output` at `dd645103` passed the
-GitHub Security Gate and attended HIL. Opening `TOOL_VISION` now emits eight
-prompt responses instead of eleven. A quiet calibration emits exactly three
-ToolVision-owned messages, but KTC toolchange, heater-wait, physical probe and
-Cartographer messages remain visible. Do not hide `action:prompt_*`, warnings or
-errors with a Mainsail regex filter.
+The canary branch `codex/compact-mainsail-output` at `204ae4c` passed the GitHub
+Security Gate and attended HIL. Every prompt entry point now fails closed while
+the printer is printing or paused, and Close uses a dedicated helper instead of
+a nested `RESPOND`. A client-cached KlipperScreen dialog still belongs to that
+client and may require a frontend refresh after the print. Opening
+`TOOL_VISION` emits eight prompt responses instead of eleven. A quiet
+calibration emits exactly three ToolVision-owned messages, but KTC toolchange,
+heater-wait, physical probe and Cartographer messages remain visible. Do not
+hide `action:prompt_*`, warnings or errors with a Mainsail regex filter.
 
 Read the [integration guide](extras/docs/toolvision-integration-guide.en.md) and
 [2026-08-25 journal](extras/Nhat-ky-chinh-sua/2026-08-25-session-updates.md)

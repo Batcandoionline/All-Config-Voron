@@ -9,7 +9,7 @@ independent ToolVision repository. Source and printer evidence were refreshed
 through 2026-08-25 against:
 
 - the current All-Config worktree and its backed-up live configuration;
-- ToolVision branch `codex/compact-mainsail-output` at `dd645103`, version
+- ToolVision branch `codex/compact-mainsail-output` at `204ae4c`, version
   `3.4.0-rc2`;
 - GitHub Security Gate, real Mainsail prompt rendering and attended dual-method
   HIL on the private five-tool printer.
@@ -76,7 +76,7 @@ are recorded.
 
 ## Current deployed UI
 
-The canary runtime at `dd645103` and the All-Config panel were deployed and
+The canary runtime at `204ae4c` and the All-Config panel were deployed and
 attended-HIL tested on 2026-08-25. The main page now contains only:
 
 - `Measure Z - Physical switch`;
@@ -89,6 +89,12 @@ station can change the stored default, but it cannot silently change either
 named Z action. `Latest results` labels the method and mode from the immutable
 last-session record, preserves an exact `0.0` drift, and always states
 `NOT APPLIED`.
+
+Every prompt entry point now fails closed while `print_stats` is `printing` or
+`paused`. Close calls a dedicated hidden macro rather than a nested `RESPOND`.
+This prevents queued ToolVision actions from affecting a print, but a dialog
+already cached by KlipperScreen still requires that client to refresh after the
+print.
 
 Opening the panel now produces eight prompt responses instead of eleven. Quiet
 mode limits ToolVision itself to three messages per successful calibration;
@@ -178,6 +184,15 @@ disagreement means the values must not be averaged or applied without further
 mechanical investigation. All runs remained report-only and are retained in
 dated history; production offsets were not changed.
 
+Five additional valid Cartographer Touch runs used a separate full `G28`
+before each run, a bed held at `70 °C` and nozzles at `150 °C`. Means (ranges)
+were T1 `+0.2464` (`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`)
+and T4 `+0.1028 mm` (`0.020`). Every mean differed by less than `0.004 mm`
+from the earlier room-temperature-bed mean. T0 return drift was
+`0.000..0.020 mm`; all cleanup lists were empty. One additional session that
+did not receive its required fresh `G28` was retained in history but excluded
+from these statistics.
+
 ## Backup and rollback
 
 All-Config deployment snapshots use:
@@ -212,7 +227,7 @@ its schema is compatible with the selected runtime.
 - **Setup appears lost:** check `Generated-Data/ToolVision/state.json` before
   teaching again.
 - **Latest result shows the wrong method or `0.0` drift as `n/a`:** update to
-  `dd645103` or later, sync the matching panel, restart Klipper and repeat the
+  `204ae4c` or later, sync the matching panel, restart Klipper and repeat the
   non-motion `Latest results` check.
 - **Too much console output:** confirm the UI action passes
   `VERBOSITY=QUIET`. ToolVision then owns only three calibration messages;

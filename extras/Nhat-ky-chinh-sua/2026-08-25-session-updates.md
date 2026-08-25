@@ -284,3 +284,93 @@
 - Trạng thái cuối: Klipper ready, XYZ homed, KTC ready, T0 active/detected,
   ToolVision idle, cả năm heater target/power bằng 0. Không áp production
   offset.
+
+## 7. Sửa vòng đời prompt KlipperScreen sau khi bản in kết thúc
+
+- Trong khi máy in PETG, BTT 5-inch giữ popup `ToolVision Z measurements` dù
+  mỗi lần bấm X/Close đều round-trip `action:prompt_end`. ToolVision lúc đó
+  `busy=false`; bản in tiếp tục bình thường. Nguyên nhân là dialog phía
+  KlipperScreen bị lệch/cache khi đường G-code bận, kết hợp panel cũ cho phép
+  mở khi `printing/paused` và dùng payload `RESPOND` lồng nhau.
+- Yêu cầu sửa source được chuyển sang task `Đơn giản hóa tự động căn chỉnh`;
+  không sửa repository ToolVision trong task All-Config. Source commit
+  `204ae4cecfec90c58cd4a84b85f4b378c1264062` trên nhánh
+  `codex/compact-mainsail-output` đạt `168/168` test và GitHub Security Gate.
+- Bản sửa chặn mọi prompt/action khi `printing/paused`, thêm
+  `_TOOL_VISION_UI_CLOSE` và không thay đổi motion, heater, probe, offset hoặc
+  report-only contract.
+- Chỉ cập nhật sau khi `print_stats=complete`, ToolVision idle và Klipper ready.
+  Backup đã xác minh SHA-256 cũ
+  `c53a5368bb4a60a9ea96013d98f15ccb9dc40a09abea2fd619af5629a97190c7`:
+  - local: `extras/backups/pre-toolvision-prompt-guard-20260825-200759/`;
+  - CM4: `/home/voron/printer_data/config_backups/tool-vision/manual-prompt-guard-before-20260825-200759/`.
+- Chỉ thay toàn bộ block `[gcode_macro TOOL_VISION]` và `_TOOL_VISION_UI_*`;
+  giữ nguyên section `[tool_vision]` riêng máy. File live/local mới cùng SHA-256
+  `e6386c0910c179cb3ae10602639ab7b614851a7db70b05833d1fd97b8f1fa7b2`.
+  Restart Klipper khi idle đạt; macro Close mới load, hai helper UI cũ không còn.
+- Mainsail tạm hiển thị hai dòng `tool-vision.cfg`: dòng 15,2 kB mới và dòng
+  12,1 kB cũ. Filesystem, Moonraker file API và configfile object cùng xác nhận
+  chỉ một file/section thật; dòng 12,1 kB là ghost cache của frontend, không có
+  file để xóa.
+
+## 8. Năm lượt Cartographer Touch ở bàn PETG 70 °C
+
+### Điều kiện
+
+- Camera xác nhận mặt bàn và vùng Touch tại `X174 Y168` trống.
+- Bàn được giữ target `70 °C`; sau overshoot đầu, bốn mẫu liên tiếp giảm từ
+  `70.56` xuống `70.14 °C` trước lượt đầu. Chamber bắt đầu khoảng `38.7 °C` và
+  tăng tới khoảng `43.2 °C`; coil Cartographer tăng từ khoảng `37.2` tới
+  `42.5 °C`.
+- Mỗi lượt hợp lệ có một `G28` đầy đủ riêng ngay trước calibration, xác minh XYZ
+  homed, KTC ready, T0 active/detected. ToolVision dùng nozzle `150 °C`, method
+  explicit và `VERBOSITY=QUIET`; bàn giữ 70 °C, không apply.
+- Một session `20260825-132649-786-z-cartographer_touch-01.json` không nhận được
+  `G28` mới do tên biến PowerShell `$home` xung đột biến hệ thống. Session được
+  để cleanup bình thường và giữ trong history nhưng loại khỏi toàn bộ thống kê
+  năm lượt.
+
+### Năm lượt hợp lệ
+
+| Lượt | T1 | T2 | T3 | T4 | Drift T0 | History |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | +0.236 | -0.268 | -0.188 | +0.108 | +0.016 | `20260825-131829-509-z-cartographer_touch-01.json` |
+| 2 | +0.242 | -0.280 | -0.194 | +0.106 | +0.002 | `20260825-132248-757-z-cartographer_touch-01.json` |
+| 3 | +0.252 | -0.266 | -0.194 | +0.090 | +0.000 | `20260825-133058-681-z-cartographer_touch-01.json` |
+| 4 | +0.242 | -0.276 | -0.188 | +0.110 | +0.006 | `20260825-133515-148-z-cartographer_touch-01.json` |
+| 5 | +0.260 | -0.254 | -0.184 | +0.100 | +0.020 | `20260825-133944-202-z-cartographer_touch-01.json` |
+
+| Tool | Mean 70 °C | Range | Sample SD | Chênh mean so với bộ bàn nguội | Chênh production |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| T1 | +0.24640 | 0.024 | 0.00953 | +0.00373 | +0.01840 |
+| T2 | -0.26880 | 0.026 | 0.01006 | -0.00080 | +0.02620 |
+| T3 | -0.18960 | 0.010 | 0.00434 | -0.00360 | +0.07840 |
+| T4 | +0.10280 | 0.020 | 0.00808 | -0.00187 | +0.11680 |
+
+- Mean/range/sample SD của T0 return drift là `+0.0088 / 0.020 / 0.00879 mm`.
+- Tất cả năm history có `cleanup_errors=[]`, `applied=false`,
+  `configuration_changed=false`; không có sampling failure, tool detection
+  failure, cleanup error hoặc `INVALID`.
+- `WARNING` duy nhất là `max_reference_z_drift is not configured`. Dữ liệu thực
+  quan sát drift tối đa `0.020 mm`; có thể cân nhắc threshold máy riêng
+  `0.030–0.040 mm` sau review, không tự đặt trong phiên này.
+
+### Đánh giá ảnh hưởng nhiệt
+
+- Mean ở bàn 70 °C lệch dưới `0.004 mm` so với ba lượt Cartographer trước khi
+  giữ bàn nóng. Nhiệt bàn không tạo correction tương đối đáng kể trên pilot vì
+  T0 và mọi tool chạm cùng điểm/cùng model trong một lượt; phần dịch chuyển
+  chung của bed/frame triệt tiêu khi trừ T0.
+- Raw T0 `trigger_z` thay đổi lớn giữa các lần `G28` (`+0.120917` tới
+  `-0.144310 mm`), nên không được so raw Z xuyên lần home. Offset tương đối cùng
+  session mới là dữ liệu đúng.
+- Home/Touch ở nhiệt thường rồi mới làm nóng bàn có thể làm sai khoảng cách lớp
+  đầu do giãn nở bed/frame. Luồng production hiện đã heat-soak bàn PETG rồi mới
+  QGL/Touch home, nên phản ánh điều kiện in tốt hơn. Nozzle vẫn dùng 150 °C để
+  giảm PETG rỉ; thử ở 220 °C sẽ tăng rủi ro nhựa bám làm sai contact và không
+  được thực hiện.
+- Production offset tiếp tục giữ T1 `+0.228`, T2 `-0.295`, T3 `-0.268`, T4
+  `-0.014 mm`. T1/T2 gần Cartographer; T3/T4 vẫn lệch production khoảng
+  `0.078/0.117 mm`, cần first-layer A/B ở nhiệt in trước mọi thay đổi.
+- Bàn được trả target 0; năm nozzle target 0; Klipper ready, XYZ homed, KTC
+  ready, T0 active/detected và ToolVision idle, `last_error=null`.

@@ -9,7 +9,7 @@ repository ToolVision độc lập. Source và bằng chứng máy được cậ
 2026-08-25 theo:
 
 - worktree All-Config hiện tại và cấu hình live đã được backup;
-- nhánh ToolVision `codex/compact-mainsail-output` tại `dd645103`, version
+- nhánh ToolVision `codex/compact-mainsail-output` tại `204ae4c`, version
   `3.4.0-rc2`;
 - GitHub Security Gate, render prompt Mainsail thật và HIL hai phương pháp có
   người giám sát trên máy năm tool riêng.
@@ -73,7 +73,7 @@ XY là đang hoạt động trước khi có setup giám sát và bằng chứng
 
 ## UI hiện đang deploy
 
-Canary runtime `dd645103` và panel All-Config đã được deploy, HIL có người giám
+Canary runtime `204ae4c` và panel All-Config đã được deploy, HIL có người giám
 sát ngày 2026-08-25. Trang chính hiện chỉ gồm:
 
 - `Measure Z - Physical switch`;
@@ -85,6 +85,11 @@ Mỗi action Z truyền rõ `METHOD=` và `VERBOSITY=QUIET`. Teach station vẫn
 đổi default đã lưu nhưng không thể âm thầm đổi phương pháp của hai nút Z đã đặt
 tên. `Latest results` lấy method/mode từ record session cuối, giữ đúng drift
 `0.0` và luôn ghi `NOT APPLIED`.
+
+Mọi entry point của prompt chặn fail-closed khi `print_stats` là `printing`
+hoặc `paused`. Close gọi một helper ẩn riêng thay vì lồng `RESPOND`. Guard này
+ngăn action ToolVision bị xếp hàng tác động bản in, nhưng dialog đã cache vẫn
+phải do KlipperScreen refresh sau khi in xong.
 
 Mở panel hiện sinh tám response thay vì mười một. Quiet mode giới hạn chính
 ToolVision còn ba message cho mỗi calibration thành công; dòng chờ heater,
@@ -172,6 +177,14 @@ T1/T2 nghĩa là không được lấy trung bình hoặc áp kết quả khi ch
 khí thêm. Tất cả run chỉ report và được giữ trong history có ngày; offset
 production không đổi.
 
+Năm lượt Cartographer Touch hợp lệ bổ sung dùng một `G28` đầy đủ riêng trước
+mỗi lượt, bàn giữ `70 °C` và nozzle ở `150 °C`. Mean (range) là T1 `+0.2464`
+(`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`) và T4 `+0.1028 mm`
+(`0.020`). Mỗi mean lệch dưới `0.004 mm` so với mean khi bàn ở nhiệt thường.
+T0 return drift là `0.000..0.020 mm`; mọi cleanup đều rỗng. Một session không
+nhận được `G28` mới theo protocol được giữ trong history nhưng loại khỏi thống
+kê này.
+
 ## Backup và rollback
 
 Snapshot All-Config dùng:
@@ -204,7 +217,7 @@ runtime được chọn.
 - **Có vẻ mất setup:** kiểm tra `Generated-Data/ToolVision/state.json` trước khi
   teach lại.
 - **Latest result ghi sai method hoặc biến drift `0.0` thành `n/a`:** cập nhật
-  `dd645103` hoặc mới hơn, đồng bộ panel tương ứng, restart Klipper rồi kiểm tra
+  `204ae4c` hoặc mới hơn, đồng bộ panel tương ứng, restart Klipper rồi kiểm tra
   lại `Latest results` không chuyển động.
 - **Console quá nhiều dòng:** xác nhận action UI truyền `VERBOSITY=QUIET`.
   ToolVision khi đó chỉ sở hữu ba message calibration; log KTC, heater, probe
