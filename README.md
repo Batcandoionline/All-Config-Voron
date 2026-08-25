@@ -496,13 +496,19 @@ dryer timer.
 | Physical switch | Manta `^PF2` |
 | Learned state | `Generated-Data/ToolVision/state.json` |
 | Latest result | `Generated-Data/ToolVision/results.json` |
-| Production runtime evidence | ToolVision `2b3bf2c6`, reported `3.4.0-rc1` |
+| Production runtime evidence | ToolVision `dd645103`, reported `3.4.0-rc2` |
 
-ToolVision is the active tool-offset backend. Axiscope and `[tools_calibrate]`
-remain disabled. The current All-Config panel groups Setup and Calibrate. It can
-teach/use the PF2 physical switch or Cartographer Touch; teaching a method
-changes the stored default used by generic Z/XYZ actions. Confirm the displayed
-method before every attended measurement.
+ToolVision is the active report-only tool-offset backend. Axiscope and
+`[tools_calibrate]` remain disabled. The compact panel exposes explicit
+`Physical switch` and `Cartographer Touch` Z actions, `Latest results`, and an
+`Advanced setup` page. UI-generated Z runs always pass an explicit `METHOD=`
+and `VERBOSITY=QUIET`; teaching a station can still change the stored default,
+but it cannot silently change the method of either named measurement button.
+
+This machine opts into `INITIALIZE_TOOLCHANGER` as ToolVision's post-error KTC
+recovery hook. The hook initializes from the physically detected tool and
+ToolVision verifies active state before attempting to restore T0. It is a
+reviewed machine-specific setting, not a portable ToolVision default.
 
 Camera XY exists in ToolVision but was not ready in the last recorded printer
 status and no camera source/name is configured here. Do not treat camera XY as
@@ -520,32 +526,34 @@ This is a candidate absolute tool value relative to T0. It is not a residual
 delta to add to the configured production offset. ToolVision never writes the
 T0–T4 production files.
 
-Observed attended 150 °C runs from 2026-08-23:
+Three attended 150 °C runs per method on 2026-08-25 produced these means:
 
-| Tool | Production Z | PF2 result | Cartographer Touch result |
+| Tool | Production Z | PF2 mean (range) | Cartographer Touch mean (range) |
 | --- | ---: | ---: | ---: |
 | T0 | +0.000 | +0.000 | +0.000 |
-| T1 | +0.228 | +0.098 | +0.242 |
-| T2 | -0.295 | -0.384 | -0.256 |
-| T3 | -0.268 | -0.154 | -0.160 |
-| T4 | -0.014 | +0.078 | +0.102 |
+| T1 | +0.228 | +0.121 (+0.114..+0.130) | +0.243 (+0.238..+0.248) |
+| T2 | -0.295 | -0.385 (-0.386..-0.384) | -0.268 (-0.270..-0.266) |
+| T3 | -0.268 | -0.179 (-0.186..-0.164) | -0.186 (-0.196..-0.178) |
+| T4 | -0.014 | +0.093 (+0.090..+0.096) | +0.105 (+0.102..+0.108) |
 
-PF2 T0 return drift was `+0.028 mm`; Cartographer Touch drift was
-`-0.008 mm`. The second run replaced the first runtime `results.json`, so these
-measurements remain historical diagnostics. They did not change the visually
-good print-tested offsets.
+Mean T0 return drift was `+0.033 mm` for PF2 and `+0.011 mm` for Cartographer
+Touch. Cartographer minus PF2 differed by `+0.121 mm` on T1, `+0.117 mm` on T2,
+`-0.007 mm` on T3 and `+0.011 mm` on T4. The disagreement is diagnostic, not a
+request to average or apply the methods. Dated immutable history preserves all
+runs; the print-tested production offsets above were not changed.
 
-### Development UX not yet on this printer
+### Canary UI and console evidence
 
-ToolVision branch `codex/z-calibration-ux` at `2d936f3` implements explicit
-method-named Z buttons, Advanced Setup separation, `VERBOSITY=QUIET`, clear
-`NOT APPLIED` metadata and a 20-record method-labelled history. ToolVision's own
-test documentation records L0–L2/fake coverage only: it has not been deployed
-or HIL-tested on this production printer.
+The canary branch `codex/compact-mainsail-output` at `dd645103` passed the
+GitHub Security Gate and attended HIL. Opening `TOOL_VISION` now emits eight
+prompt responses instead of eleven. A quiet calibration emits exactly three
+ToolVision-owned messages, but KTC toolchange, heater-wait, physical probe and
+Cartographer messages remain visible. Do not hide `action:prompt_*`, warnings or
+errors with a Mainsail regex filter.
 
 Read the [integration guide](extras/docs/toolvision-integration-guide.en.md) and
-[implementation-status report](extras/docs/toolvision-z-calibration-ux-proposal.md)
-before changing the runtime or panel.
+[2026-08-25 journal](extras/Nhat-ky-chinh-sua/2026-08-25-session-updates.md)
+before changing the runtime, station or panel.
 
 ## Camera and user interfaces
 

@@ -5,13 +5,14 @@
 ## Verified scope
 
 This guide describes the All-Config integration, not every capability in the
-independent ToolVision repository. Source review was refreshed on 2026-08-24
-against:
+independent ToolVision repository. Source and printer evidence were refreshed
+through 2026-08-25 against:
 
-- deployed machine configuration commit `9d848f04`;
-- the development-canary runtime recorded on the printer at ToolVision commit
-  `2b3bf2c6`, version `3.4.0-rc1`;
-- the newer, not-yet-deployed UX branch `codex/z-calibration-ux` at `2d936f3`.
+- the current All-Config worktree and its backed-up live configuration;
+- ToolVision branch `codex/compact-mainsail-output` at `dd645103`, version
+  `3.4.0-rc2`;
+- GitHub Security Gate, real Mainsail prompt rendering and attended dual-method
+  HIL on the private five-tool printer.
 
 ToolVision remains report-only. It measures candidate relative offsets and
 never calls `SAVE_CONFIG` or writes T0–T4 production offsets.
@@ -30,15 +31,15 @@ never calls `SAVE_CONFIG` or writes T0–T4 production offsets.
 `Generated-Data/` is excluded from Git and All-Config's `rsync --delete`, so a
 configuration update does not remove learned state or results.
 
-When the newer history implementation is eventually reviewed and deployed,
-its default history directory follows the parent of the configured result file:
+The deployed immutable history directory follows the parent of the configured
+result file:
 
 ```text
 Generated-Data/ToolVision/tool-vision-history/
 ```
 
-That directory is **not** evidence that the current production runtime already
-has history. The recorded runtime at `2b3bf2c6` keeps only `results.json`.
+`results.json` remains the backward-compatible latest result; each completed or
+failed session also writes a dated, method-labelled history record.
 
 ## Active machine configuration
 
@@ -55,7 +56,13 @@ The machine-specific section is:
 pin: ^PF2
 state_file: ~/printer_data/config/Generated-Data/ToolVision/state.json
 result_file: ~/printer_data/config/Generated-Data/ToolVision/results.json
+toolchanger_recovery_gcode:
+  INITIALIZE_TOOLCHANGER
 ```
+
+The recovery hook is reviewed for this KTC Easy machine. It is not a portable
+default and must not be copied to another toolchanger without verifying its
+initialization behavior at calibration failure positions.
 
 The physical-switch method depends on `tools_calibrate.py` being installed by
 KTC-Easy, but its `[tools_calibrate]` section must remain disabled while
@@ -67,26 +74,27 @@ camera source/name and the recorded printer status said camera setup was not
 ready. Do not document camera XY as active until an attended setup and evidence
 are recorded.
 
-## Current UI versus development UI
+## Current deployed UI
 
-The deployed All-Config panel groups Setup and Calibrate and uses generic Z/XYZ
-run buttons. Teaching Switch or Cartographer changes the stored default method;
-the generic `MODE=Z` action then uses that state. Always read the method shown
-in the panel before motion.
+The canary runtime at `dd645103` and the All-Config panel were deployed and
+attended-HIL tested on 2026-08-25. The main page now contains only:
 
-The ToolVision branch at `2d936f3` implements but has not production-deployed:
+- `Measure Z - Physical switch`;
+- `Measure Z - Cartographer Touch`;
+- `Latest results`;
+- `Advanced setup` and `Close`.
 
-- method-specific `Measure Z - Physical switch` and `Measure Z - Cartographer
-  Touch` actions;
-- Advanced Setup separated from routine measurement;
-- explicit `METHOD=` on UI-generated Z runs;
-- `VERBOSITY=QUIET` for fewer ToolVision-owned console messages;
-- immutable method-labelled history with fixed retention 20;
-- final `NOT APPLIED` and `Configuration changed: No` metadata.
+Each Z action passes an explicit `METHOD=` and `VERBOSITY=QUIET`. Teaching a
+station can change the stored default, but it cannot silently change either
+named Z action. `Latest results` labels the method and mode from the immutable
+last-session record, preserves an exact `0.0` drift, and always states
+`NOT APPLIED`.
 
-Its tests are L0–L2/component/fake evidence. ToolVision's own documentation says
-Mainsail, simulator and printer HIL are still outstanding. See
-[the implementation-status report](toolvision-z-calibration-ux-proposal.md).
+Opening the panel now produces eight prompt responses instead of eleven. Quiet
+mode limits ToolVision itself to three messages per successful calibration;
+heater waits, KTC toolchanges, physical probe contacts and Cartographer output
+are owned by those components and remain visible. Do not regex-hide
+`action:prompt_*`, warnings or errors.
 
 ## Safe update procedure
 
@@ -109,10 +117,10 @@ sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-Do not update the ToolVision Git runtime to `2d936f3` merely because these docs
-describe it. Its feature branch is not the `main` updater channel, and deploying
-it changes Klipper orchestration and result storage; that requires its own
-backup, review and attended HIL plan.
+The current canary follows `codex/compact-mainsail-output`. Refresh Moonraker's
+update metadata before updating so its cached remote hash includes the reviewed
+commit. Do not use `git pull` directly and do not move another printer to this
+development channel without its own backup and attended HIL plan.
 
 ## Non-motion verification
 
@@ -156,11 +164,19 @@ to add to the configured offset. Match method and temperature when comparing
 runs. Review T0 return drift as diagnostic evidence; ToolVision does not define
 a universal drift pass/fail threshold.
 
-On 2026-08-23, one 150 °C PF2 run and one 150 °C Cartographer Touch run
-completed. Both returned the printer to a safe idle state with heater targets
-at 0, but the second run replaced the first `results.json`. The print-tested
-production offsets were not changed. Values and comparison are preserved in
-[the UX status report](toolvision-z-calibration-ux-proposal.md).
+On 2026-08-25, three valid 150 °C runs per method completed after a full `G28`
+before every run. Mean candidate values for T1–T4 were:
+
+| Method | T1 | T2 | T3 | T4 | Mean T0 return drift |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PF2 physical switch | +0.121 | -0.385 | -0.179 | +0.093 | +0.033 |
+| Cartographer Touch | +0.243 | -0.268 | -0.186 | +0.105 | +0.011 |
+
+Cartographer minus PF2 was `+0.121`, `+0.117`, `-0.007` and `+0.011 mm` for
+T1–T4. Both methods were repeatable internally, but the systematic T1/T2
+disagreement means the values must not be averaged or applied without further
+mechanical investigation. All runs remained report-only and are retained in
+dated history; production offsets were not changed.
 
 ## Backup and rollback
 
@@ -195,10 +211,14 @@ its schema is compatible with the selected runtime.
   `Printer-Setup/tool-vision.cfg`.
 - **Setup appears lost:** check `Generated-Data/ToolVision/state.json` before
   teaching again.
-- **Latest PF2 run disappeared after Cartographer:** this is expected behavior
-  of the recorded `2b3bf2c6` runtime; recover evidence from the original log,
-  not by fabricating JSON.
-- **Too much console output:** current production UI does not pass quiet mode.
-  The reduction exists only on the un-deployed `2d936f3` branch.
+- **Latest result shows the wrong method or `0.0` drift as `n/a`:** update to
+  `dd645103` or later, sync the matching panel, restart Klipper and repeat the
+  non-motion `Latest results` check.
+- **Too much console output:** confirm the UI action passes
+  `VERBOSITY=QUIET`. ToolVision then owns only three calibration messages;
+  KTC, heater, probe and Cartographer output is intentionally not hidden.
+- **KTC becomes uninitialized after a nested command error:** this machine uses
+  the reviewed `INITIALIZE_TOOLCHANGER` recovery hook. Confirm the physically
+  detected tool before enabling the same hook on another machine.
 - **Deployment preflight fails:** fix the named runtime/symlink/KTC ownership
   issue; do not bypass it.

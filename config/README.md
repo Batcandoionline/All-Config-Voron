@@ -83,7 +83,10 @@ The five tool CAN UUIDs, docks and production offsets are documented in the
 - Cartographer Scan provides the adaptive bed mesh. The configured mesh spans
   X `20..320`, Y `45..325` at 55 × 55 samples.
 - ToolVision is loaded from `Printer-Setup/tool-vision.cfg`. It is report-only
-  and uses PF2 for the physical-switch method.
+  and exposes explicit PF2 physical-switch and Cartographer Touch Z actions.
+  The compact panel passes `VERBOSITY=QUIET`; the machine-specific
+  `INITIALIZE_TOOLCHANGER` hook may recover KTC state after a nested command
+  error, but ToolVision still verifies active state before restoring T0.
 - Axiscope and `[tools_calibrate]` are commented rollback material in
   `calibration-probe.cfg`, not active backends.
 - ToolVision camera XY is not configured by this repository; it becomes ready

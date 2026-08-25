@@ -5,12 +5,14 @@
 ## Phạm vi đã xác minh
 
 Tài liệu này mô tả tích hợp trong All-Config, không tuyên bố mọi khả năng của
-repository ToolVision độc lập. Source được đọc lại ngày 2026-08-24 theo:
+repository ToolVision độc lập. Source và bằng chứng máy được cập nhật tới
+2026-08-25 theo:
 
-- cấu hình máy đã deploy tại commit `9d848f04`;
-- development-canary đã ghi nhận trên máy tại commit ToolVision `2b3bf2c6`,
-  version `3.4.0-rc1`;
-- nhánh UX mới chưa deploy `codex/z-calibration-ux` tại `2d936f3`.
+- worktree All-Config hiện tại và cấu hình live đã được backup;
+- nhánh ToolVision `codex/compact-mainsail-output` tại `dd645103`, version
+  `3.4.0-rc2`;
+- GitHub Security Gate, render prompt Mainsail thật và HIL hai phương pháp có
+  người giám sát trên máy năm tool riêng.
 
 ToolVision vẫn chỉ báo cáo. Nó đo offset tương đối ứng viên và không gọi
 `SAVE_CONFIG` hoặc ghi offset production T0–T4.
@@ -29,15 +31,14 @@ ToolVision vẫn chỉ báo cáo. Nó đo offset tương đối ứng viên và 
 `Generated-Data/` bị loại khỏi Git và `rsync --delete` của All-Config, nên cập
 nhật cấu hình không xóa state hoặc result đã học.
 
-Khi implementation history mới được review và deploy, thư mục mặc định sẽ nằm
-cùng parent của result đã cấu hình:
+Thư mục history bất biến đang deploy nằm cùng parent của result đã cấu hình:
 
 ```text
 Generated-Data/ToolVision/tool-vision-history/
 ```
 
-Sự xuất hiện của đường dẫn trong tài liệu **không** chứng minh runtime production
-hiện đã có history. Runtime `2b3bf2c6` được ghi nhận chỉ giữ `results.json`.
+`results.json` tiếp tục là kết quả mới nhất tương thích ngược; mỗi session hoàn
+tất hoặc lỗi cũng ghi một history có ngày và tên method.
 
 ## Cấu hình máy đang hoạt động
 
@@ -54,7 +55,13 @@ Section riêng của máy:
 pin: ^PF2
 state_file: ~/printer_data/config/Generated-Data/ToolVision/state.json
 result_file: ~/printer_data/config/Generated-Data/ToolVision/results.json
+toolchanger_recovery_gcode:
+  INITIALIZE_TOOLCHANGER
 ```
+
+Hook recovery đã được review cho máy KTC Easy này. Đây không phải default dùng
+chung và không được sao chép sang toolchanger khác nếu chưa xác minh hành vi
+initialize tại các vị trí calibration có thể lỗi.
 
 Method switch vật lý cần `tools_calibrate.py` do KTC-Easy cài, nhưng section
 `[tools_calibrate]` phải tiếp tục tắt khi `[tool_vision]` hoạt động. Axiscope
@@ -64,25 +71,25 @@ ToolVision có camera discovery, nhưng file All-Config không đặt camera
 source/name và trạng thái máy đã ghi camera setup chưa ready. Không mô tả camera
 XY là đang hoạt động trước khi có setup giám sát và bằng chứng mới.
 
-## UI hiện tại và UI đang phát triển
+## UI hiện đang deploy
 
-Panel All-Config đã deploy gom Setup và Calibrate, dùng nút Z/XYZ chung. Teach
-Switch hoặc Cartographer làm đổi default method đã lưu; action `MODE=Z` chung
-sẽ dùng state đó. Luôn đọc method panel hiển thị trước chuyển động.
+Canary runtime `dd645103` và panel All-Config đã được deploy, HIL có người giám
+sát ngày 2026-08-25. Trang chính hiện chỉ gồm:
 
-Nhánh ToolVision `2d936f3` đã cài đặt nhưng chưa deploy production:
+- `Measure Z - Physical switch`;
+- `Measure Z - Cartographer Touch`;
+- `Latest results`;
+- `Advanced setup` và `Close`.
 
-- action riêng `Measure Z - Physical switch` và `Measure Z - Cartographer
-  Touch`;
-- tách Advanced Setup khỏi đo thường xuyên;
-- UI luôn truyền `METHOD=` cho run Z;
-- `VERBOSITY=QUIET` giảm message do ToolVision sở hữu;
-- history bất biến có tên method, retention cố định 20;
-- metadata cuối `NOT APPLIED` và `Configuration changed: No`.
+Mỗi action Z truyền rõ `METHOD=` và `VERBOSITY=QUIET`. Teach station vẫn có thể
+đổi default đã lưu nhưng không thể âm thầm đổi phương pháp của hai nút Z đã đặt
+tên. `Latest results` lấy method/mode từ record session cuối, giữ đúng drift
+`0.0` và luôn ghi `NOT APPLIED`.
 
-Test hiện là bằng chứng L0–L2/component/fake. Tài liệu ToolVision ghi Mainsail,
-simulator và HIL trên máy vẫn chưa thực hiện. Xem
-[báo cáo trạng thái triển khai](toolvision-z-calibration-ux-proposal.vi.md).
+Mở panel hiện sinh tám response thay vì mười một. Quiet mode giới hạn chính
+ToolVision còn ba message cho mỗi calibration thành công; dòng chờ heater,
+toolchange KTC, tiếp xúc switch và Cartographer thuộc các component đó nên vẫn
+hiển thị. Không dùng regex để ẩn `action:prompt_*`, warning hoặc error.
 
 ## Quy trình cập nhật an toàn
 
@@ -104,9 +111,10 @@ sudo systemctl restart moonraker
 sudo systemctl restart klipper
 ```
 
-Không cập nhật runtime ToolVision lên `2d936f3` chỉ vì tài liệu này mô tả nó.
-Đây không phải nhánh `main` của updater; deploy sẽ đổi điều phối Klipper và lưu
-result, nên cần backup, review và kế hoạch HIL có người giám sát riêng.
+Canary hiện theo nhánh `codex/compact-mainsail-output`. Refresh metadata của
+Moonraker trước update để cache remote thấy commit đã review. Không chạy
+`git pull` trực tiếp và không chuyển máy khác sang development channel này nếu
+chưa có backup cùng kế hoạch HIL có người giám sát riêng.
 
 ## Kiểm tra không chuyển động
 
@@ -150,11 +158,19 @@ cộng vào offset đang cấu hình. Khi so run phải giữ cùng method và n
 return drift là evidence chẩn đoán; ToolVision chưa có ngưỡng drift pass/fail
 phổ quát.
 
-Ngày 2026-08-23, một run PF2 150 °C và một run Cartographer Touch 150 °C hoàn
-tất. Cả hai đưa máy về idle an toàn với heater target 0, nhưng run thứ hai ghi
-đè `results.json` của run đầu. Offset production đã thử nghiệm in không bị đổi.
-Giá trị được giữ trong
-[báo cáo trạng thái UX](toolvision-z-calibration-ux-proposal.vi.md).
+Ngày 2026-08-25, ba run hợp lệ ở 150 °C cho mỗi phương pháp đã hoàn tất, với
+`G28` đầy đủ trước từng run. Mean ứng viên T1–T4:
+
+| Phương pháp | T1 | T2 | T3 | T4 | Mean drift T0 trở về |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Switch vật lý PF2 | +0.121 | -0.385 | -0.179 | +0.093 | +0.033 |
+| Cartographer Touch | +0.243 | -0.268 | -0.186 | +0.105 | +0.011 |
+
+Cartographer trừ PF2 lần lượt là `+0.121`, `+0.117`, `-0.007` và `+0.011 mm`
+cho T1–T4. Hai phương pháp đều lặp lại tốt trong nội bộ, nhưng sai khác hệ thống
+T1/T2 nghĩa là không được lấy trung bình hoặc áp kết quả khi chưa điều tra cơ
+khí thêm. Tất cả run chỉ report và được giữ trong history có ngày; offset
+production không đổi.
 
 ## Backup và rollback
 
@@ -187,9 +203,14 @@ runtime được chọn.
   `Printer-Setup/tool-vision.cfg`.
 - **Có vẻ mất setup:** kiểm tra `Generated-Data/ToolVision/state.json` trước khi
   teach lại.
-- **Run PF2 mới nhất biến mất sau Cartographer:** đây là hành vi runtime
-  `2b3bf2c6`; khôi phục evidence từ log gốc, không tự tạo JSON.
-- **Console quá nhiều dòng:** UI production hiện chưa truyền quiet mode. Phần
-  giảm log chỉ có trong nhánh `2d936f3` chưa deploy.
+- **Latest result ghi sai method hoặc biến drift `0.0` thành `n/a`:** cập nhật
+  `dd645103` hoặc mới hơn, đồng bộ panel tương ứng, restart Klipper rồi kiểm tra
+  lại `Latest results` không chuyển động.
+- **Console quá nhiều dòng:** xác nhận action UI truyền `VERBOSITY=QUIET`.
+  ToolVision khi đó chỉ sở hữu ba message calibration; log KTC, heater, probe
+  và Cartographer được chủ ý giữ lại.
+- **KTC chuyển uninitialized sau nested command error:** máy này dùng hook
+  `INITIALIZE_TOOLCHANGER` đã review. Phải xác nhận tool đang physically
+  detected trước khi bật hook tương tự trên máy khác.
 - **Preflight deploy lỗi:** sửa runtime/symlink/quyền sở hữu KTC được nêu; không
   bypass.
