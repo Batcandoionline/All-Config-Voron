@@ -267,3 +267,78 @@ sửa mã nguồn ToolVision.
   `18:45:23-18:45:36`.
 - Cần tắt nguồn, kiểm tra dây/connector motor X và driver X trước khi
   tiếp tục. Không chỉ gửi `FIRMWARE_RESTART` để bỏ qua cờ short-to-supply.
+
+## 11. HIL Cartographer bổ sung sau khi xử lý driver X
+
+### Khôi phục và canary
+
+- Người vận hành xác nhận đã xử lý phần cứng. Preflight sau đó cho
+  `DUMP_TMC STEPPER=stepper_x` =
+  `DRV_STATUS: 80190000 cs_actual=25 stst=1`, không còn
+  `ShortToSupply_A`; cold `G28 X Y` và full `G28` đều thành công.
+- Klipper ready, print standby, ToolVision idle, T0 active/detected và bàn được
+  heat-soak tại 70 °C trước khi chạy lại.
+- Chuỗi xen kẽ ban đầu sau sửa phần cứng có một switch hợp lệ
+  (`T1 +0.104, T2 -0.364, T3 -0.086, T4 +0.090`, drift `+0.028`) và một
+  Cartographer hợp lệ
+  (`T1 +0.258, T2 -0.268, T3 -0.118, T4 +0.120`, drift `+0.004`).
+- Attempt Cartographer tiếp theo bị `INVALID` tại T2:
+  `CARTOGRAPHER_TOUCH_PROBE failed: Unable to find 3 samples within 0.010mm in a window of 5 after 10 touches`;
+  history `20260826-121300-706-z-cartographer_touch-01.json`. Không có lỗi
+  TMC/CAN/Klipper, không apply và cleanup không báo lỗi, nhưng KTC lại kết thúc
+  trễ ở `uninitialized/-1/0`. Detector vẫn thấy T0; macro không chuyển động
+  `INITIALIZE_TOOLCHANGER` khôi phục đúng `ready/0/0`.
+- Theo yêu cầu người vận hành, bỏ chuỗi xen kẽ dang dở và bắt đầu lại bộ
+  Cartographer từ 0/5. Các attempt trước đó không trộn vào thống kê năm lượt
+  mới bên dưới.
+
+### Năm lượt Cartographer mới từ đầu
+
+- ToolVision `3.4.0-rc2`, report-only, bàn 70 °C, nozzle 150 °C. Mỗi lượt dùng
+  `HOME=1`, vì vậy có full `G28` riêng trước khi đo.
+- Cả năm lượt hoàn tất; `applied=false`, `configuration_changed=false`,
+  `last_error=null`, cleanup sạch và trả T0 `ready/0/0`.
+- Nhãn `WARNING` chỉ do chưa cấu hình `max_reference_z_drift`, không phải lỗi
+  phép đo.
+
+| Lượt | T1 | T2 | T3 | T4 | Drift T0 | Duration | History |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | +0.272 | -0.264 | -0.102 | +0.128 | +0.020 | 252.09 s | `20260826-122023-520-z-cartographer_touch-01.json` |
+| 2 | +0.246 | -0.280 | -0.118 | +0.114 | +0.000 | 239.63 s | `20260826-122433-553-z-cartographer_touch-01.json` |
+| 3 | +0.250 | -0.288 | -0.128 | +0.120 | +0.000 | 232.51 s | `20260826-122833-740-z-cartographer_touch-01.json` |
+| 4 | +0.256 | -0.268 | -0.108 | +0.132 | +0.010 | 251.35 s | `20260826-123259-936-z-cartographer_touch-01.json` |
+| 5 | +0.248 | -0.268 | -0.136 | +0.118 | -0.006 | 252.50 s | `20260826-123723-967-z-cartographer_touch-01.json` |
+
+| Tool | Mean | Median | Range | Sample SD | Mean - production |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| T1 | +0.2544 | +0.250 | 0.026 | 0.01053 | +0.0080 |
+| T2 | -0.2736 | -0.268 | 0.024 | 0.01004 | -0.0048 |
+| T3 | -0.1184 | -0.118 | 0.034 | 0.01396 | +0.0712 |
+| T4 | +0.1224 | +0.120 | 0.018 | 0.00740 | +0.0196 |
+
+- Mean/median/range/sample SD drift T0 lần lượt là
+  `+0.0048 / +0.000 / 0.026 / 0.01026 mm`; nhiệt bàn trong metadata toàn bộ
+  năm lượt nằm `69.94..70.02 °C` tại các mốc before-home/start/end.
+- So với bộ Cartographer production đã cho bản in tương đối đẹp
+  (`T1 +0.2464, T2 -0.2688, T3 -0.1896, T4 +0.1028`), T1/T2 tiếp tục xác nhận
+  rất gần. T4 cao hơn `+0.0196 mm`, còn T3 cao hơn `+0.0712 mm`, vượt xa độ
+  phân tán nội bộ của phép đo.
+- Gộp chín lượt Cartographer hợp lệ ngày 26/08 (bốn lượt mục 6 và năm lượt
+  mới), mean là `T1 +0.25178, T2 -0.27133, T3 -0.12511, T4 +0.11711 mm`;
+  sample SD tương ứng `0.01037, 0.00806, 0.01490, 0.00923 mm`. T3 vẫn lệch
+  production `+0.06449 mm`, nên đây là sai khác có hệ thống trong điều kiện đo,
+  không phải một outlier đơn.
+
+### Quyết định
+
+- Giữ nguyên bộ offset production đã kiểm chứng bằng bản in; không apply mean
+  hay median của batch mới, đặc biệt không tự đổi T3.
+- Chọn Cartographer làm phương pháp Z ưu tiên khi phần cứng hỗ trợ vì độ lặp tốt
+  hơn switch và bám production ở T1/T2. Switch tiếp tục là tùy chọn/fallback,
+  không được trộn hai phương pháp trong cùng baseline.
+- ToolVision nên tổng hợp batch bằng median kèm min-max/sample SD, so với
+  configured production và fail-closed/report-only khi chênh lệch vượt ngưỡng
+  cấu hình. Một candidate đo được chỉ được đưa sang A/B print sau khi người vận
+  hành xác nhận; không tự `SAVE_CONFIG`.
+- Sau khi hoàn tất, `TURN_OFF_HEATERS`; xác nhận Klipper ready, print standby,
+  ToolVision idle, KTC `ready/0/0`, bàn và cả năm nozzle target/power bằng 0.
