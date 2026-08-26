@@ -412,3 +412,57 @@ sửa mã nguồn ToolVision.
   mọi heater target/power 0.
 - Raw values và ba history sau reset đã gửi sang task ToolVision để triển khai
   diagnostics/state/cleanup fixes.
+
+## 14. Đối chiếu năm lượt thủ công sau full host reboot
+
+- Người vận hành chạy thủ công năm lượt Cartographer liên tiếp từ
+  `20:30:53` tới `20:54:51`; cả năm hoàn tất `WARNING`, không có `INVALID`.
+- History chứng minh đường thủ công và đường tự động đều
+  `home_before_measurement=true`, 150 °C, cùng configuration fingerprint
+  `f8b188...`, cùng ToolVision `3.4.0-rc2` và cùng chuỗi T0→T4→T0. Không có
+  bằng chứng chúng dùng công thức hay macro calibration khác nhau.
+- Trước chuỗi thủ công có full host/Moonraker reboot lúc `20:28:37`; Mainsail
+  websocket mở lại lúc `20:29:10`. Gap từ completion tới start lượt sau của
+  manual là `53.64, 82.23, 55.84, 22.56 s`, trong khi automation sau reset
+  dùng khoảng `13.32..15.00 s`. Đây là khác biệt điều kiện, chưa chứng minh
+  transport HTTP/WebSocket gây khác kết quả.
+
+| Lượt manual | T1 | T2 | T3 | T4 | Drift | History |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | +0.176 | -0.276 | -0.178 | +0.128 | +0.016 | `20260826-133458-106-z-cartographer_touch-01.json` |
+| 2 | +0.170 | -0.282 | -0.186 | +0.108 | +0.002 | `20260826-133954-656-z-cartographer_touch-01.json` |
+| 3 | +0.178 | -0.268 | -0.180 | +0.106 | +0.000 | `20260826-134526-955-z-cartographer_touch-01.json` |
+| 4 | +0.168 | -0.278 | -0.182 | +0.106 | +0.004 | `20260826-135025-985-z-cartographer_touch-01.json` |
+| 5 | +0.170 | -0.294 | -0.180 | +0.104 | +0.016 | `20260826-135451-252-z-cartographer_touch-01.json` |
+
+- Mean/median/range/sample SD manual:
+  - T1 `+0.1724 / +0.170 / 0.010 / 0.00434 mm`;
+  - T2 `-0.2796 / -0.278 / 0.026 / 0.00953 mm`;
+  - T3 `-0.1812 / -0.180 / 0.008 / 0.00303 mm`;
+  - T4 `+0.1104 / +0.106 / 0.024 / 0.00994 mm`.
+- T3 sau vệ sinh bám production rất tốt: mean - production `+0.0084 mm`.
+  T2/T4 cũng gần (`-0.0108/+0.0076 mm`). Riêng T1 mean thấp hơn production
+  `-0.0740 mm` và thấp hơn rõ hai lượt hoàn tất trước full host reboot
+  `+0.250/+0.238 mm`; chưa apply và cần coi đây là discontinuity cần xác minh.
+
+### Raw T2 cho thấy success vẫn sát giới hạn
+
+- Manual 1: 5 touches, full range `0.152 mm`; pass nhờ cụm touch 3-5
+  `-0.4858/-0.4878/-0.4858`.
+- Manual 2: 7 touches, range `0.234 mm`; pass nhờ cụm 5-7
+  `-0.5063/-0.5043/-0.5043`.
+- Manual 3: 6 touches, range `0.422 mm`; pass nhờ cụm muộn quanh
+  `-0.5041..-0.5081`.
+- Manual 4: 9 touches, range `0.614 mm`; pass nhờ touch 7-9
+  `-0.5185/-0.5185/-0.5165`, chỉ còn một touch trước giới hạn.
+- Manual 5: 4 touches, range `0.102 mm`; pass nhờ cụm
+  `-0.5622/-0.5622/-0.5662`.
+- Vì vậy “không báo lỗi” ở manual là đúng ở mức session verdict, nhưng raw T2
+  vẫn marginal và có outlier lớn. Automation `INVALID` có cùng kiểu phân bố,
+  chỉ khác là không gặp mẫu thứ ba đủ gần trong rolling window trước touch 10.
+- Kết luận: chưa có bằng chứng lỗi do đường gọi tự động; sampling T2 mang tính
+  xác suất/biên trong trạng thái hiện tại. Giữ nguyên công thức, tolerance
+  `0.010 mm`, max touches/window, không retry, không apply.
+- Kết luận sửa lại cùng toàn bộ raw manual đã gửi sang task ToolVision. Source
+  fix diagnostics/state/cleanup commit `2e0e9c5` đã CI pass nhưng chưa deploy
+  lên máy trong phiên log này; các kết quả trên vẫn thuộc live commit `aee9c3c`.
