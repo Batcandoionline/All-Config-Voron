@@ -220,3 +220,50 @@ sửa mã nguồn ToolVision.
   nozzle target/power 0.
 - Hai mục untracked `extras/Config download/config-20260821-172111*` thuộc người
   dùng được giữ nguyên và không stage.
+
+## 10. Dừng HIL bổ sung do driver X báo ShortToSupply
+
+### Mục tiêu và preflight
+
+- Mục tiêu là chạy thêm năm attempt switch và năm attempt Cartographer,
+  xen kẽ, report-only, full `G28` trước từng attempt, nozzle 150 °C và bàn
+  PETG 70 °C.
+- Trước chuyển động: Klipper ready, print standby, ToolVision idle, KTC ready,
+  T0 active/detected, camera cho thấy bàn và dock không có vật cản.
+- Bàn đạt bốn mẫu liên tiếp `70.33, 70.18, 70.10, 70.04 °C` trong
+  ±0.5 °C sau khi overshoot ngắn tới 74.57 °C.
+
+### Sự cố attempt đầu
+
+- Attempt 1 dùng `METHOD=SWITCH HOME=1`; session
+  `20260826-114524-081-z-switch-01.json`, duration `18.681 s`, trạng thái
+  `INVALID`.
+- Lỗi chính xảy ra trong full `G28`, trước gia nhiệt nozzle/measure T0:
+  `TMC 'stepper_x' reports error: DRV_STATUS: c01f0010 s2vsa=1(ShortToSupply_A!) cs_actual=31 stealth=1 stst=1`.
+- History có `offsets={}`, `waited_tools=[]`, `reference_z_drift=null`,
+  `configuration_changed=false`, `applied=false`. Không có dữ liệu Z để đưa
+  vào thống kê.
+- Klipper shutdown lúc `18:45:23`; log sau đó ghi reset EBB0-EBB4,
+  Cartographer và main MCU rồi `Start printer` lúc `18:45:27`; Moonraker xác
+  nhận ready lại lúc `18:45:36`. Chuỗi test không gửi
+  `FIRMWARE_RESTART` và không coi trạng thái ready lại là bằng chứng phần cứng
+  đã an toàn.
+- Cleanup ToolVision không thể chạy abort/recovery/heater/G-code-state trong
+  khi printer shutdown và ghi đúng các `cleanup_errors`; original tool không được
+  restore trong session lỗi.
+
+### Hành động an toàn và trạng thái
+
+- Dừng toàn bộ chuỗi; 0/5 switch và 0/5 Cartographer hợp lệ trong
+  batch bổ sung này. Không tự retry, không initialize toolchanger và không
+  có chuyển động tiếp theo.
+- Gửi `TURN_OFF_HEATERS` sau khi Klipper ready lại; xác nhận bàn và cả năm
+  nozzle target/power 0. ToolVision idle; KTC sau khi Klipper nạp lại báo ready,
+  T0 active/detected, nhưng XYZ không được coi là đã home.
+- Bằng chứng off-device trước khi có bất kỳ retry nào:
+  `extras/backups/pre-resume-toolvision-z-hil-20260826-184826/`.
+- Log nguồn: `/home/voron/printer_data/logs/klippy.log` dòng 25071-25072 và
+  26706-26715; `/home/voron/printer_data/logs/moonraker.log` các event
+  `18:45:23-18:45:36`.
+- Cần tắt nguồn, kiểm tra dây/connector motor X và driver X trước khi
+  tiếp tục. Không chỉ gửi `FIRMWARE_RESTART` để bỏ qua cờ short-to-supply.
