@@ -342,3 +342,36 @@ sửa mã nguồn ToolVision.
   hành xác nhận; không tự `SAVE_CONFIG`.
 - Sau khi hoàn tất, `TURN_OFF_HEATERS`; xác nhận Klipper ready, print standby,
   ToolVision idle, KTC `ready/0/0`, bàn và cả năm nozzle target/power bằng 0.
+
+## 12. Batch sau vệ sinh T3 bị chặn tại T2
+
+- Người vận hành phát hiện một miếng nhựa cũ bị ép dẹt trên T3 và yêu cầu đo
+  lại năm lượt Cartographer sau khi loại bỏ nhiễu này.
+- Preflight đạt: Klipper ready, print standby, ToolVision idle, KTC
+  `ready/0/0`, `DRV_STATUS` X vẫn `80190000 cs_actual=25 stst=1`. Bàn đạt bốn
+  mẫu liên tiếp `70.00, 70.47, 70.41, 70.32 °C` trong ±0.5 °C.
+- Canary đầu không tới T3 mà `INVALID` tại T2 do
+  `Unable to find 3 samples within 0.010mm in a window of 5 after 10 touches`.
+  History `20260826-125222-292-z-cartographer_touch-01.json`, duration
+  `162.248 s`, T1 `+0.262`, waited tools `[0,1,2]`, bàn before/start/end
+  `70.27/70.21/70.08 °C`.
+- Sau recovery hook, KTC và detector trở lại `ready/0/0`; driver X sạch. Bắt
+  đầu lại batch chính thức 0/5 nhưng attempt 1 tiếp tục `INVALID` tại T2 với
+  cùng lỗi. History `20260826-125850-285-z-cartographer_touch-01.json`, duration
+  `160.472 s`, T1 `+0.258`, waited tools `[0,1,2]`, bàn before/start/end
+  `70.03/70.00/70.04 °C`.
+- Cả hai session đều report-only, không apply, không thay đổi config và không có
+  lỗi TMC/CAN/Klipper. Vì đều dừng trước T3, không có dữ liệu sau vệ sinh T3 để
+  so sánh; không được diễn giải hai lỗi này là T3 đã tốt hoặc xấu hơn.
+- Cả hai terminal path `INVALID` lại để KTC ở `uninitialized/-1/0` dù detector
+  thấy T0 và `cleanup_errors=[]`. Recovery hook khôi phục đúng `ready/0/0`.
+- Phát hiện thêm lỗi state: `last_history_file`, error, duration và results cập
+  nhật theo session lỗi mới, nhưng `tool_vision.last_run` vẫn giữ timestamp
+  session hợp lệ cũ `1787747843.9670157`. Client poll theo `last_run` vì vậy có
+  thể treo sau `busy=false`.
+- Dừng retry sau hai lỗi T2 liên tiếp; không nới tolerance và không tự retry.
+  Tắt toàn bộ heater; trạng thái cuối Klipper ready, print standby, ToolVision
+  idle, KTC `ready/0/0`, driver X sạch, mọi heater target/power 0.
+- Hai history và yêu cầu sửa sampling diagnostics, terminal state, cleanup
+  verification/recovery đã được gửi sang task ToolVision
+  `01a02382-e5a5-7c93-952f-f01783f6cd55`.
