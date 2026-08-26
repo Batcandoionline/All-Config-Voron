@@ -1,0 +1,42 @@
+{
+  "reference_tool": 0,
+  "schema_version": 4,
+  "stations": {
+    "cartographer_touch": {
+      "model": "default",
+      "position": [
+        174.0,
+        168.0,
+        15.0
+      ],
+      "reference_offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "safe_z": 15.0,
+      "source": "bed_mesh.zero_reference_position",
+      "trigger_z": -0.550146
+    },
+    "switch": {
+      "position": [
+        68.0,
+        -8.0,
+        2.0
+      ],
+      "reference_offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "safe_z": 7.0,
+      "trigger_z": 1.3985049154729698
+    }
+  },
+  "tool_vision_version": "3.4.0-rc2",
+  "updated": 1787648411.6219568,
+  "vision": {},
+  "z": {
+    "method": "switch"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "reference_tool": 0,
+  "schema_version": 2,
+  "stations": {
+    "switch": {
+      "position": [
+        67.5,
+        -8.0,
+        2.0
+      ],
+      "safe_z": 7.0,
+      "trigger_z": 1.2369663242565452
+    }
+  },
+  "tool_vision_version": "3.0.0",
+  "updated": 1787308649.1353703,
+  "vision": {}
+}

@@ -488,14 +488,13 @@ chuyển quyền sở hữu an toàn từ timer dryer đang chạy.
 | Switch vật lý | Manta `^PF2` |
 | Learned state | `Generated-Data/ToolVision/state.json` |
 | Kết quả mới nhất | `Generated-Data/ToolVision/results.json` |
-| Bằng chứng runtime production | ToolVision `204ae4c`, báo `3.4.0-rc2` |
+| Bằng chứng runtime production | ToolVision `aee9c3c`, báo `3.4.0-rc2` |
 
-ToolVision là backend offset tool đang hoạt động. Axiscope và
-`[tools_calibrate]` tiếp tục tắt. Panel gọn có hai action Z đặt tên rõ
-`Physical switch` và `Cartographer Touch`, cùng `Latest results` và
-`Advanced setup`. Mỗi action truyền `METHOD=` tường minh và kết quả luôn
-report-only. Mọi entry point của panel chặn `printing/paused`; nút Close gọi
-helper riêng thay vì lồng `RESPOND`.
+ToolVision là backend offset tool chỉ báo cáo đang hoạt động. Axiscope và
+`[tools_calibrate]` tiếp tục tắt. Một entry `TOOL_VISION` chứa action Z bằng
+Physical switch hoặc Cartographer Touch, XY camera, XYZ camera+Z, setup và kết
+quả mới nhất. Mỗi action thường dùng trang xác nhận, tự chạy `G28` đầy đủ, đặt
+method tường minh và không che lỗi KTC/probe/heater.
 
 Máy này bật `INITIALIZE_TOOLCHANGER` làm hook recovery KTC sau lỗi ToolVision.
 Đây là setting riêng đã review, không phải default để sao chép sang máy khác.
@@ -516,33 +515,46 @@ measured Z(tool) = raw contact Z(tool) - raw contact Z(reference T0)
 vào offset production đang cấu hình. ToolVision không ghi file production
 T0–T4.
 
-Ba lượt 150 °C cho mỗi phương pháp ngày 2026-08-25 có mean sau:
+HIL hậu-update ngày 2026-08-26 dùng `G28` đầy đủ trước mỗi lượt, bàn PETG 70 °C
+và nozzle 150 °C. Năm lượt switch hoàn tất; Cartographer có bốn lượt hợp lệ
+trong năm lượt thử, một lượt lỗi sampling tại T3.
 
 | Tool | Z production | PF2 mean (range) | Cartographer mean (range) |
 | --- | ---: | ---: | ---: |
 | T0 | +0.000 | +0.000 | +0.000 |
-| T1 | +0.228 | +0.121 (+0.114..+0.130) | +0.243 (+0.238..+0.248) |
-| T2 | -0.295 | -0.385 (-0.386..-0.384) | -0.268 (-0.270..-0.266) |
-| T3 | -0.268 | -0.179 (-0.186..-0.164) | -0.186 (-0.196..-0.178) |
-| T4 | -0.014 | +0.093 (+0.090..+0.096) | +0.105 (+0.102..+0.108) |
+| T1 | +0.2464 | +0.0832 (+0.064..+0.104) | +0.2485 (+0.240..+0.264) |
+| T2 | -0.2688 | -0.4004 (-0.486..-0.368) | -0.2685 (-0.272..-0.262) |
+| T3 | -0.1896 | -0.1580 (-0.172..-0.148) | -0.1335 (-0.148..-0.120) |
+| T4 | +0.1028 | +0.0772 (+0.064..+0.108) | +0.1105 (+0.102..+0.118) |
 
-Năm lượt Cartographer bổ sung dùng `G28` đầy đủ riêng trước mỗi lượt, bàn giữ
-ở target PETG `70 °C` và nozzle đo ở `150 °C`. Mean (range) là T1 `+0.2464`
-(`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`) và T4 `+0.1028 mm`
-(`0.020`). Mean từng tool chỉ đổi dưới `0.004 mm` so với bộ bàn nguội trước đó;
-T0 return drift nằm trong `0.000..0.020 mm`. Cả năm history có
-`cleanup_errors=[]`, `applied=false` và không đổi cấu hình.
+Mean Cartographer hợp lệ ngày 26/08 lệch mean ba lượt ngày 25/08 lần
+lượt `+0.0058`, `-0.0005`, `+0.0525`, `+0.0058 mm` ở T1-T4; so với bộ
+live đã in lệch `+0.0021`, `+0.0003`, `+0.0561`, `+0.0077 mm`. T3 cũng là
+tool có một lượt mười Touch không hội tụ. Không kết quả nào ngày 26/08
+được apply hoặc in test; cần lặp T0/T3 và in A/B có kiểm soát. PF2
+lệch hệ thống ở T1/T2 và có range T2 `0.118 mm`, nên chỉ là phép
+kiểm tra chéo.
+
+Mẫu bốn mặt dùng mean năm lượt Cartographer hợp lệ ở bàn 70 °C ngày
+25/08: T1 `+0.2464`, T2 `-0.2688`, T3 `-0.1896`, T4 `+0.1028 mm`. Nguồn
+này được xác minh bằng năm history, phép tính mean khớp tuyệt đối, lần upload
+`printer.cfg` lúc 20:54-20:55 và job mẫu bắt đầu 20:59. Mean ba lượt ghi
+riêng là `+0.24267`, `-0.26800`, `-0.18600`, `+0.10467 mm`; đó không phải
+bộ được load cho bản in này. Git/máy tính giữ bộ cũ tới khi sync live ngày
+26/08. Mẫu in gần đồng phẳng, không có bậc theo tool lặp quanh bốn mặt;
+ảnh ủng hộ giữ bộ live đã in, nhưng không xác nhận hay cho phép áp bộ
+26/08 chưa in.
 
 ### Canary UI và console
 
-Nhánh `codex/compact-mainsail-output` tại `204ae4c` đã qua GitHub Security Gate
-và HIL. Guard mới ngăn prompt/action ToolVision khi đang in hoặc pause. Một
-dialog đã cache vẫn do KlipperScreen sở hữu và có thể cần refresh frontend sau
-khi bản in kết thúc. Không lọc `action:prompt_*`, warning hoặc error bằng regex
-vì đây là giao thức prompt và bằng chứng chẩn đoán.
+Nhánh `codex/compact-mainsail-output` tại `aee9c3c` đã qua test source và HIL.
+Guard chặn action khi in/pause, Close idempotent. Mainsail và KlipperScreen dùng
+cùng macro; màn hình đầu hiện có tám action nên có thể phải cuộn trên BTT 5-inch.
+Calibration dài qua UI lặp lại HTTP 504 khoảng 60 giây dù ToolVision vẫn chạy và
+lưu kết quả; cần theo dõi `busy` + history và không lọc warning/error bằng regex.
 
 Đọc [hướng dẫn tích hợp](extras/docs/toolvision-integration-guide.vi.md) và
-[nhật ký 2026-08-25](extras/Nhat-ky-chinh-sua/2026-08-25-session-updates.md)
+[nhật ký 2026-08-26](extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md)
 trước khi đổi runtime, station hoặc panel.
 
 ## Camera và giao diện người dùng

@@ -496,14 +496,14 @@ dryer timer.
 | Physical switch | Manta `^PF2` |
 | Learned state | `Generated-Data/ToolVision/state.json` |
 | Latest result | `Generated-Data/ToolVision/results.json` |
-| Production runtime evidence | ToolVision `204ae4c`, reported `3.4.0-rc2` |
+| Production runtime evidence | ToolVision `aee9c3c`, reported `3.4.0-rc2` |
 
 ToolVision is the active report-only tool-offset backend. Axiscope and
-`[tools_calibrate]` remain disabled. The compact panel exposes explicit
-`Physical switch` and `Cartographer Touch` Z actions, `Latest results`, and an
-`Advanced setup` page. UI-generated Z runs always pass an explicit `METHOD=`
-and `VERBOSITY=QUIET`; teaching a station can still change the stored default,
-but it cannot silently change the method of either named measurement button.
+`[tools_calibrate]` remain disabled. The single `TOOL_VISION` entry exposes
+explicit Physical-switch and Cartographer-Touch Z actions, camera XY, combined
+camera+Z XYZ actions, setup shortcuts and latest results. Every routine action
+shows a confirmation, performs its own full `G28`, names the selected Z method
+and uses quiet ToolVision output without hiding KTC, probe or heater errors.
 
 This machine opts into `INITIALIZE_TOOLCHANGER` as ToolVision's post-error KTC
 recovery hook. The hook initializes from the physically detected tool and
@@ -526,47 +526,52 @@ This is a candidate absolute tool value relative to T0. It is not a residual
 delta to add to the configured production offset. ToolVision never writes the
 T0–T4 production files.
 
-Three attended 150 °C runs per method on 2026-08-25 produced these means:
+The post-update HIL on 2026-08-26 used a full `G28` before every attempt, a
+70 °C PETG bed and 150 °C nozzles. Five Physical-switch sessions completed;
+four of five Cartographer sessions completed, with one T3 sampling failure.
 
 | Tool | Production Z | PF2 mean (range) | Cartographer Touch mean (range) |
 | --- | ---: | ---: | ---: |
 | T0 | +0.000 | +0.000 | +0.000 |
-| T1 | +0.228 | +0.121 (+0.114..+0.130) | +0.243 (+0.238..+0.248) |
-| T2 | -0.295 | -0.385 (-0.386..-0.384) | -0.268 (-0.270..-0.266) |
-| T3 | -0.268 | -0.179 (-0.186..-0.164) | -0.186 (-0.196..-0.178) |
-| T4 | -0.014 | +0.093 (+0.090..+0.096) | +0.105 (+0.102..+0.108) |
+| T1 | +0.2464 | +0.0832 (+0.064..+0.104) | +0.2485 (+0.240..+0.264) |
+| T2 | -0.2688 | -0.4004 (-0.486..-0.368) | -0.2685 (-0.272..-0.262) |
+| T3 | -0.1896 | -0.1580 (-0.172..-0.148) | -0.1335 (-0.148..-0.120) |
+| T4 | +0.1028 | +0.0772 (+0.064..+0.108) | +0.1105 (+0.102..+0.118) |
 
-Mean T0 return drift was `+0.033 mm` for PF2 and `+0.011 mm` for Cartographer
-Touch. Cartographer minus PF2 differed by `+0.121 mm` on T1, `+0.117 mm` on T2,
-`-0.007 mm` on T3 and `+0.011 mm` on T4. The disagreement is diagnostic, not a
-request to average or apply the methods. Dated immutable history preserves all
-runs; the print-tested production offsets above were not changed.
+The valid 2026-08-26 Cartographer means differ from the recorded three-run
+2026-08-25 means by `+0.0058`, `-0.0005`, `+0.0525` and `+0.0058 mm` on T1-T4.
+They differ from the print-tested live values by `+0.0021`, `+0.0003`, `+0.0561`
+and `+0.0077 mm`. T3 also produced the only ten-touch sampling failure, so no
+2026-08-26 candidate has been applied or print-tested; repeat T0/T3 testing and
+a controlled print A/B are required. PF2 shows systematic disagreement on
+T1/T2 and one `0.118 mm` T2 range, so it remains a diagnostic cross-check.
 
-Five additional Cartographer Touch runs were completed after a separate full
-`G28` before each run, with the bed held at the PETG production target of
-`70 °C` and every nozzle measured at `150 °C`. Their means (ranges) were T1
-`+0.2464` (`0.024`), T2 `-0.2688` (`0.026`), T3 `-0.1896` (`0.010`) and T4
-`+0.1028 mm` (`0.020`). Each mean moved by less than `0.004 mm` from the earlier
-room-temperature-bed Cartographer mean. T0 return drift ranged `0.000..0.020
-mm`; all five sessions had empty cleanup errors and did not apply or change
-configuration. This supports Touch homing after the bed reaches its print
-temperature, while showing no material thermal correction to the relative tool
-offsets on this pilot.
+The supplied four-face coupon used the mean of five valid 70 °C Cartographer
+runs on 2026-08-25: T1 `+0.2464`, T2 `-0.2688`, T3 `-0.1896` and T4
+`+0.1028 mm`. This provenance is confirmed by the five history files, exact
+mean arithmetic, the `printer.cfg` upload at 20:54-20:55 and the coupon job
+starting at 20:59. The separate recorded three-run means were `+0.24267`,
+`-0.26800`, `-0.18600` and `+0.10467 mm`; they were not the set loaded for this
+print. The Git/computer copy still held the old values until the 2026-08-26
+live-value sync. The coupon's colour transitions remain broadly coplanar on
+every face with no repeated tool-specific ledge. It supports retaining the
+existing print-tested live set, but does not validate or justify applying the
+unprinted 2026-08-26 results.
 
 ### Canary UI and console evidence
 
-The canary branch `codex/compact-mainsail-output` at `204ae4c` passed the GitHub
-Security Gate and attended HIL. Every prompt entry point now fails closed while
-the printer is printing or paused, and Close uses a dedicated helper instead of
-a nested `RESPOND`. A client-cached KlipperScreen dialog still belongs to that
-client and may require a frontend refresh after the print. Opening
-`TOOL_VISION` emits eight prompt responses instead of eleven. A quiet
-calibration emits exactly three ToolVision-owned messages, but KTC toolchange,
-heater-wait, physical probe and Cartographer messages remain visible. Do not
-hide `action:prompt_*`, warnings or errors with a Mainsail regex filter.
+The canary branch `codex/compact-mainsail-output` at `aee9c3c` passed source
+tests and attended HIL. Prompt guards fail closed while printing or paused, and
+Close is idempotent. Mainsail and KlipperScreen use the same macros; the current
+first screen contains eight routine/setup actions and may scroll on the BTT
+5-inch display. Long UI-triggered calibrations repeatedly return nginx HTTP 504
+after about 60 seconds even though ToolVision continues and saves a valid
+result. Treat the transport timeout as an integration issue, follow
+`tool_vision.busy` plus history, and never hide `action:prompt_*`, warnings or
+probe/toolchanger errors with a frontend regex.
 
 Read the [integration guide](extras/docs/toolvision-integration-guide.en.md) and
-[2026-08-25 journal](extras/Nhat-ky-chinh-sua/2026-08-25-session-updates.md)
+[2026-08-26 journal](extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md)
 before changing the runtime, station or panel.
 
 ## Camera and user interfaces

@@ -1,0 +1,32 @@
+{
+  "reference_tool": 0,
+  "schema_version": 3,
+  "stations": {
+    "cartographer_touch": {
+      "model": "default",
+      "position": [
+        174.0,
+        168.0,
+        7.0
+      ],
+      "safe_z": 7.0,
+      "source": "bed_mesh.zero_reference_position",
+      "trigger_z": -0.182689
+    },
+    "switch": {
+      "position": [
+        67.5,
+        -8.0,
+        2.0
+      ],
+      "safe_z": 7.0,
+      "trigger_z": 1.2369663242565452
+    }
+  },
+  "tool_vision_version": "3.4.0-rc1",
+  "updated": 1787496209.1263292,
+  "vision": {},
+  "z": {
+    "method": "cartographer_touch"
+  }
+}
