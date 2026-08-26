@@ -375,3 +375,40 @@ sửa mã nguồn ToolVision.
 - Hai history và yêu cầu sửa sampling diagnostics, terminal state, cleanup
   verification/recovery đã được gửi sang task ToolVision
   `01a02382-e5a5-7c93-952f-f01783f6cd55`.
+
+## 13. Thử lại sau power reset
+
+- Một attempt ngay trước reset tiếp tục `INVALID` tại T2, history
+  `20260826-130820-281-z-cartographer_touch-01.json`, duration `167.993 s`,
+  T1 `+0.262`. Raw Touch 3-10 ở T2 có spread tối thiểu `0.3820 mm`
+  (`-0.3979..-0.0159`), trong khi CAN, Cartographer và driver đều không báo
+  lỗi truyền thông/phần cứng.
+- Người vận hành power-reset máy. Sau boot: Klipper ready, ToolVision
+  `3.4.0-rc2`, detector thấy T0; `INITIALIZE_TOOLCHANGER` khôi phục
+  `ready/0/0`, driver X `80190000`. Reset cũng làm `last_run` nạp lại đúng
+  timestamp history lỗi trước và xóa `last_error`, khác state stale trước reset.
+- Bàn đạt bốn mẫu `70.22, 70.41, 70.34, 70.27 °C`; bắt đầu batch mới 0/5.
+
+| Attempt | Status | T1 | T2 | T3 | T4 | Drift | History |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | WARNING | +0.250 | -0.266 | -0.164 | +0.120 | +0.008 | `20260826-131652-546-z-cartographer_touch-01.json` |
+| 2 | WARNING | +0.238 | -0.276 | -0.190 | +0.106 | -0.008 | `20260826-132117-268-z-cartographer_touch-01.json` |
+| 3 | INVALID tại T2 | +0.254 | — | — | — | — | `20260826-132403-319-z-cartographer_touch-01.json` |
+
+- Hai lượt đầu sau reset vượt T2 và hoàn tất sạch. T3 `-0.164/-0.190 mm` gần
+  production `-0.1896 mm` hơn rõ so mean trước vệ sinh `-0.1184 mm`; bằng chứng
+  này ủng hộ miếng nhựa dẹt trên T3 đã gây bias, nhưng hai mẫu chưa đủ để chốt
+  mean năm lượt.
+- Attempt 3 tái lỗi sampling ở T2 dù bàn before/start/end là
+  `70.01/70.01/70.02 °C`. Mười raw touch T2:
+  `-0.1519, -0.4759, -0.4939, -0.4759, -0.4859, -0.4539, -0.4239, -0.4739, -0.4799, -0.4159 mm`;
+  full spread `0.3420 mm`, bỏ outlier đầu vẫn spread `0.0780 mm`.
+- Power reset chỉ khôi phục tạm thời hai lượt rồi lỗi quay lại; chưa đủ bằng
+  chứng để quy thuần software. Cần phân biệt nhựa/nozzle T2, tool seating/compliance
+  và state Cartographer bằng raw-sample telemetry.
+- Batch dừng tại 2 lượt hợp lệ/3 attempts; không nới tolerance, không apply.
+  `TURN_OFF_HEATERS`, recovery hook và `DUMP_TMC` xác nhận trạng thái cuối
+  Klipper ready, print standby, ToolVision idle, KTC `ready/0/0`, driver X sạch,
+  mọi heater target/power 0.
+- Raw values và ba history sau reset đã gửi sang task ToolVision để triển khai
+  diagnostics/state/cleanup fixes.
