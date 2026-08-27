@@ -332,6 +332,22 @@
 
 ### Trạng thái chờ
 
-- Cần người vận hành dọn prime line của lần hủy trước khi chạy lại đúng file
-  `Khoi lap phuong_PETG_33m38s.gcode`.
-- Chưa có kết quả bản in candidate để đánh giá hoặc quyết định giữ/rollback.
+- Người vận hành đã dọn prime line; đã chạy lại đúng file
+  `Khoi lap phuong_PETG_33m38s.gcode` với candidate live.
+- Moonraker history job `000270` xác nhận `completed`, 100 lớp, cao 20.04 mm,
+  print duration 2130.07 s, total duration 2395.87 s, filament 2087.26 mm;
+  không có shutdown/pause/error trong job. Job trước `00026F` là lần hủy
+  prime-line và không được dùng để đánh giá.
+- Ảnh bốn mặt do người vận hành cung cấp cho thấy bản candidate có bám lớp và
+  thành đều, các dải màu/đường lớp liên tục; ranh giới T1 (xanh) và T2 (đen)
+  không có khe hoặc bậc lớn. Vẫn thấy nhẹ seam/độ bóng không đều trên một số
+  dải đỏ và xanh, nhưng không đủ bằng chứng để quy cho Z offset riêng lẻ.
+- So với bộ bốn ảnh baseline, candidate tương đương hoặc sạch hơn nhẹ ở
+  ranh giới dải và không còn hạt trắng rõ trên dải đen; khác biệt ánh sáng,
+  góc chụp và hướng xoay làm so sánh định lượng không hợp lệ. Kết luận ngoại
+  quan: candidate đạt để tiếp tục A/B, chưa phải phê duyệt production.
+- G-code này thực tế chỉ gọi `T0`, `T1`, `T2`, `T3` (không có `T4`); vì vậy
+  phép in không xác minh offset T4 `+0.10522 mm` dù giá trị vẫn đang lưu live.
+- Chưa thay đổi `config/printer.cfg` trong Git; giữ baseline làm đường rollback.
+  Cần người vận hành quyết định giữ candidate sau khi kiểm tra trực tiếp độ
+  phẳng đáy, độ bám và kích thước nếu muốn cập nhật production.
