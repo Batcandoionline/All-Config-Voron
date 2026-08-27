@@ -179,3 +179,112 @@
   `3.4.0-rc2`. A later idle canary must update via Moonraker, restart Klipper
   for macro changes, and verify static open/close, Start closing before G28,
   no modal during the job, and explicit Latest results on both Mainsail and BTT.
+
+## 4. Consolidated non-INVALID Cartographer Z reference
+
+- Read-only parsing of the retained Klipper logs from 2026-08-24 through
+  2026-08-27 recovered 35 unique Cartographer result blocks that reached the
+  terminal `WARNING` result with complete T0-T4 values and a history filename.
+  The `WARNING` label is caused by the unconfigured
+  `max_reference_z_drift`; these are provider-complete sessions, not
+  production-approved offsets.
+- The live history directory currently retains only the latest 20 files, so
+  older rows below were reconstructed from immutable Klipper log result blocks
+  and cross-checked against the committed 24-26 August journals.
+- Classification:
+  - A: provider-complete, but outside the final controlled clean series on
+    24 August; kept only as historical evidence.
+  - B: final controlled series on 24 August after the operator resolved T3
+    ooze/cleanliness.
+  - C: three-run pilot on 25 August before the dedicated 70 C PETG batch.
+  - D: provider-complete, but no fresh G28 was issued because of the PowerShell
+    `$home` variable collision; excluded from controlled statistics.
+  - E: five-run PETG 70 C baseline on 25 August; this is the set that was
+    averaged into the print-tested production values.
+  - F: procedure-complete on 26 August, but later physical inspection found a
+    flattened plastic remnant on T3; retained in history and excluded from the
+    clean subset.
+  - G: two complete runs after T3 cleaning and a machine power reset.
+  - H: five manual runs after the full host reboot.
+  - I: latest five-run batch on 27 August.
+
+| Local time (+07) | Class | T1 | T2 | T3 | T4 | T0 drift | History |
+| --- | :---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 24/08 21:17:31 | A | +0.210 | -0.294 | -0.232 | +0.062 | -0.030 | `20260824-141731-041-z-cartographer_touch-01.json` |
+| 24/08 21:46:28 | B | +0.256 | -0.282 | -0.172 | +0.116 | +0.010 | `20260824-144628-534-z-cartographer_touch-01.json` |
+| 24/08 21:51:42 | B | +0.248 | -0.268 | -0.180 | +0.106 | +0.014 | `20260824-145142-725-z-cartographer_touch-01.json` |
+| 24/08 21:56:48 | B | +0.240 | -0.262 | -0.188 | +0.124 | -0.002 | `20260824-145648-209-z-cartographer_touch-01.json` |
+| 25/08 16:17:29 | C | +0.238 | -0.270 | -0.184 | +0.104 | +0.000 | `20260825-091729-285-z-cartographer_touch-01.json` |
+| 25/08 16:52:00 | C | +0.248 | -0.266 | -0.196 | +0.102 | +0.014 | `20260825-095200-233-z-cartographer_touch-01.json` |
+| 25/08 16:56:39 | C | +0.242 | -0.268 | -0.178 | +0.108 | +0.018 | `20260825-095639-268-z-cartographer_touch-01.json` |
+| 25/08 20:18:29 | E | +0.236 | -0.268 | -0.188 | +0.108 | +0.016 | `20260825-131829-509-z-cartographer_touch-01.json` |
+| 25/08 20:22:48 | E | +0.242 | -0.280 | -0.194 | +0.106 | +0.002 | `20260825-132248-757-z-cartographer_touch-01.json` |
+| 25/08 20:26:49 | D | +0.230 | -0.282 | -0.196 | +0.104 | +0.006 | `20260825-132649-786-z-cartographer_touch-01.json` |
+| 25/08 20:30:58 | E | +0.252 | -0.266 | -0.194 | +0.090 | +0.000 | `20260825-133058-681-z-cartographer_touch-01.json` |
+| 25/08 20:35:15 | E | +0.242 | -0.276 | -0.188 | +0.110 | +0.006 | `20260825-133515-148-z-cartographer_touch-01.json` |
+| 25/08 20:39:44 | E | +0.260 | -0.254 | -0.184 | +0.100 | +0.020 | `20260825-133944-202-z-cartographer_touch-01.json` |
+| 26/08 17:31:27 | F | +0.246 | -0.270 | -0.140 | +0.114 | +0.002 | `20260826-103127-777-z-cartographer_touch-01.json` |
+| 26/08 17:36:21 | F | +0.244 | -0.270 | -0.148 | +0.102 | -0.002 | `20260826-103621-562-z-cartographer_touch-01.json` |
+| 26/08 17:49:48 | F | +0.240 | -0.262 | -0.126 | +0.108 | +0.004 | `20260826-104948-744-z-cartographer_touch-01.json` |
+| 26/08 17:54:31 | F | +0.264 | -0.272 | -0.120 | +0.118 | +0.014 | `20260826-105431-421-z-cartographer_touch-01.json` |
+| 26/08 19:10:18 | F | +0.258 | -0.268 | -0.118 | +0.120 | +0.004 | `20260826-121018-449-z-cartographer_touch-01.json` |
+| 26/08 19:20:23 | F | +0.272 | -0.264 | -0.102 | +0.128 | +0.020 | `20260826-122023-520-z-cartographer_touch-01.json` |
+| 26/08 19:24:33 | F | +0.246 | -0.280 | -0.118 | +0.114 | +0.000 | `20260826-122433-553-z-cartographer_touch-01.json` |
+| 26/08 19:28:33 | F | +0.250 | -0.288 | -0.128 | +0.120 | +0.000 | `20260826-122833-740-z-cartographer_touch-01.json` |
+| 26/08 19:32:59 | F | +0.256 | -0.268 | -0.108 | +0.132 | +0.010 | `20260826-123259-936-z-cartographer_touch-01.json` |
+| 26/08 19:37:23 | F | +0.248 | -0.268 | -0.136 | +0.118 | -0.006 | `20260826-123723-967-z-cartographer_touch-01.json` |
+| 26/08 20:16:52 | G | +0.250 | -0.266 | -0.164 | +0.120 | +0.008 | `20260826-131652-546-z-cartographer_touch-01.json` |
+| 26/08 20:21:17 | G | +0.238 | -0.276 | -0.190 | +0.106 | -0.008 | `20260826-132117-268-z-cartographer_touch-01.json` |
+| 26/08 20:34:58 | H | +0.176 | -0.276 | -0.178 | +0.128 | +0.016 | `20260826-133458-106-z-cartographer_touch-01.json` |
+| 26/08 20:39:54 | H | +0.170 | -0.282 | -0.186 | +0.108 | +0.002 | `20260826-133954-656-z-cartographer_touch-01.json` |
+| 26/08 20:45:26 | H | +0.178 | -0.268 | -0.180 | +0.106 | +0.000 | `20260826-134526-955-z-cartographer_touch-01.json` |
+| 26/08 20:50:25 | H | +0.168 | -0.278 | -0.182 | +0.106 | +0.004 | `20260826-135025-985-z-cartographer_touch-01.json` |
+| 26/08 20:54:51 | H | +0.170 | -0.294 | -0.180 | +0.104 | +0.016 | `20260826-135451-252-z-cartographer_touch-01.json` |
+| 27/08 07:38:40 | I | +0.168 | -0.288 | -0.172 | +0.112 | +0.010 | `20260827-003840-964-z-cartographer_touch-01.json` |
+| 27/08 07:43:41 | I | +0.158 | -0.294 | -0.188 | +0.088 | -0.024 | `20260827-004341-450-z-cartographer_touch-01.json` |
+| 27/08 07:48:32 | I | +0.162 | -0.296 | -0.194 | +0.090 | -0.014 | `20260827-004832-323-z-cartographer_touch-01.json` |
+| 27/08 07:53:36 | I | +0.170 | -0.288 | -0.192 | +0.076 | -0.018 | `20260827-005336-052-z-cartographer_touch-01.json` |
+| 27/08 08:00:04 | I | +0.168 | -0.284 | -0.182 | +0.102 | +0.000 | `20260827-010004-071-z-cartographer_touch-01.json` |
+
+### Batch means
+
+| Class | N | T1 mean | T2 mean | T3 mean | T4 mean | Drift mean | Use |
+| :---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| A | 1 | +0.2100 | -0.2940 | -0.2320 | +0.0620 | -0.0300 | Historical only; condition not locked |
+| B | 3 | +0.2480 | -0.27067 | -0.1800 | +0.11533 | +0.00733 | Controlled clean reference |
+| C | 3 | +0.24267 | -0.2680 | -0.1860 | +0.10467 | +0.01067 | Pilot reference only |
+| D | 1 | +0.2300 | -0.2820 | -0.1960 | +0.1040 | +0.0060 | Exclude: no fresh G28 |
+| E | 5 | +0.2464 | -0.2688 | -0.1896 | +0.1028 | +0.0088 | Print-tested production baseline |
+| F | 10 | +0.2524 | -0.2710 | -0.1244 | +0.1174 | +0.0046 | Exclude from clean baseline: T3 plastic |
+| G | 2 | +0.2440 | -0.2710 | -0.1770 | +0.1130 | +0.0000 | Post-clean evidence; N too small |
+| H | 5 | +0.1724 | -0.2796 | -0.1812 | +0.1104 | +0.0076 | Clean, but T1 discontinuity |
+| I | 5 | +0.1652 | -0.2900 | -0.1856 | +0.0936 | -0.0092 | Clean/latest; T1 remains discontinuous |
+
+### Aggregate statistics
+
+| Population | N | Tool | Mean | Median | Range | Sample SD |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| All provider-complete rows | 35 | T1 | +0.22411 | +0.242 | 0.114 | 0.03705 |
+| All provider-complete rows | 35 | T2 | -0.27531 | -0.272 | 0.042 | 0.01069 |
+| All provider-complete rows | 35 | T3 | -0.16874 | -0.180 | 0.130 | 0.03119 |
+| All provider-complete rows | 35 | T4 | +0.10743 | +0.108 | 0.070 | 0.01418 |
+| All provider-complete rows | 35 | T0 drift | +0.00320 | +0.004 | 0.050 | 0.01178 |
+| Controlled rows, excluding A and D | 33 | T1 | +0.22436 | +0.242 | 0.114 | 0.03809 |
+| Controlled rows, excluding A and D | 33 | T2 | -0.27455 | -0.270 | 0.042 | 0.01042 |
+| Controlled rows, excluding A and D | 33 | T3 | -0.16600 | -0.180 | 0.094 | 0.02962 |
+| Controlled rows, excluding A and D | 33 | T4 | +0.10891 | +0.108 | 0.056 | 0.01210 |
+| Controlled rows, excluding A and D | 33 | T0 drift | +0.00412 | +0.004 | 0.044 | 0.01058 |
+| Clean subset, excluding A/D/F | 23 | T1 | +0.21217 | +0.238 | 0.102 | 0.03946 |
+| Clean subset, excluding A/D/F | 23 | T2 | -0.27609 | -0.276 | 0.042 | 0.01121 |
+| Clean subset, excluding A/D/F | 23 | T3 | -0.18409 | -0.184 | 0.032 | 0.00806 |
+| Clean subset, excluding A/D/F | 23 | T4 | +0.10522 | +0.106 | 0.052 | 0.01161 |
+| Clean subset, excluding A/D/F | 23 | T0 drift | +0.00391 | +0.004 | 0.044 | 0.01172 |
+
+- The 35-row and 23-row cross-session means are descriptive only. They mix
+  different machine/reboot/thermal regimes, and T1 clearly changes regime from
+  about `+0.24..+0.25 mm` to `+0.16..+0.18 mm`. Averaging those regimes does
+  not create a safe candidate offset.
+- The only print-tested reference remains class E:
+  `T1 +0.2464, T2 -0.2688, T3 -0.1896, T4 +0.1028 mm`. Class I confirms T3
+  closely but does not confirm T1. No configuration was changed or applied by
+  this consolidation.
