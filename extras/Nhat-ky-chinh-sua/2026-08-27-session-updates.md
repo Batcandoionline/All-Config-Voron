@@ -86,4 +86,3 @@
 - Final state: `TURN_OFF_HEATERS` executed; Klipper ready, print standby,
   homed XYZ, T2 still mounted and detected as `ready/2/2`, Z lifted to about
   15 mm, bed and T2 heater targets zero.
-
