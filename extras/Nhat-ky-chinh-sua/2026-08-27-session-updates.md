@@ -288,3 +288,50 @@
   `T1 +0.2464, T2 -0.2688, T3 -0.1896, T4 +0.1028 mm`. Class I confirms T3
   closely but does not confirm T1. No configuration was changed or applied by
   this consolidation.
+
+## 5. Áp mean sạch Cartographer cho bản in A/B
+
+### Mục tiêu
+
+- Người vận hành chọn mean của 23 lượt không ghi nhận nhiễm bẩn để in thử:
+  T1 `+0.21217`, T2 `-0.27609`, T3 `-0.18409`, T4 `+0.10522 mm`.
+- File so sánh đúng là `Khoi lap phuong_PETG_33m38s.gcode`; chưa coi các giá trị
+  này là production-approved trước khi đánh giá vật thể hoàn tất.
+
+### Baseline và backup
+
+- Baseline live/repository trước thử nghiệm: T1 `+0.2464`, T2 `-0.2688`,
+  T3 `-0.1896`, T4 `+0.1028 mm`.
+- Backup local:
+  `extras/backups/pre-clean-cartographer-mean-print-test-20260827-090014/`.
+- Backup live:
+  `/home/voron/printer_data/config_backups/manual-before-clean-cartographer-mean-print-test-20260827-090014/printer.cfg`.
+- SHA-256 của `printer.cfg` repo/live trước thay đổi cùng là
+  `e72de505f9521983d5c4b530526d76b7ee74440eff5a34cbed67179124890538`.
+
+### Áp dụng và xác minh
+
+- Lần đầu dùng `SET_TOOL_PARAMETER` để thử runtime, nhưng một Klipper restart
+  trước lần khởi chạy thủ công làm các object tool trở lại baseline cũ.
+- Bản `Khoi lap phuong_PETG_33m38s.gcode` khởi chạy thủ công sau restart vì vậy
+  không phải phép thử candidate. Đã hủy khi chưa vào vật thể; chỉ còn prime line,
+  `display_status` báo `Print canceled`, filament counter `148.96 mm`.
+- Sau khi backup, dùng `SET_TOOL_PARAMETER`, `SAVE_TOOL_PARAMETER` cho T1-T4 và
+  `SAVE_CONFIG`. Live `printer.cfg` sau restart chứa chính xác:
+  - T1 `gcode_z_offset = 0.21217`;
+  - T2 `gcode_z_offset = -0.27609`;
+  - T3 `gcode_z_offset = -0.18409`;
+  - T4 `gcode_z_offset = 0.10522`.
+- SHA-256 live mới:
+  `718d227924eaaf6b1d5b2d2a6a033f3a375cd7d7bad0b23ca0c7fed5e6da1436`.
+- `INITIALIZE_TOOLCHANGER` khôi phục KTC `ready/0/0`; Klipper ready, print
+  standby và mọi heater target/power bằng 0.
+- `config/printer.cfg` trong Git vẫn giữ baseline đã in kiểm chứng; candidate chỉ
+  được ghi live để thực hiện A/B. Không đồng bộ candidate vào production repo
+  trước kết quả bản in.
+
+### Trạng thái chờ
+
+- Cần người vận hành dọn prime line của lần hủy trước khi chạy lại đúng file
+  `Khoi lap phuong_PETG_33m38s.gcode`.
+- Chưa có kết quả bản in candidate để đánh giá hoặc quyết định giữ/rollback.
