@@ -1,0 +1,652 @@
+# ToolVision — report-only XYZ calibration with one visible UI control
+#
+# Add only `[include tool_vision.cfg]` to the config that contains printer.cfg.
+# Standard Mainsail setups already load `[respond]` through client.cfg. If yours
+# does not, add one `[respond]` section elsewhere; never add a duplicate.
+#
+# Routine workflow:
+#   1. Open TOOL_VISION; every routine/setup shortcut is on the first screen.
+#   2. Z/XYZ buttons name their sensor explicitly, then show one safety confirm.
+#   3. Review Latest results. ToolVision never writes production offsets.
+#
+# Camera/sensor stations, detector profile, transform, rotation, pixel scale and
+# tool list are taught/discovered state, not normal cfg inputs. Do not enable
+# [axiscope] or [tools_calibrate] sections at the same time.
+
+[tool_vision]
+# Set pin only when using the physical-switch Z method. Inversion/pull-up follow
+# normal Klipper pin syntax. Verify it with QUERY_ENDSTOPS before first probing.
+# Switch mode also needs tools_calibrate.py from klipper-toolchanger installed;
+# the [tools_calibrate] section itself must remain disabled.
+pin: ^PF2
+
+# Normally omit both camera fields. ToolVision discovers enabled webcams through
+# Moonraker. When several cameras exist, the setup wizard asks for a choice.
+# camera_name: nozzle
+
+# Use an explicit source only when the camera is not registered in Moonraker.
+# Accepted examples: snapshot/MJPEG/RTSP URL, /dev/video0, or OpenCV index 0.
+# camera_source: http://127.0.0.1:8080/?action=snapshot
+
+# Routine calibration temperature. The default follows the 150 C Axiscope/
+# Cartographer-compatible workflow. TEMP=0 remains an explicit cold-run override.
+# calibration_temperature: 150
+
+# Rare compatibility/path overrides; leave commented on normal installations.
+# reference_tool: 0
+# server_url: http://127.0.0.1:8085
+# moonraker_url: http://127.0.0.1:7125
+# tool_select_command: T{tool}
+# State/result files default to the directory containing the main printer.cfg.
+# state_file: /absolute/path/to/tool_vision_state.json
+# result_file: /absolute/path/to/tool_vision_results.json
+state_file: ~/printer_data/config/Generated-Data/ToolVision/state.json
+result_file: ~/printer_data/config/Generated-Data/ToolVision/results.json
+
+# Optional machine-specific validation gates. Do not copy limits from another
+# printer. Missing limits keep a successful measurement at WARNING.
+# max_reference_xy_drift: <limit from your XY repeatability study>
+# max_reference_z_drift: <limit from your Z repeatability study>
+# max_transform_rms: <held-out RMS limit from your camera corpus/HIL>
+# max_transform_max_error: <held-out maximum limit from your camera corpus/HIL>
+# max_xy_uncertainty: <limit from your camera corpus/HIL>
+
+# Advanced bed evidence policy. ToolVision never heats the bed. With no
+# tolerance, bed stability is recorded as not_evaluated. A measured per-machine
+# tolerance may warn or block an unstable run.
+# bed_stability_tolerance: <C from your machine study>
+# bed_unstable_policy: warn
+
+# Optional machine-specific hooks: start_gcode, before_tool_gcode,
+# after_select_gcode, after_tool_gcode, finish_gcode, abort_gcode.
+# after_select_gcode is the place for a reviewed nozzle scrubber path.
+# after_select_gcode:
+#   CLEAN_NOZZLE TEMP=150
+
+# Optional failure recovery for toolchangers that clear active-tool state after
+# a nested G-code error. Initialization may move hardware; configure this only
+# after machine-specific review/HIL proves it safe at failure positions.
+# toolchanger_recovery_gcode:
+#   <reviewed toolchanger recovery command>
+toolchanger_recovery_gcode:
+  INITIALIZE_TOOLCHANGER
+
+# Advanced clearance overrides remain available from the console:
+#   TOOL_VISION_CAMERA_STATION SAFE_Z=25
+#   TOOL_VISION_SETUP_CAMERA SAFE_Z=25
+#   TOOL_VISION_SETUP_Z METHOD=SWITCH SAFE_Z=25
+#   TOOL_VISION_SETUP_Z METHOD=CARTOGRAPHER SAFE_Z=25
+
+[gcode_macro TOOL_VISION]
+description: Open the ToolVision report-only XYZ calibration panel
+gcode:
+  _TOOL_VISION_UI_MAIN
+
+[gcode_macro _TOOL_VISION_UI_CLOSE]
+gcode:
+  # One idempotent protocol action; no nested RESPOND payload.
+  RESPOND TYPE=command MSG="action:prompt_end"
+
+[gcode_macro _TOOL_VISION_UI_MAIN]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set xy_label = "Ready" if tv.camera_ready else "Camera setup required" %}
+    {% set switch_label = "Ready" if tv.switch_ready else "Needs setup" %}
+    {% set cartographer_label = "Ready" if tv.cartographer_touch_ready else "Needs setup" %}
+    RESPOND TYPE=command MSG="action:prompt_begin ToolVision XYZ calibration"
+    RESPOND TYPE=command MSG="action:prompt_text ToolVision {tv.version} | Report only - no printer offset is changed"
+    RESPOND TYPE=command MSG="action:prompt_text Camera XY: {xy_label} | Cartographer: {cartographer_label} | Switch: {switch_label}"
+    RESPOND TYPE=command MSG="action:prompt_button Teach Physical switch|_TOOL_VISION_UI_CONFIRM_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Teach camera position safely|_TOOL_VISION_UI_CONFIRM_CAMERA_STATION|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Measure Z - Cartographer Touch|_TOOL_VISION_UI_RUN ACTION=CHOOSE_Z_CARTOGRAPHER|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Measure Z - Physical switch|_TOOL_VISION_UI_RUN ACTION=CHOOSE_Z_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Measure XY - Camera|_TOOL_VISION_UI_RUN ACTION=CHOOSE_XY|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Measure XYZ - Camera + Cartographer Touch|_TOOL_VISION_UI_RUN ACTION=CHOOSE_XYZ_CARTOGRAPHER|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Measure XYZ - Camera + Physical switch|_TOOL_VISION_UI_RUN ACTION=CHOOSE_XYZ_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Latest results|_TOOL_VISION_UI_RESULTS|info"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_Z_METHOD]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set switch = "Ready" if tv.switch_ready else "Needs setup" %}
+    {% set carto = "Ready" if tv.cartographer_touch_ready else "Needs setup" %}
+    RESPOND TYPE=command MSG="action:prompt_begin Choose Z sensor"
+    RESPOND TYPE=command MSG="action:prompt_text Choose explicitly for this run | Last choice: {tv.ui_z_method}"
+    RESPOND TYPE=command MSG="action:prompt_button Cartographer Touch - Recommended - {carto}|_TOOL_VISION_UI_RUN ACTION=CHOOSE_Z_CARTOGRAPHER|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Physical switch - Cross-check - {switch}|_TOOL_VISION_UI_RUN ACTION=CHOOSE_Z_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_XYZ_METHOD]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set switch = "Ready" if tv.switch_ready else "Needs setup" %}
+    {% set carto = "Ready" if tv.cartographer_touch_ready else "Needs setup" %}
+    {% set camera = "Ready" if tv.camera_ready else "Camera setup required" %}
+    RESPOND TYPE=command MSG="action:prompt_begin Choose XYZ Z sensor"
+    RESPOND TYPE=command MSG="action:prompt_text Camera XY: {camera} | Choose the Z sensor explicitly"
+    RESPOND TYPE=command MSG="action:prompt_button Camera + Cartographer Touch - {carto}|_TOOL_VISION_UI_RUN ACTION=CHOOSE_XYZ_CARTOGRAPHER|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Camera + Physical switch - {switch}|_TOOL_VISION_UI_RUN ACTION=CHOOSE_XYZ_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_XY]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set bed = tv.bed %}
+    {% set bed_text = ((bed.actual_c|round(1)) ~ '/' ~ (bed.target_c|round(1)) ~ ' C - ' ~ bed.stability) if bed.available else 'unavailable' %}
+    {% set estimate = ((tv.last_duration_seconds / 60.0)|round(1) ~ ' min from latest run') if tv.last_result_mode == 'XY' and tv.last_duration_seconds else 'no comparable run yet' %}
+    RESPOND TYPE=command MSG="action:prompt_begin Confirm camera XY measurement"
+    RESPOND TYPE=command MSG="action:prompt_text Camera connected: {tv.camera_connected} | Profile: {tv.camera_profile_ready} | Station: {tv.camera_station_ready} | Transform: {tv.camera_transform_ready}"
+    RESPOND TYPE=command MSG="action:prompt_text Full G28 before run | Nozzle: {tv.calibration_temperature|round(1)} C | Bed: {bed_text} | Estimate: {estimate}"
+    RESPOND TYPE=command MSG="action:prompt_text Report only - candidate XY relative to T{tv.reference_tool}; no offset will be applied"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Start measurement|_TOOL_VISION_UI_RUN ACTION=CALIBRATE_XY|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_Z_SWITCH]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set bed = tv.bed %}
+    {% set bed_text = ((bed.actual_c|round(1)) ~ '/' ~ (bed.target_c|round(1)) ~ ' C - ' ~ bed.stability) if bed.available else 'unavailable' %}
+    RESPOND TYPE=command MSG="action:prompt_begin Confirm Z - Physical switch"
+    RESPOND TYPE=command MSG="action:prompt_text Sensor: Physical switch - {('Ready' if tv.switch_ready else 'Needs setup')} | Full G28 before run"
+    RESPOND TYPE=command MSG="action:prompt_text Nozzle: {tv.calibration_temperature|round(1)} C | Bed: {bed_text} | Estimate: {(((tv.last_duration_seconds / 60.0)|round(1)) ~ ' min from latest run') if tv.last_result_mode == 'Z' and tv.last_result_method == 'switch' and tv.last_duration_seconds else 'no comparable run yet'}"
+    RESPOND TYPE=command MSG="action:prompt_text Report only - candidate Z values relative to T{tv.reference_tool}; not deltas to add. No printer offsets will be applied"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Start measurement|_TOOL_VISION_UI_RUN ACTION=CALIBRATE_Z_SWITCH|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_Z_CARTOGRAPHER]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set bed = tv.bed %}
+    {% set bed_text = ((bed.actual_c|round(1)) ~ '/' ~ (bed.target_c|round(1)) ~ ' C - ' ~ bed.stability) if bed.available else 'unavailable' %}
+    RESPOND TYPE=command MSG="action:prompt_begin Confirm Z - Cartographer Touch"
+    RESPOND TYPE=command MSG="action:prompt_text Sensor: Cartographer Touch - {('Ready' if tv.cartographer_touch_ready else 'Needs setup')} | Full G28 before run"
+    RESPOND TYPE=command MSG="action:prompt_text Nozzle: {tv.calibration_temperature|round(1)} C | Bed: {bed_text} | Estimate: {(((tv.last_duration_seconds / 60.0)|round(1)) ~ ' min from latest run') if tv.last_result_mode == 'Z' and tv.last_result_method == 'cartographer_touch' and tv.last_duration_seconds else 'no comparable run yet'}"
+    RESPOND TYPE=command MSG="action:prompt_text Report only - candidate Z values relative to T{tv.reference_tool}; not deltas to add. No printer offsets will be applied"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Start measurement|_TOOL_VISION_UI_RUN ACTION=CALIBRATE_Z_CARTOGRAPHER|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_XYZ_SWITCH]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set bed = tv.bed %}
+    {% set bed_text = ((bed.actual_c|round(1)) ~ '/' ~ (bed.target_c|round(1)) ~ ' C - ' ~ bed.stability) if bed.available else 'unavailable' %}
+    RESPOND TYPE=command MSG="action:prompt_begin Confirm XYZ - Camera + Physical switch"
+    RESPOND TYPE=command MSG="action:prompt_text Camera: {('Ready' if tv.camera_ready else 'Needs setup')} | Z: Physical switch - {('Ready' if tv.switch_ready else 'Needs setup')} | Full G28 before run"
+    RESPOND TYPE=command MSG="action:prompt_text Nozzle: {tv.calibration_temperature|round(1)} C | Bed: {bed_text} | Estimate: {(((tv.last_duration_seconds / 60.0)|round(1)) ~ ' min from latest run') if tv.last_result_mode == 'XYZ' and tv.last_result_method == 'switch' and tv.last_duration_seconds else 'no comparable run yet'}"
+    RESPOND TYPE=command MSG="action:prompt_text Report only - candidate XYZ relative to T{tv.reference_tool}; no offset will be applied"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Start measurement|_TOOL_VISION_UI_RUN ACTION=CALIBRATE_XYZ_SWITCH|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_XYZ_CARTOGRAPHER]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set bed = tv.bed %}
+    {% set bed_text = ((bed.actual_c|round(1)) ~ '/' ~ (bed.target_c|round(1)) ~ ' C - ' ~ bed.stability) if bed.available else 'unavailable' %}
+    RESPOND TYPE=command MSG="action:prompt_begin Confirm XYZ - Camera + Cartographer Touch"
+    RESPOND TYPE=command MSG="action:prompt_text Camera: {('Ready' if tv.camera_ready else 'Needs setup')} | Z: Cartographer Touch - {('Ready' if tv.cartographer_touch_ready else 'Needs setup')} | Full G28 before run"
+    RESPOND TYPE=command MSG="action:prompt_text Nozzle: {tv.calibration_temperature|round(1)} C | Bed: {bed_text} | Estimate: {(((tv.last_duration_seconds / 60.0)|round(1)) ~ ' min from latest run') if tv.last_result_mode == 'XYZ' and tv.last_result_method == 'cartographer_touch' and tv.last_duration_seconds else 'no comparable run yet'}"
+    RESPOND TYPE=command MSG="action:prompt_text Report only - candidate XYZ relative to T{tv.reference_tool}; no offset will be applied"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Start measurement|_TOOL_VISION_UI_RUN ACTION=CALIBRATE_XYZ_CARTOGRAPHER|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_RESULTS]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set mode = tv.last_result_mode|default('', true)|upper %}
+    {% set method = "Physical switch" if tv.last_result_method == "switch" else ("Cartographer Touch" if tv.last_result_method == "cartographer_touch" else "Camera XY") %}
+    {% set verdict = "Valid" if tv.last_session_status == "PASS" else ("Needs review" if tv.last_session_status == "WARNING" else "Invalid") %}
+    {% set comparison = tv.last_production_comparison %}
+    {% set environment = tv.last_environment %}
+    RESPOND TYPE=command MSG="action:prompt_begin ToolVision latest results"
+    {% if tv.last_result_mode %}
+      RESPOND TYPE=command MSG="action:prompt_text Measurement: {verdict} | Mode: {mode} | Method: {method} | NOT APPLIED"
+      RESPOND TYPE=command MSG="action:prompt_text T{tv.reference_tool} drift XY: {(('%.4f'|format(tv.reference_xy_drift)) ~ ' mm') if tv.reference_xy_drift is not none else 'n/a'} | Z: {(('%+.4f'|format(tv.reference_z_drift)) ~ ' mm') if tv.reference_z_drift is not none else 'n/a'} | Production comparison: {comparison.assessment|default('NOT_EVALUATED')}"
+      {% if environment.bed is defined and environment.bed.end is defined %}
+        RESPOND TYPE=command MSG="action:prompt_text Bed end: {environment.bed.end.actual_c|default('n/a')} / {environment.bed.end.target_c|default('n/a')} C - {environment.bed.end.stability|default('unknown')} | Nozzle request: {environment.nozzle.requested_c|default('n/a')} C"
+      {% endif %}
+      {% for number in tv.result_tool_numbers %}
+        {% set result = tv.results.get(number|string) %}
+        {% set compare = comparison.tools.get(number|string, {}) if comparison.tools is defined else {} %}
+        {% set current = compare.get('configured_relative', {}) %}
+        {% set difference = compare.get('difference', {}) %}
+        {% if result %}
+          {% if mode == "Z" %}
+            RESPOND TYPE=command MSG="action:prompt_text T{number} | Z {('%+.4f'|format(result.z)) if result.z is defined else '-'} | Current {('%+.4f'|format(current.z)) if current.z is defined else '-'} | Diff {('%+.4f'|format(difference.z)) if difference.z is defined else '-'} | Not evaluated"
+          {% elif mode == "XY" %}
+            RESPOND TYPE=command MSG="action:prompt_text T{number} | XY {('%+.4f'|format(result.x)) if result.x is defined else '-'}/{('%+.4f'|format(result.y)) if result.y is defined else '-'} | Current {('%+.4f'|format(current.x)) if current.x is defined else '-'}/{('%+.4f'|format(current.y)) if current.y is defined else '-'} | Diff {('%+.4f'|format(difference.x)) if difference.x is defined else '-'}/{('%+.4f'|format(difference.y)) if difference.y is defined else '-'}"
+          {% else %}
+            RESPOND TYPE=command MSG="action:prompt_text T{number} | dX {('%+.4f'|format(result.x)) if result.x is defined else '-'} | dY {('%+.4f'|format(result.y)) if result.y is defined else '-'} | dZ {('%+.4f'|format(result.z)) if result.z is defined else '-'} | {compare.assessment|default('NOT_EVALUATED')}"
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if tv.result_tool_numbers|length == 0 %}
+        RESPOND TYPE=command MSG="action:prompt_text No tool measurement completed; review the INVALID session in console/history."
+      {% endif %}
+    {% else %}
+      RESPOND TYPE=command MSG="action:prompt_text No persisted ToolVision result is available."
+    {% endif %}
+    RESPOND TYPE=command MSG="action:prompt_button Console report/history|_TOOL_VISION_UI_RUN ACTION=HISTORY|info"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_SETUP]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin ToolVision setup"
+    RESPOND TYPE=command MSG="action:prompt_text Teach stations with T{tv.reference_tool} mounted. Current pilot support requires its configured XYZ offset to be zero; non-zero reference teaching still awaits R-002 HIL."
+    RESPOND TYPE=command MSG="action:prompt_button Camera XY setup|_TOOL_VISION_UI_CAMERA_SETUP|primary"
+    RESPOND TYPE=command MSG="action:prompt_button Sensor setup|_TOOL_VISION_UI_Z_SETUP|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Readiness status|_TOOL_VISION_UI_SETUP_STATUS|info"
+    RESPOND TYPE=command MSG="action:prompt_button Advanced|_TOOL_VISION_UI_ADVANCED|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CAMERA_SETUP]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin Camera XY setup"
+    RESPOND TYPE=command MSG="action:prompt_text Connected: {tv.camera_connected} | Selection: {tv.camera_selection|default('automatic', true)} | Station: {tv.camera_station_ready} | Profile: {tv.camera_profile_ready} | Transform: {tv.camera_transform_ready}"
+    RESPOND TYPE=command MSG="action:prompt_button Discover/Refresh cameras|_TOOL_VISION_UI_RUN ACTION=CAMERA_DISCOVER|info"
+    {% if tv.camera_candidates|length > 1 %}
+      RESPOND TYPE=command MSG="action:prompt_button Choose camera|_TOOL_VISION_UI_CAMERA_SELECT|primary"
+    {% endif %}
+    RESPOND TYPE=command MSG="action:prompt_button Preview/Refresh frame|_TOOL_VISION_UI_RUN ACTION=CAMERA_PREVIEW|info"
+    RESPOND TYPE=command MSG="action:prompt_button Save current T0 camera position|_TOOL_VISION_UI_CONFIRM_CAMERA_STATION|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Learn nozzle + transform|_TOOL_VISION_UI_CONFIRM_CAMERA_LEARN|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Test camera XY with T0|_TOOL_VISION_UI_RUN ACTION=CAMERA_TEST|primary"
+    RESPOND TYPE=command MSG="action:prompt_text Preview uses native resolution. Adjust physical focus/light in the frontend Webcam view; ToolVision does not ask for a universal sharpness threshold."
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CAMERA_SELECT]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin Choose camera"
+    RESPOND TYPE=command MSG="action:prompt_text Selecting a different optical source marks its learned profile/transform not ready. URLs are never shown or stored here."
+    {% for camera in tv.camera_candidates %}
+      RESPOND TYPE=command MSG="action:prompt_button {camera.name} - {camera.location}|_TOOL_VISION_UI_RUN ACTION=CAMERA_SELECT INDEX={loop.index0}|primary"
+    {% endfor %}
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_CAMERA_SETUP|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_Z_SETUP]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin Z sensor setup"
+    RESPOND TYPE=command MSG="action:prompt_text Physical switch: {('Ready' if tv.switch_ready else 'Needs setup')} | Cartographer Touch: {('Ready' if tv.cartographer_touch_ready else 'Needs setup')}"
+    RESPOND TYPE=command MSG="action:prompt_button Teach Physical switch|_TOOL_VISION_UI_CONFIRM_SWITCH|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Check Physical switch|_TOOL_VISION_UI_RUN ACTION=CHECK_SWITCH|info"
+    RESPOND TYPE=command MSG="action:prompt_button Teach Cartographer Touch|_TOOL_VISION_UI_CONFIRM_CARTOGRAPHER|warning"
+    RESPOND TYPE=command MSG="action:prompt_button Check Cartographer Touch|_TOOL_VISION_UI_RUN ACTION=CHECK_CARTOGRAPHER|info"
+    RESPOND TYPE=command MSG="action:prompt_button Status|_TOOL_VISION_UI_SETUP_STATUS|info"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_CAMERA_STATION]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin Save camera position"
+    RESPOND TYPE=command MSG="action:prompt_text Mount T{tv.reference_tool}, home XYZ, jog the clean nozzle near the camera image center and verify a collision-free vertical path. Saving invalidates old profile/transform readiness."
+    RESPOND TYPE=command MSG="action:prompt_footer_button Save position|_TOOL_VISION_UI_RUN ACTION=CAMERA_STATION|warning"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_CAMERA_LEARN]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin Learn camera XY"
+    RESPOND TYPE=command MSG="action:prompt_text Requires a saved T{tv.reference_tool} camera station and clear room for the ten-point 0.5 mm kTAMV pattern. It learns the nozzle, fits/validates transform and centers T{tv.reference_tool}."
+    RESPOND TYPE=command MSG="action:prompt_footer_button Learn + calibrate|_TOOL_VISION_UI_RUN ACTION=CAMERA_LEARN|warning"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_CAMERA_SETUP|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_SWITCH]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set current = "Physical switch" if tv.z_method == "switch" else ("Cartographer Touch" if tv.z_method == "cartographer_touch" else "not selected") %}
+    RESPOND TYPE=command MSG="action:prompt_begin Teach Physical switch"
+    RESPOND TYPE=command MSG="action:prompt_text Current method -> New method: {current} -> Physical switch. Mount T{tv.reference_tool}, home XYZ, jog above an open switch and verify pin polarity plus a collision-free vertical path."
+    RESPOND TYPE=command MSG="action:prompt_footer_button Teach switch|_TOOL_VISION_UI_RUN ACTION=SETUP_SWITCH|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_CONFIRM_CARTOGRAPHER]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    {% set current = "Physical switch" if tv.z_method == "switch" else ("Cartographer Touch" if tv.z_method == "cartographer_touch" else "not selected") %}
+    RESPOND TYPE=command MSG="action:prompt_begin Teach Cartographer Touch"
+    RESPOND TYPE=command MSG="action:prompt_text Current method -> New method: {current} -> Cartographer Touch. Requires the current plugin, saved Touch model, bed_mesh zero reference and reviewed clearance for every tool."
+    RESPOND TYPE=command MSG="action:prompt_footer_button Teach Cartographer|_TOOL_VISION_UI_RUN ACTION=SETUP_CARTOGRAPHER|error"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_MAIN|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_SETUP_STATUS]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin ToolVision readiness"
+    RESPOND TYPE=command MSG="action:prompt_text Camera connected: {tv.camera_connected} | Station: {tv.camera_station_ready} | Detector: {tv.camera_profile_ready} | Transform: {tv.camera_transform_ready} | Stale: {tv.camera_stale_reason|default('no', true)}"
+    RESPOND TYPE=command MSG="action:prompt_text Physical switch: {tv.switch_ready} | Cartographer Touch: {tv.cartographer_touch_ready} | Tools: {tv.tool_numbers|join(', ')} | Reference: T{tv.reference_tool}"
+    RESPOND TYPE=command MSG="action:prompt_text Nozzle calibration: {tv.calibration_temperature|round(1)} C | Bed evidence: {tv.bed.stability} | Report only"
+    RESPOND TYPE=command MSG="action:prompt_button Refresh host status in console|_TOOL_VISION_UI_RUN ACTION=STATUS|info"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_SETUP|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_ADVANCED]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    RESPOND TYPE=echo MSG="ToolVision panel is unavailable while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision is busy; wait for the current operation or use Close."
+  {% else %}
+    RESPOND TYPE=command MSG="action:prompt_begin ToolVision Advanced"
+    RESPOND TYPE=command MSG="action:prompt_text SAFE_Z, camera selector/URL, timeout and detector/transform overrides remain cfg/console-only because standard action prompts have no safe numeric input control. Normal setup should not require them."
+    RESPOND TYPE=command MSG="action:prompt_button Console status|_TOOL_VISION_UI_RUN ACTION=STATUS|info"
+    RESPOND TYPE=command MSG="action:prompt_button Console report/history|_TOOL_VISION_UI_RUN ACTION=HISTORY|info"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Back|_TOOL_VISION_UI_SETUP|secondary"
+    RESPOND TYPE=command MSG="action:prompt_footer_button Close|_TOOL_VISION_UI_CLOSE|secondary"
+    RESPOND TYPE=command MSG="action:prompt_show"
+  {% endif %}
+
+[gcode_macro _TOOL_VISION_UI_RUN]
+gcode:
+  {% set tv = printer.tool_vision %}
+  {% set action = params.ACTION|default('')|upper %}
+  {% set index = params.INDEX|default(-1)|int %}
+  {% set print_state = printer.print_stats.state|default('unknown')|lower %}
+  RESPOND TYPE=command MSG="action:prompt_end"
+  {% if print_state in ["printing", "paused"] %}
+    # A queued/stale UI action must not emit gcode:command_error because some
+    # toolchangers clear active state on that global event.
+    RESPOND TYPE=echo MSG="ToolVision action ignored while the printer is {print_state}."
+  {% elif tv.busy %}
+    RESPOND TYPE=echo MSG="ToolVision action ignored because another ToolVision operation is active."
+  {% else %}
+    {% if action == "STATUS" %}
+      TOOL_VISION_STATUS
+    {% elif action == "HISTORY" %}
+      TOOL_VISION_REPORT
+      TOOL_VISION_HISTORY
+    {% elif action == "CHOOSE_XY" %}
+      {% if tv.camera_ready %}
+        _TOOL_VISION_UI_CONFIRM_XY
+      {% else %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% endif %}
+    {% elif action == "CHOOSE_Z_SWITCH" %}
+      TOOL_VISION_SELECT_Z METHOD=SWITCH
+      {% if tv.switch_ready %}
+        _TOOL_VISION_UI_CONFIRM_Z_SWITCH
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_SWITCH
+      {% endif %}
+    {% elif action == "CHOOSE_Z_CARTOGRAPHER" %}
+      TOOL_VISION_SELECT_Z METHOD=CARTOGRAPHER_TOUCH
+      {% if tv.cartographer_touch_ready %}
+        _TOOL_VISION_UI_CONFIRM_Z_CARTOGRAPHER
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_CARTOGRAPHER
+      {% endif %}
+    {% elif action == "CHOOSE_XYZ_SWITCH" %}
+      TOOL_VISION_SELECT_Z METHOD=SWITCH
+      {% if not tv.camera_ready %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% elif tv.switch_ready %}
+        _TOOL_VISION_UI_CONFIRM_XYZ_SWITCH
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_SWITCH
+      {% endif %}
+    {% elif action == "CHOOSE_XYZ_CARTOGRAPHER" %}
+      TOOL_VISION_SELECT_Z METHOD=CARTOGRAPHER_TOUCH
+      {% if not tv.camera_ready %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% elif tv.cartographer_touch_ready %}
+        _TOOL_VISION_UI_CONFIRM_XYZ_CARTOGRAPHER
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_CARTOGRAPHER
+      {% endif %}
+    {% elif action == "CAMERA_DISCOVER" %}
+      TOOL_VISION_CAMERA_DISCOVER
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "CAMERA_SELECT" %}
+      TOOL_VISION_CAMERA_SELECT INDEX={index}
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "CAMERA_PREVIEW" %}
+      TOOL_VISION_CAMERA_PREVIEW
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "CAMERA_STATION" %}
+      TOOL_VISION_CAMERA_STATION
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "CAMERA_LEARN" %}
+      TOOL_VISION_SETUP_CAMERA FROM_STATION=1 VERBOSITY=NORMAL
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "CAMERA_TEST" %}
+      TOOL_VISION_CAMERA_TEST
+      _TOOL_VISION_UI_CAMERA_SETUP
+    {% elif action == "SETUP_SWITCH" %}
+      TOOL_VISION_SETUP_Z METHOD=SWITCH
+      _TOOL_VISION_UI_Z_SETUP
+    {% elif action == "CHECK_SWITCH" %}
+      TOOL_VISION_CHECK_Z METHOD=SWITCH
+      _TOOL_VISION_UI_Z_SETUP
+    {% elif action == "SETUP_CARTOGRAPHER" %}
+      TOOL_VISION_SETUP_Z METHOD=CARTOGRAPHER_TOUCH
+      _TOOL_VISION_UI_Z_SETUP
+    {% elif action == "CHECK_CARTOGRAPHER" %}
+      TOOL_VISION_CHECK_Z METHOD=CARTOGRAPHER_TOUCH
+      _TOOL_VISION_UI_Z_SETUP
+    {% elif action == "CALIBRATE_XY" %}
+      {% if tv.camera_ready %}
+        TOOL_VISION_CALIBRATE MODE=XY HOME=1 VERBOSITY=QUIET
+        _TOOL_VISION_UI_RESULTS
+      {% else %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% endif %}
+    {% elif action == "CALIBRATE_Z_SWITCH" %}
+      {% if tv.switch_ready %}
+        TOOL_VISION_CALIBRATE MODE=Z METHOD=SWITCH HOME=1 VERBOSITY=QUIET
+        _TOOL_VISION_UI_RESULTS
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_SWITCH
+      {% endif %}
+    {% elif action == "CALIBRATE_Z_CARTOGRAPHER" %}
+      {% if tv.cartographer_touch_ready %}
+        TOOL_VISION_CALIBRATE MODE=Z METHOD=CARTOGRAPHER_TOUCH HOME=1 VERBOSITY=QUIET
+        _TOOL_VISION_UI_RESULTS
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_CARTOGRAPHER
+      {% endif %}
+    {% elif action == "CALIBRATE_XYZ_SWITCH" %}
+      {% if not tv.camera_ready %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% elif tv.switch_ready %}
+        TOOL_VISION_CALIBRATE MODE=XYZ METHOD=SWITCH HOME=1 VERBOSITY=QUIET
+        _TOOL_VISION_UI_RESULTS
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_SWITCH
+      {% endif %}
+    {% elif action == "CALIBRATE_XYZ_CARTOGRAPHER" %}
+      {% if not tv.camera_ready %}
+        _TOOL_VISION_UI_CAMERA_SETUP
+      {% elif tv.cartographer_touch_ready %}
+        TOOL_VISION_CALIBRATE MODE=XYZ METHOD=CARTOGRAPHER_TOUCH HOME=1 VERBOSITY=QUIET
+        _TOOL_VISION_UI_RESULTS
+      {% else %}
+        _TOOL_VISION_UI_CONFIRM_CARTOGRAPHER
+      {% endif %}
+    {% else %}
+      {action_raise_error("Unknown ToolVision panel action")}
+    {% endif %}
+  {% endif %}
