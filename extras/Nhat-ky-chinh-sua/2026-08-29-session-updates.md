@@ -170,3 +170,141 @@ TOOL_VISION_SETUP
   and detected: PASS.
 - Printer ready/standby; all five nozzle targets and bed target are `0 C`:
   PASS.
+
+## 3. Restore the operator-selected print-tested Z offset set
+
+### Reason and requested values
+
+The operator reported that the GitHub offset set produced a less smooth coupon
+than the earlier print-tested set, and that another coupon printed on the
+morning of 2026-08-29 was worse than both previously reviewed coupons. The
+operator explicitly selected the following earlier set as the production
+baseline:
+
+```text
+T1 Z=+0.2464
+T2 Z=-0.2688
+T3 Z=-0.1896
+T4 Z=+0.1028
+```
+
+These values were independently extracted from the supplied historical
+`printer.cfg` text. Its remaining generated mesh and configuration content was
+treated as evidence only and was not copied into the repository.
+
+### Pre-change comparison
+
+- Live Klipper already reported exactly the requested four offsets. No live
+  offset write was necessary.
+- The repository still contained T1 `+0.21217`, T2 `-0.2688`,
+  T3 `-0.18409`, T4 `+0.10522`.
+- The live file also had unrelated `max_z_velocity=70` and `max_z_accel=900`
+  values while the repository retained its reviewed `60` and `700` values.
+  Those unrelated live differences were deliberately not synchronized.
+- Printer was ready/standby and ToolVision was idle. Bed target remained at the
+  operator's current `70 C` setting; no heater, homing, toolchanger or
+  measurement command was issued for this offset synchronization.
+
+### Backup and repository change
+
+- [Backup record](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-print-tested-z-offsets-20260829-164546/README.md)
+- [Previous repository printer.cfg](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-restore-print-tested-z-offsets-20260829-164546/printer.cfg)
+- Previous repository SHA-256:
+  `9F09A13D16198F08FF22B75C87CE05DFC8DA4F2CB8FFD958AC881DA2223B94A5`.
+- Repository edit was limited to the three differing generated Z lines:
+  T1 `+0.21217 -> +0.2464`, T3 `-0.18409 -> -0.1896`, and
+  T4 `+0.10522 -> +0.1028`. T2 already matched.
+- The repository and live printer now expose the same selected Z offset set.
+
+## 4. Replace the public ToolVision prompt surface with direct console macros
+
+### Source release
+
+- Feature commit:
+  `25fe4bec56fbbcb42d127d85e64d565255239f50`.
+- ToolVision `main` merge and deployed HEAD:
+  `374d5e22db393c74f91706791727771f9413547e`.
+- Feature-branch CI PASS:
+  `https://github.com/IDcrazy123/Tool-Vision/actions/runs/33246809720`.
+- Main-branch CI PASS:
+  `https://github.com/IDcrazy123/Tool-Vision/actions/runs/33247017779`.
+- The main security gate passed on Python 3.10, 3.11, 3.12 and 3.13,
+  including the required security job.
+- Source work was performed in the ToolVision project. This repository only
+  preserved machine-specific options, synchronized the reviewed macro section,
+  deployed it and performed live HIL.
+
+### Public macro contract
+
+Only three macros remain public in Mainsail:
+
+```text
+TOOL_VISION_Z
+TOOL_VISION_Z_X3
+TOOL_VISION_RESULTS
+```
+
+- `TOOL_VISION_Z` directly starts Cartographer Touch Z x1 with `HOME=1`,
+  `ASYNC=1` and quiet output.
+- `TOOL_VISION_Z_X3` directly starts the same report-only measurement as a
+  three-attempt batch.
+- Both measurement descriptions explicitly state that clicking starts homing
+  and motion immediately. They do not show a modal confirmation.
+- `TOOL_VISION_RESULTS` directly runs `TOOL_VISION_REPORT` and writes the
+  latest summary to the console.
+- Public macros contain no `action:prompt_*` payload and do not call a UI
+  helper. XY, XYZ, setup and all legacy prompt helpers remain hidden with `_`
+  or available only through documented advanced console commands.
+- Core report-only behavior, asynchronous fast ACK, print/paused/busy guards,
+  cleanup, persisted evidence and the no-apply/no-save contract remain intact.
+
+### Backup and deployment
+
+- [Backup record](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-toolvision-console-only-main-20260829-170842/README.md)
+- [Previous macro configuration](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-toolvision-console-only-main-20260829-170842/tool-vision.cfg)
+- [Previous live Moonraker configuration](file:///D:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-toolvision-console-only-main-20260829-170842/moonraker-live.conf)
+- Remote backup:
+  `/home/voron/printer_data/config_backups/tool-vision/pre-console-only-main-20260829-170842/`;
+  it contains 26 files covering the prior macro config, Moonraker config and
+  complete ToolVision state/results/history.
+- The live Moonraker updater was changed only from
+  `primary_branch: codex/compact-mainsail-output` to
+  `primary_branch: main`, matching the repository configuration.
+- The clean runtime checkout was switched without a reset and fast-forwarded
+  to `origin/main`.
+- Moonraker now reports branch `main`, local/remote SHA `374d5e2`, valid,
+  pristine, zero commits behind, and no warnings or anomalies.
+- The machine-specific `[tool_vision]` section remained byte-identical to its
+  backup, including PF2, Generated-Data paths and the reviewed toolchanger
+  recovery hook.
+- The macro section is byte-identical to ToolVision main. Repository/live
+  macro config SHA-256:
+  `1D399C131B7BC70DACED70184BCD03CCABF8B8E0DF7CC6FA9585AAF1E55868CD`.
+- `FIRMWARE_RESTART` completed and Klipper returned ready with no failed
+  components or warnings.
+- ToolVision state/results/history remained byte-identical to the pre-deploy
+  backup.
+
+### Live Mainsail HIL at 800x480
+
+- The macro panel exposed exactly Results, Z x1 and Z x3. The previous Z, XY,
+  XYZ, Results and Setup prompt surface was absent.
+- `TOOL_VISION_RESULTS` was clicked once. Dialog count remained zero before and
+  after the action, while the latest report appeared directly in the Mainsail
+  console.
+- The console result retained session
+  `f04b6f3b3cd84c78afff68f9793f419d`, classification
+  `COMPLETED_NO_THRESHOLDS`, and explicitly stated `NOT APPLIED` and
+  `Configuration changed: No`.
+- Z x1/x3 were intentionally not clicked during UI HIL because the requested
+  direct-entry contract starts homing and motion immediately. Their exact
+  commands were validated from the loaded config and source contract instead.
+
+### Final state
+
+- Printer ready/standby; ToolVision idle: PASS.
+- All nozzle and bed targets `0 C`: PASS.
+- No physical tool was mounted or detected after restart, so the toolchanger
+  was deliberately left `uninitialized`; no recovery motion was attempted.
+- Live and repository production offsets are T1 `+0.2464`, T2 `-0.2688`,
+  T3 `-0.1896`, T4 `+0.1028`: PASS.
