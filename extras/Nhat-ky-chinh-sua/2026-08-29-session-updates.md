@@ -308,3 +308,22 @@ TOOL_VISION_RESULTS
   was deliberately left `uninitialized`; no recovery motion was attempted.
 - Live and repository production offsets are T1 `+0.2464`, T2 `-0.2688`,
   T3 `-0.1896`, T4 `+0.1028`: PASS.
+
+## 5. Final live offset correction after post-deploy verification (2026-08-30)
+
+- A read-only verification found that the active printer file had drifted to
+  T1 `0.228` and T4 `-0.014`, while T2/T3 were already the requested values.
+- Before changing the live file, the complete active configuration was copied
+  to `extras/backups/pre-final-live-offset-sync-20260830-001500/printer.cfg`
+  and to the matching remote backup directory. Captured SHA-256:
+  `B60946F78E8C25A69DEBB45B1D572219B615E99F424DA11E2F9B6104D75D318B`.
+- A candidate derived from the live file changed only the generated Z-offset
+  lines to T1 `0.2464`, T2 `-0.2688`, T3 `-0.1896`, T4 `0.1028`; unrelated live
+  settings were preserved. The candidate was installed atomically.
+- `FIRMWARE_RESTART` completed successfully after the first malformed request
+  was rejected by Moonraker without changing printer state. Klipper returned
+  `ready`, print state remained `standby`, ToolVision remained idle, and all
+  heater targets remained `0 C`.
+- Final active SHA-256 is
+  `A17B7CCC07FB90934FAFA8A44D45B2E749D8F3DDC21C70B5CEF6325441BAC765`, with
+  all four operator-selected offsets confirmed in the loaded configuration.
