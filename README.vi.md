@@ -393,6 +393,8 @@ upstream không tương thích.
 | `KTAMV_SIMPLE_NOZZLE_POSITION` | Nhận diện ảnh mà không jog | Không |
 | `KTAMV_CALIB_CAMERA` | Calibrate camera bằng pattern mười điểm XY | Có |
 | `KTAMV_FIND_NOZZLE_CENTER` | Nhận diện và jog X/Y về tâm camera | Có |
+| `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3` | Đo ba residual XY, báo mean/spread | Có |
+| `KTAMV_APPLY_ACTIVE_TOOL_XY` | Stage mean cuối vào offset XY của active tool | Không |
 | `QUERY_ENDSTOPS` | Đọc trạng thái endstop/switch | Không |
 | `BED_FAN_ON [SPEED=0.5]` / `BED_FAN_OFF` | Điều khiển tuần hoàn chamber | Chỉ fan |
 | `LIGHTS_ON` / `LIGHTS_OFF` | Đèn chamber ở mức an toàn đã cấu hình | Chỉ LED |
@@ -402,9 +404,10 @@ Các lệnh căn dock nâng cao `TOOL_ALIGN_START`, `TOOL_ALIGN_TEST` và
 `TOOL_ALIGN_DONE` có thể làm máy di chuyển và lưu vĩnh viễn tọa độ dock. Chỉ
 dùng trong quy trình căn chỉnh có người giám sát và đã backup.
 
-Các lệnh legacy `CALIBRATE_MOVE_OVER_PROBE`, `CALIBRATE_ALL_OFFSETS` và
-`CALIBRATE_NOZZLE_PROBE_OFFSET` bị `calibration-probe.cfg` tắt có chủ ý và sẽ
-raise giải thích kTAMV chỉ hỗ trợ XY.
+`CALIBRATE_ALL_OFFSETS` nguyên bản thuộc KTC `tools_calibrate` và dùng station
+SexBolt/SexBall để đo XYZ; nó không phải lệnh ToolVision. Cả lệnh này,
+`CALIBRATE_MOVE_OVER_PROBE` và `CALIBRATE_NOZZLE_PROBE_OFFSET` đang bị
+`calibration-probe.cfg` tắt; dùng lệnh `KTAMV_*` riêng cho camera XY.
 
 ## Vệ sinh nozzle và prime line
 
@@ -484,7 +487,7 @@ chuyển quyền sở hữu an toàn từ timer dryer đang chạy.
 | Hạng mục | Giá trị hiện tại |
 | --- | --- |
 | Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pin commit `72421f2` |
-| Runtime checkout | `~/kTAMV` cùng các bản sửa nhiều vật thể, highlight MF-500 và stdev |
+| Runtime checkout | `~/kTAMV` cùng các bản sửa detector, lọc calibration và đo XY lặp |
 | Môi trường Python | `~/ktamv-env`, dùng OpenCV package hệ thống |
 | Host service/API | user service `ktamv-server.service`, cổng `8086` |
 | Config riêng máy | `Printer-Setup/ktamv.cfg` |
@@ -519,16 +522,16 @@ nới `detection_tolerance` để ép một cảnh mơ hồ pass; hãy sửa foc
 
 Các lệnh không chuyển động gồm `KTAMV_SETUP`, `KTAMV_STATUS`,
 `KTAMV_SEND_SERVER_CFG`, bật/tắt preview, `KTAMV_SIMPLE_NOZZLE_POSITION`,
-`KTAMV_SET_ORIGIN`, `KTAMV_GET_OFFSET`. `KTAMV_CALIB_CAMERA` chạy pattern mười
-điểm và có thể dịch tới tâm tính toán; `KTAMV_FIND_NOZZLE_CENTER` jog X/Y lặp
-và có thể wiggle khi mất detection. Hai lệnh có chuyển động yêu cầu home đầy đủ,
-operator đứng tại máy và sẵn emergency stop. Phiên cài ngày 2026-08-31 không
-chạy bất kỳ lệnh chuyển động nào.
+`KTAMV_SET_ORIGIN`, `KTAMV_GET_OFFSET` và `KTAMV_APPLY_ACTIVE_TOOL_XY`.
+`KTAMV_CALIB_CAMERA`, `KTAMV_FIND_NOZZLE_CENTER` và
+`KTAMV_MEASURE_ACTIVE_TOOL_XY` đều có chuyển động. Chúng yêu cầu home đầy đủ,
+operator đứng tại máy và sẵn emergency stop.
 
 Dùng T0 với offset X/Y bằng 0 làm reference: setup server, preview/kiểm tra nhận
-diện, calibrate camera, đưa T0 về tâm, đặt origin đúng một lần; sau đó đưa từng
-T1–T4 về tâm và đọc `KTAMV_GET_OFFSET`. Đo ít nhất ba lượt mỗi tool và xác minh
-quy ước dấu trước khi cân nhắc sửa cấu hình. Xem tài liệu song ngữ
+diện, calibrate camera, đưa T0 về tâm, đặt origin đúng một lần; sau đó chọn từng
+T1–T4 và chạy `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`. Review mean/spread,
+chạy `KTAMV_APPLY_ACTIVE_TOOL_XY` riêng cho từng tool rồi `SAVE_CONFIG` một lần.
+Xem tài liệu song ngữ
 [sử dụng kTAMV và đối chiếu phương pháp](extras/docs/ktamv-usage-comparison.vi.md).
 
 ## Camera và giao diện người dùng

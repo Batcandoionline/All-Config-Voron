@@ -302,3 +302,100 @@ Với KTC đang áp dụng production offset, ứng viên mới được tính t
 - Extruder T0-T4 và bed đều target `0 degC`; nhiệt độ thực tế khoảng
   `31-34 degC`.
 - Calibration và origin chỉ còn trong RAM và sẽ bị xóa khi Klipper restart.
+
+## 6. Gỡ dấu vết ToolVision active, thêm đo XY trung bình và áp dụng offset
+
+### Phân loại `CALIBRATE_ALL_OFFSETS`
+
+- Macro gốc nằm trong KTC-Easy readonly `calibrate-offsets.cfg`. Nó gọi
+  `TOOL_LOCATE_SENSOR`/`TOOL_CALIBRATE_TOOL_OFFSET`, dùng backend
+  `[tools_calibrate]` và station SexBolt/SexBall để đo XYZ.
+- Đây không phải lệnh ToolVision và cũng không phải lệnh kTAMV. Trên máy hiện
+  tại `[tools_calibrate]` không được nạp, nên override trong
+  `calibration-probe.cfg` tiếp tục fail closed và hướng người dùng sang lệnh
+  kTAMV chỉ đo XY.
+
+### Sao lưu và gỡ ToolVision active
+
+- Backup repository:
+  `extras/backups/pre-ktamv-average-apply-20260831-134948/`.
+- Backup máy thật:
+  `/home/voron/printer_data/config_backups/pre-ktamv-average-apply-20260831-134948/`.
+- Backup tự động lúc deploy:
+  `/home/voron/printer_data/config_backups/config-install-20260831-135450/`.
+- Xóa tham chiếu cuối cùng trong payload `config/toolchanger/toolchanger-config.cfg`
+  và đồng bộ README config sạch lên máy. Scan cuối không còn chuỗi/path
+  ToolVision trong `/home/voron/printer_data/config`.
+- Xác minh absent: `~/Tool-Vision`, `~/tool-vision-env`,
+  `~/printer_data/tool-vision`, config include cũ, Klipper module cũ và systemd
+  unit root. Port 8085 đóng; `moonraker.asvc` không còn service cũ.
+- Backup/snapshot lịch sử ToolVision không active được giữ nguyên để rollback và
+  audit theo chính sách dự án.
+
+### Sửa mã nguồn kTAMV
+
+- Giữ hai patch đã cài: multi-object keypoint/method binding và detector
+  center-highlight MF-500 kèm guard `stdev` một sample.
+- Thêm `ktamv-repeat-xy-measurement.patch`:
+  - utility lọc trên bản sao thay vì mutate list caller;
+  - xóa cùng index cho MPP, space và camera coordinates ở mọi filter;
+  - trả tuple nhất quán khi standard deviation fail;
+  - caller kiểm tra tỷ lệ giữ 75% so với count thật ban đầu;
+  - thêm native `KTAMV_MEASURE_TOOL_XY`, raw samples, mean, spread, tool number,
+    Z measurement mặc định 40 và guard toolchanger active/detected.
+- Thêm wrapper `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3` để tắt `Tn_LED`, đo ba
+  sample độc lập từ cùng origin, cùng Z40; thêm
+  `KTAMV_APPLY_ACTIVE_TOOL_XY` để stage `loaded offset + mean residual` cho
+  active non-reference tool. Apply bị tách khỏi đo và cần `SAVE_CONFIG` riêng.
+- Patch được áp tuần tự trên fresh checkout upstream, `py_compile`,
+  `git diff --check` và unit simulation đều đạt. Dataset yếu giữ 7/11, dataset
+  tốt giữ 9/11; list đầu vào không đổi.
+- Chuẩn hóa lại artifact patch bằng unified diff có context và xác minh cả
+  apply/reverse-apply mặc định. Bản patch live trước bước chuẩn hóa được giữ tại
+  `/home/voron/printer_data/config_backups/pre-ktamv-patch-normalization-20260831-143147/`;
+  đây chỉ là đồng bộ file nguồn, không restart và không di chuyển máy.
+- `RESTART` đầu tiên reload config trong process Python cũ nên báo option mới
+  chưa hợp lệ. Không có chuyển động; restart service Klipper qua Moonraker đã
+  import module mới và printer trở lại ready.
+
+### Phiên đo và offset đã áp dụng
+
+- Operator cho phép chuyển động tại camera Z40. Đã chạy G28, T0 active/detected,
+  heater target 0, T0_LED tắt; vòng ESP32-C3 5% không bị điều khiển.
+- Calibration mới trả `0.036, 0.056, 0.059, 0.059, 0.056, 0.036, 0.054,
+  0.059, 0.056, 0.052`, sample tâm `0.056`; kết quả `0.056 mm/pixel`, giữ
+  9/11, relative stdev 4.3%.
+- T0 được center tại origin `X168.760 Y18.419`; lệnh mới trả baseline ba sample
+  `0/0`, spread 0.
+
+| Tool | Ba residual X/Y (mm) | Mean/spread (mm) | XY cũ → XY đã lưu |
+| --- | --- | --- | --- |
+| T1 | `+0.084/+0.057` ×3 | mean `+0.084/+0.057`, spread `0/0` | `-0.243/-0.252` → `-0.159/-0.195` |
+| T2 | `+0.074/+0.154` ×3 | mean `+0.074/+0.154`, spread `0/0` | `+0.746/+0.086` → `+0.820/+0.240` |
+| T3 | `+0.022/+0.075` ×3 | mean `+0.022/+0.075`, spread `0/0` | `+0.304/+0.449` → `+0.326/+0.524` |
+| T4 | `+0.127/-0.084` ×3 | mean `+0.127/-0.084`, spread `0/0` | `+0.041/+0.352` → `+0.168/+0.268` |
+
+- Sau return pickup T0, correction để về tâm là `X-0.009 Y+0.072 mm`. Dữ liệu
+  này xác nhận ba sample trong cùng pickup không đo được toàn bộ dock
+  repeatability; offset vẫn được áp theo yêu cầu explicit của operator.
+- `SAVE_CONFIG` ghi đúng bốn XY mới. Z giữ nguyên byte-for-byte:
+  T1 `+0.2464`, T2 `-0.2688`, T3 `-0.1896`, T4 `+0.1028`.
+
+### Đề xuất ToolVision
+
+- Review Git bundle ToolVision commit `374d5e2`: source hiện center một lần/tool
+  mỗi attempt và dùng median giữa nhiều full attempts.
+- Tạo cặp tài liệu `toolvision-xy-repeat-average-proposal.*.md`: đề xuất ba
+  sample có reset station trong mỗi pickup, raw/mean/spread, candidate bằng
+  configured plus residual, phân biệt within-pickup với between-pickup, gate T0
+  return drift, lighting hook và apply command tách riêng có fingerprint/tool
+  guards. ToolVision không được cài lại.
+
+### Trạng thái cuối
+
+- Printer `ready`, `standby`, không pause; heater T0-T4 và bed target 0.
+- Sau `SAVE_CONFIG` và service restart cuối, `homed_axes=""`, toolchanger
+  uninitialized nhưng detected tool là T0. T0 vật lý vẫn ở tâm camera quanh
+  `X168.751 Y18.491 Z40`; không gửi thêm chuyển động sau restart.
+- kTAMV service active; module mới đã nạp. Calibration/origin RAM đã reset như
+  thiết kế và phải setup lại trước phép đo tiếp theo.

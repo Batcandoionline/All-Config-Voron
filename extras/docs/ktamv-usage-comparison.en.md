@@ -100,6 +100,7 @@ SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
 | `KTAMV_SIMPLE_NOZZLE_POSITION` | Detect and report the nozzle pixel position |
 | `KTAMV_SET_ORIGIN` | Store current raw X/Y as the reference |
 | `KTAMV_GET_OFFSET` | Report current raw X/Y minus the stored origin |
+| `KTAMV_APPLY_ACTIVE_TOOL_XY` | Stage the last XY mean in KTC; no motion, separate `SAVE_CONFIG` required |
 
 ### Moves the printer
 
@@ -107,15 +108,16 @@ SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
 | --- | --- |
 | `KTAMV_CALIB_CAMERA` | Ten small X/Y calibration moves and a possible final centering move |
 | `KTAMV_FIND_NOZZLE_CENTER` | Repeated X/Y corrections; may wiggle 0.1–0.2 mm after detection loss |
+| `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3` | Return to the origin at Z40 and center three times, reporting mean/spread |
 
 Both moving commands require X/Y/Z to be homed. They must be run only with an
 operator at the printer, the camera and cable secure, all dock paths clear and
 an emergency stop ready. A failure does not guarantee exact return to the
 starting coordinate.
 
-No G-code, homing, toolchange, heating or movement command was sent during the
-2026-08-31 installation. The physical tool was intentionally left above the
-camera.
+The 2026-08-31 measurement used operator-approved Z40, disabled each tool LED
+and did not control the independent 5% ESP32-C3 ring. Heater targets remained
+zero.
 
 ## Manual comparison workflow
 
@@ -132,12 +134,30 @@ frame margin for the 0.5 mm pattern.
 3. Stop preview and run `KTAMV_CALIB_CAMERA`. Continue only when
    `KTAMV_STATUS` reports calibrated with a valid mm/pixel value.
 4. Run `KTAMV_FIND_NOZZLE_CENTER`, then `KTAMV_SET_ORIGIN` exactly once for T0.
-5. For each T1–T4, select the tool through KTC, move it close to the same focus
-   plane, verify with simple detection, center it and run `KTAMV_GET_OFFSET`.
-6. Repeat at least three times per tool. Record raw readings and compare signs
-   with the loaded offsets; never run `KTAMV_SET_ORIGIN` for T1–T4.
-7. Do not modify production X/Y from one result. Z values are out of scope and
-   must remain unchanged.
+5. For each T1–T4, select it through KTC and run
+   `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`. The wrapper disables `Tn_LED`,
+   keeps Z40, returns to the same origin before every sample and reports raw
+   samples, mean and spread.
+6. Only when active/detected tools match, all three samples exist and per-axis
+   spread is at most `0.12 mm`, run `KTAMV_APPLY_ACTIVE_TOOL_XY`. The candidate
+   is `loaded offset + mean residual`; T0 is rejected because it is reference.
+7. After reviewing every tool, run `SAVE_CONFIG` once. It restarts Klipper and
+   clears the RAM-only camera calibration/origin. Z remains unchanged.
+
+## Local kTAMV source changes
+
+- `ktamv-multi-object-selection.patch` fixes keypoint access and method binding
+  when a detector pipeline returns multiple objects.
+- `ktamv-center-highlight-fallback.patch` rejects far keypoints, adds a compact
+  highlight detector for the MF-500/5% ring, and guards one-sample `stdev`.
+- `ktamv-repeat-xy-measurement.patch` stops mm/pixel filtering from mutating
+  caller lists, keeps MPP/space/camera removals aligned, returns a consistent
+  failure tuple, enforces the real 75% retained threshold, and adds native
+  three-sample XY state with Z40 and active/detected-tool guards.
+
+The user-facing measure and apply macros are intentionally separate. Klipper
+Jinja renders before the native measurement updates status, and the boundary
+also provides an explicit review point before staging configuration.
 
 ## kTAMV versus retired ToolVision
 

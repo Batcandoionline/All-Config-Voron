@@ -20,6 +20,7 @@ on 2026-08-31.
 | OrcaSlicer sync/profiles | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | StealthChanger operation | [Guide](huong-dan-he-thong-stealthchanger.en.md) | [Guide](huong-dan-he-thong-stealthchanger.md) |
 | kTAMV usage and method comparison | [Guide](ktamv-usage-comparison.en.md) | [Guide](ktamv-usage-comparison.vi.md) |
+| ToolVision repeated-XY proposal | [Proposal](toolvision-xy-repeat-average-proposal.en.md) | [Proposal](toolvision-xy-repeat-average-proposal.vi.md) |
 
 ## Historical and retired material
 

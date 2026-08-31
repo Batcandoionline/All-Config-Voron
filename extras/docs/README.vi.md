@@ -19,6 +19,7 @@ trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
 | Đồng bộ/profile OrcaSlicer | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | Vận hành StealthChanger | [Hướng dẫn](huong-dan-he-thong-stealthchanger.en.md) | [Hướng dẫn](huong-dan-he-thong-stealthchanger.md) |
 | Sử dụng kTAMV và đối chiếu phương pháp | [Hướng dẫn](ktamv-usage-comparison.en.md) | [Hướng dẫn](ktamv-usage-comparison.vi.md) |
+| Đề xuất ToolVision đo XY lặp | [Đề xuất](toolvision-xy-repeat-average-proposal.en.md) | [Đề xuất](toolvision-xy-repeat-average-proposal.vi.md) |
 
 ## Nội dung lịch sử và retired
 

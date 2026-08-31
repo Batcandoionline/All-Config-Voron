@@ -94,6 +94,7 @@ SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
 | `KTAMV_SIMPLE_NOZZLE_POSITION` | Nhận diện và báo tọa độ pixel nozzle |
 | `KTAMV_SET_ORIGIN` | Lưu raw X/Y hiện tại làm reference |
 | `KTAMV_GET_OFFSET` | Báo raw X/Y hiện tại trừ origin |
+| `KTAMV_APPLY_ACTIVE_TOOL_XY` | Stage mean XY cuối vào KTC; không di chuyển, cần `SAVE_CONFIG` riêng |
 
 ### Có di chuyển máy
 
@@ -101,13 +102,14 @@ SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
 | --- | --- |
 | `KTAMV_CALIB_CAMERA` | Mười move nhỏ X/Y và có thể thêm move cuối tới tâm |
 | `KTAMV_FIND_NOZZLE_CENTER` | Correction X/Y lặp; có thể wiggle 0.1–0.2 mm khi mất detection |
+| `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3` | Trở về origin ở Z40 rồi căn tâm ba lần, báo mean/spread |
 
 Hai lệnh có chuyển động yêu cầu đã home X/Y/Z. Chỉ chạy khi operator đứng tại
 máy, camera/dây chắc chắn, đường dock trống và emergency stop sẵn sàng. Khi lỗi,
 kTAMV không đảm bảo trở về chính xác tọa độ bắt đầu.
 
-Trong phiên cài 2026-08-31 không gửi G-code, home, toolchange, gia nhiệt hoặc
-lệnh chuyển động. Tool vật lý được giữ nguyên trên camera đúng yêu cầu.
+Phiên đo 2026-08-31 dùng Z40 do operator xác nhận, tắt LED của từng tool và
+không điều khiển vòng ESP32-C3 5% độc lập. Heater target luôn bằng 0.
 
 ## Workflow đối chiếu thủ công
 
@@ -122,11 +124,29 @@ sáng mềm/đều, focus rõ lỗ nozzle và để đủ margin cho pattern 0.5
 3. Tắt preview rồi chạy `KTAMV_CALIB_CAMERA`. Chỉ tiếp tục khi `KTAMV_STATUS`
    báo calibrated và mm/pixel hợp lệ.
 4. Chạy `KTAMV_FIND_NOZZLE_CENTER`, sau đó `KTAMV_SET_ORIGIN` đúng một lần cho T0.
-5. Với từng T1–T4, chọn qua KTC, đưa nozzle gần cùng mặt phẳng focus, kiểm tra
-   nhận diện, căn tâm rồi chạy `KTAMV_GET_OFFSET`.
-6. Lặp ít nhất ba lượt/tool. Ghi raw result, đối chiếu dấu với offset đang nạp;
-   không chạy `KTAMV_SET_ORIGIN` cho T1–T4.
-7. Không sửa X/Y production từ một kết quả. Z ngoài phạm vi và phải giữ nguyên.
+5. Với từng T1–T4, chọn qua KTC rồi chạy
+   `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`. Wrapper tắt `Tn_LED`, giữ Z40,
+   đưa nozzle về cùng origin trước mỗi sample và báo raw samples, mean, spread.
+6. Chỉ khi active/detected tool khớp, đủ ba sample và spread mỗi trục không quá
+   `0.12 mm`, chạy `KTAMV_APPLY_ACTIVE_TOOL_XY`. Ứng viên được tính bằng
+   `offset đang nạp + mean residual`; T0 bị chặn vì là reference.
+7. Sau khi review tất cả tool, chạy `SAVE_CONFIG` đúng một lần. Lệnh này restart
+   Klipper và xóa calibration/origin RAM. Z ngoài phạm vi và luôn giữ nguyên.
+
+## Các bản sửa mã nguồn kTAMV trên máy này
+
+- `ktamv-multi-object-selection.patch`: sửa truy cập keypoint và method binding
+  khi pipeline trả nhiều vật thể.
+- `ktamv-center-highlight-fallback.patch`: loại keypoint quá xa tâm, thêm
+  detector highlight compact cho MF-500/vòng 5%, và guard `stdev` một sample.
+- `ktamv-repeat-xy-measurement.patch`: sửa bộ lọc mm/pixel không còn mutate list
+  caller, xóa đồng bộ MPP/space/camera, trả tuple nhất quán khi fail, kiểm tra
+  thật tỷ lệ giữ 75%; thêm `KTAMV_MEASURE_TOOL_XY` cùng state raw/mean/spread,
+  Z40 và guard active/detected tool.
+
+Hai macro user-facing trong `Printer-Setup/ktamv.cfg` tách đo và áp dụng có chủ
+ý. Không ghép chúng trong một macro vì Jinja của Klipper render trước khi lệnh
+native đo cập nhật status; tách riêng cũng tạo điểm review trước khi stage.
 
 ## kTAMV so với ToolVision đã retired
 

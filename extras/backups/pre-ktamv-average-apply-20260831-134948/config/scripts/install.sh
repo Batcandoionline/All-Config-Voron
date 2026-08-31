@@ -83,11 +83,6 @@ if grep -Eq '^[[:space:]]*\[include[[:space:]]+Printer-Setup/ktamv\.cfg\][[:spac
       "${KTAMV_DETECTOR}" ||
       ! grep -Fq 'self.__algorithm = 6' "${KTAMV_DETECTOR}" ||
       ! grep -Fq 'stdev(mpps) if len(mpps) > 1 else 0.0' \
-      "${KTAMV_UTILITY_SOURCE}" ||
-      ! grep -Fq 'def cmd_MEASURE_TOOL_XY(self, gcmd):' \
-      "${KTAMV_CLIENT_SOURCE}" ||
-      ! grep -Fq 'mpps = mpps.copy()' "${KTAMV_UTILITY_SOURCE}" ||
-      ! grep -Fq 'camera_coordinates.remove(camera_coordinates[i])' \
       "${KTAMV_UTILITY_SOURCE}"; then
     echo "ERROR: one or more reviewed kTAMV runtime patches are missing." >&2
     exit 1

@@ -398,6 +398,8 @@ an incompatible upstream source.
 | `KTAMV_SIMPLE_NOZZLE_POSITION` | Run image detection without jogging | No |
 | `KTAMV_CALIB_CAMERA` | Calibrate the camera with a ten-point XY pattern | Yes |
 | `KTAMV_FIND_NOZZLE_CENTER` | Detect and jog X/Y toward camera center | Yes |
+| `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3` | Measure three XY residuals and report mean/spread | Yes |
+| `KTAMV_APPLY_ACTIVE_TOOL_XY` | Stage the last mean in the active tool's XY offset | No |
 | `QUERY_ENDSTOPS` | Read endstop/switch states | No |
 | `BED_FAN_ON [SPEED=0.5]` / `BED_FAN_OFF` | Manual chamber circulation control | Fan only |
 | `LIGHTS_ON` / `LIGHTS_OFF` | Chamber lighting at configured safe level | LEDs only |
@@ -407,9 +409,10 @@ Advanced dock alignment commands `TOOL_ALIGN_START`, `TOOL_ALIGN_TEST` and
 `TOOL_ALIGN_DONE` can move the printer and permanently save dock coordinates.
 Use them only during an explicit attended alignment procedure with a backup.
 
-Legacy `CALIBRATE_MOVE_OVER_PROBE`, `CALIBRATE_ALL_OFFSETS` and
-`CALIBRATE_NOZZLE_PROBE_OFFSET` are deliberately disabled by
-`calibration-probe.cfg` and explain that kTAMV is XY-only.
+The original `CALIBRATE_ALL_OFFSETS` belongs to KTC `tools_calibrate` and uses a
+SexBolt/SexBall station for XYZ; it is not a ToolVision command. It,
+`CALIBRATE_MOVE_OVER_PROBE` and `CALIBRATE_NOZZLE_PROBE_OFFSET` are disabled by
+`calibration-probe.cfg`; use the dedicated `KTAMV_*` commands for camera XY.
 
 ## Nozzle cleaning and prime lines
 
@@ -492,7 +495,7 @@ dryer timer.
 | Item | Current value |
 | --- | --- |
 | Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pinned commit `72421f2` |
-| Runtime checkout | `~/kTAMV` with reviewed multi-object, MF-500 highlight and stdev fixes |
+| Runtime checkout | `~/kTAMV` with reviewed detector, calibration-filter and repeated-XY fixes |
 | Python environment | `~/ktamv-env` using system OpenCV packages |
 | Host service/API | user service `ktamv-server.service`, port `8086` |
 | Machine config | `Printer-Setup/ktamv.cfg` |
@@ -526,18 +529,17 @@ soft lighting and nozzle cleanliness first.
 
 ### Usage boundary
 
-The non-motion commands are `KTAMV_SETUP`, `KTAMV_STATUS`,
-`KTAMV_SEND_SERVER_CFG`, preview start/stop, `KTAMV_SIMPLE_NOZZLE_POSITION`,
-`KTAMV_SET_ORIGIN` and `KTAMV_GET_OFFSET`. `KTAMV_CALIB_CAMERA` moves through a
-ten-point pattern and may make a final centering move;
-`KTAMV_FIND_NOZZLE_CENTER` repeatedly jogs X/Y and may wiggle when detection is
-lost. Both moving commands require full homing, direct supervision and an
-emergency stop. No motion command was run during the 2026-08-31 installation.
+The non-motion commands include `KTAMV_SETUP`, `KTAMV_STATUS`, server/preview
+configuration, `KTAMV_SIMPLE_NOZZLE_POSITION`, `KTAMV_SET_ORIGIN`,
+`KTAMV_GET_OFFSET` and `KTAMV_APPLY_ACTIVE_TOOL_XY`. `KTAMV_CALIB_CAMERA`,
+`KTAMV_FIND_NOZZLE_CENTER` and `KTAMV_MEASURE_ACTIVE_TOOL_XY` move the printer;
+they require full homing, direct supervision and an emergency stop.
 
 Use T0 with zero X/Y offsets as the reference: configure the server, preview and
-verify detection, calibrate the camera, center T0, set the origin once, then
-center each T1–T4 and read `KTAMV_GET_OFFSET`. Repeat every tool at least three
-times and verify sign conventions before considering any configuration change.
+verify detection, calibrate the camera, center T0 and set the origin once. Then
+select each T1–T4 and run `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`; review the
+mean/spread, run `KTAMV_APPLY_ACTIVE_TOOL_XY` separately, then `SAVE_CONFIG`
+once after all tools are reviewed.
 The detailed bilingual [kTAMV usage and method comparison](extras/docs/ktamv-usage-comparison.en.md)
 is the authoritative procedure.
 
