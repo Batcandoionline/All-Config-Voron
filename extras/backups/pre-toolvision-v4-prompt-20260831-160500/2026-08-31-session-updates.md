@@ -456,18 +456,3 @@ Với KTC đang áp dụng production offset, ứng viên mới được tính t
   tắc với vị trí do lệnh cung cấp; XY camera và ánh sáng mặc định của camera
   không phụ thuộc ESP32/WS2812B. Chi tiết prompt điều phối agent Luna được gửi
   ở task ToolVision riêng.
-
-## 8. Prompt greenfield rewrite ToolVision v4
-
-- Người dùng xác nhận không tiếp tục vá nhánh thử nghiệm; yêu cầu tái cấu trúc
-  và viết lại toàn bộ ToolVision từ đầu dựa trên evidence kTAMV ba pickup cycle.
-- Tạo prompt tại `extras/docs/toolvision-v4-greenfield-rewrite-prompt.vi.md`.
-  Prompt bắt buộc worktree sạch từ `origin/main`, branch riêng, không merge/
-  cherry-pick nhánh `codex/independent-pickup-evidence`, và dùng code v3 chỉ làm
-  reference hành vi.
-- Phạm vi bao gồm toàn bộ production code, Klipper/host boundary, dynamic
-  camera/Z position commands, independent T0→T4→T0 cycles, Cartographer/switch
-  Z providers, evidence schema, explicit guarded apply, installer, tests và
-  disposition cho mọi file Markdown.
-- Ánh sáng camera mặc định là contract; ESP32-C3/WS2812B không thuộc runtime.
-  Task rewrite chỉ làm offline/worktree, không deploy hay di chuyển máy.
