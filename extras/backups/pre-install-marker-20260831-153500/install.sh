@@ -17,7 +17,6 @@ KTAMV_SERVICE="${HOME}/.config/systemd/user/ktamv-server.service"
 KTAMV_CLIENT_SOURCE="${KTAMV_RUNTIME}/extension/ktamv.py"
 KTAMV_UTILITY_SOURCE="${KTAMV_RUNTIME}/extension/ktamv_utl.py"
 KTAMV_DETECTOR="${KTAMV_RUNTIME}/server/ktamv_server_dm.py"
-KTAMV_CLIENT_PATCH_MARKER='minimum_count = max(1, initial_count - 1)'
 KTC_READONLY_DIR="${CONFIG_DIR}/toolchanger/readonly-configs"
 KTC_READONLY_FILES=(
   "calibrate-offsets.cfg"
@@ -89,8 +88,7 @@ if grep -Eq '^[[:space:]]*\[include[[:space:]]+Printer-Setup/ktamv\.cfg\][[:spac
       "${KTAMV_CLIENT_SOURCE}" ||
       ! grep -Fq 'mpps = mpps.copy()' "${KTAMV_UTILITY_SOURCE}" ||
       ! grep -Fq 'camera_coordinates.remove(camera_coordinates[i])' \
-      "${KTAMV_UTILITY_SOURCE}" ||
-      ! grep -Fq "${KTAMV_CLIENT_PATCH_MARKER}" "${KTAMV_CLIENT_SOURCE}"; then
+      "${KTAMV_UTILITY_SOURCE}"; then
     echo "ERROR: one or more reviewed kTAMV runtime patches are missing." >&2
     exit 1
   fi

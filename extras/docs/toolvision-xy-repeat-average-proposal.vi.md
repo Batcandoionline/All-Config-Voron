@@ -14,9 +14,14 @@ là tọa độ tương đối giữa center của tool và T0; production vẫn
 
 1. Thêm `xy_samples_per_tool` mặc định `3` và
    `max_xy_sample_spread_mm` mặc định `0.12`.
-2. Trong `_measure_xy()`, trước **mỗi** sample phải gọi lại
-   `_move_to_station("camera", tool_number)`. Không center liên tiếp từ vị trí
-   đã center vì sample 2/3 khi đó chỉ đo số 0 giả.
+2. Trong `_measure_xy()`, trước **mỗi** sample phải gọi một provider vị trí an
+   toàn (lệnh/API tương đương `GET_POSITION`, hoặc macro
+   `TOOLVISION_GET_SAFE_POSITION`) và lưu pose trả về. Provider phải kiểm tra
+   homed axes, giới hạn hành trình, Z clearance và active/detected tool; tuyệt
+   đối không hard-code X/Y/Z camera, dock, probe hay switch. Sau đó mới nâng Z
+   tại XY hiện tại rồi di chuyển đến camera station theo origin đã hiệu chuẩn.
+   Không center liên tiếp từ vị trí đã center vì sample 2/3 khi đó chỉ đo số 0
+   giả.
 3. Lưu mỗi `raw_center_position`, residual so với station/reference và evidence
    detector. Tính mean X/Y, min/max/range từng trục; fail closed khi thiếu sample
    hoặc range vượt giới hạn.
@@ -25,14 +30,17 @@ là tọa độ tương đối giữa center của tool và T0; production vẫn
    - `configured_xy`: snapshot offset lúc bắt đầu;
    - `candidate_xy = configured_xy + mean_residual_xy`;
    - raw samples và spread, không chỉ một center cuối.
-5. Giữ median giữa nhiều full attempts/pickup cycles làm lớp thống kê ngoài.
+5. Giữ median giữa nhiều full attempts/pickup cycles làm lớp thống kê ngoài;
+   HIL 2026-08-31 đã chạy đúng ba vòng T0→T4 độc lập và lưu raw CSV/Markdown.
    Mean ba sample trong một pickup đo detector/centering repeatability; median
    giữa ít nhất ba pickup cycles đo repeatability của dock. Không trộn hai loại.
 6. Dùng lại reference-return T0 sau batch, nhưng bắt buộc threshold thay vì chỉ
    report. HIL máy này thấy T0 return correction tới `Y+0.072 mm`, nên candidate
    phải bị gắn `REVIEW_PICKUP_REPEATABILITY` khi drift vượt ngưỡng cấu hình.
-7. Thêm hook ánh sáng trước camera sample. Cấu hình máy này chỉ tắt `Tn_LED`;
-   không được giả định hay điều khiển vòng WCMCU WS2812B/ESP32-C3 độc lập 5%.
+7. Thêm hook ánh sáng trước camera sample. Cấu hình máy này dùng ánh sáng mặc
+   định do camera cung cấp và chỉ tắt `Tn_LED`; vòng WCMCU WS2812B/ESP32-C3
+   độc lập là giải pháp tạm thời ngoài camera, không được giả định, điều khiển,
+   đồng bộ hay đưa vào calibration.
 8. Nếu bổ sung apply, giữ lệnh riêng `TOOL_VISION_APPLY_LAST_XY` và fail closed:
    active/detected tool phải khớp, fingerprint/configured snapshot không đổi,
    batch PASS, tool không phải T0, spread/drift đạt, người dùng xác nhận rõ.
@@ -56,7 +64,9 @@ là tọa độ tương đối giữa center của tool và T0; production vẫn
 
 - Camera Z40, T0 làm reference X/Y zero, heater target 0, LED tool tắt.
 - Mỗi T1–T4: ba raw sample đủ, spread mỗi trục không quá `0.12 mm`.
-- Ít nhất ba pickup cycles/tool; lưu riêng mean mỗi pickup và median liên pickup.
+- Ít nhất ba pickup cycles/tool; mỗi cycle là một T0→T4 hoàn chỉnh, lưu riêng
+  mean mỗi pickup và median liên pickup. Trước mỗi sample phải có bằng chứng
+  lệnh vị trí an toàn động; thiếu bằng chứng là fail closed.
 - T0 return drift nằm trong threshold đã khai báo; nếu không, kết quả chỉ được
   báo cáo và không cho apply.
 - Sau apply thử nghiệm, đo verification report-only phải về gần zero theo độ
@@ -70,3 +80,7 @@ là tọa độ tương đối giữa center của tool và T0; production vẫn
   nhầm kết quả cũ.
 - Detector ổn định trong một pickup không chứng minh dock repeatable. T0 return
   drift là gate bắt buộc trước khi coi candidate là production-ready.
+- Kết quả HIL lần này: T1 `(+0.004,-0.078)`, T2 `(+0.005,-0.104)`, T3 mean
+  `(+0.012667,-0.085)` nhưng median `(+0.005,-0.078)` do một outlier X,
+  T4 `(+0.003667,-0.069333)` mm. Vì vậy phải hiển thị cả mean và median, không
+  tự động ghi offset.

@@ -17,7 +17,7 @@ diff --git a/server/ktamv_server_dm.py b/server/ktamv_server_dm.py
                                  self.__algorithm = 5
 +                            else:
 +                                # MF-500 fallback: locate the compact highlight
-+                                # produced by the camera's supplied nozzle illumination.
++                                # produced by the 5% nozzle-camera light ring.
 +                                highlight = self.find_center_highlight_keypoint(nozzleDetectFrame)
 +                                if highlight is None:
 +                                    keypoints = None
@@ -26,19 +26,18 @@ diff --git a/server/ktamv_server_dm.py b/server/ktamv_server_dm.py
 +                                    keypointColor = (0,255,255)
 +                                    self.__algorithm = 6
                          else:
-@@ -301,3 +314,46 @@ class Ktamv_Server_Detection_Manager:
+@@ -301,3 +314,45 @@ class Ktamv_Server_Detection_Manager:
          return(outputFrame)
 -
 +
 +    def find_center_highlight_keypoint(self, frame):
 +        """Return the compact nozzle highlight nearest the image center.
 +
-+        The camera's supplied/default nozzle illumination is the optical input.
++        The machine's independent WS2812B camera ring is fixed at 5% output.
 +        With the toolhead LEDs disabled, its stable white reflection is a more
-+        reliable tracking feature than the super-relaxed blob detector.  An
-+        external ESP32/WS2812B ring is not required or controlled.  The bounds
-+        deliberately reject tiny sparkles, large overexposed regions, elongated
-+        reflections, and candidates outside the calibration area.
++        reliable tracking feature than the super-relaxed blob detector.  The
++        bounds deliberately reject tiny sparkles, large overexposed regions,
++        elongated reflections, and candidates outside the calibration area.
 +        """
 +        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 +        _, mask = cv2.threshold(gray, 245, 255, cv2.THRESH_BINARY)

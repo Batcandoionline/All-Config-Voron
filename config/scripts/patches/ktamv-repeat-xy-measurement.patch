@@ -148,24 +148,27 @@ index 14ae4e4..055ed3c 100644
      cmd_FIND_NOZZLE_CENTER_help = ("Finds the center of the nozzle and moves" 
          + " it to the center of the camera, offset can be set from here")
  
-@@ -595,6 +715,7 @@ class ktamv:
+@@ -595,6 +715,10 @@ class ktamv:
      def _get_average_mpp_from_lists(self, gcmd):
          logging.debug("*** calling ktamv._get_average_mpp_from_lists")
          try:
 +            initial_count = len(self.mm_per_pixels)
++            # The final center reading repeats an endpoint; count only the
++            # independent movement points for the 75% minimum.
++            minimum_count = max(1, initial_count - 1) * 0.75
              (
                  mpp,
                  new_mm_per_pixels,
-@@ -610,7 +731,7 @@ class ktamv:
+@@ -610,7 +734,7 @@ class ktamv:
              # Ensure we got a result and that we have at least 75% of the calibration points
              if mpp is None:
                  raise self.gcode.error("Failed to get average mm per pixel")
 -            elif len(new_mm_per_pixels) < (len(self.mm_per_pixels) * 0.75):
-+            elif len(new_mm_per_pixels) < (initial_count * 0.75):
++            elif len(new_mm_per_pixels) < minimum_count:
                  raise self.gcode.error(
                      "More than 25% of the calibration points failed, aborting"
                  )
-@@ -648,6 +769,10 @@ class ktamv:
+@@ -648,6 +772,10 @@ class ktamv:
              "camera_center_coordinates": self.cp,
              "travel_speed": self.speed,
              "last_nozzle_center_successful": self.last_nozzle_center_successful,

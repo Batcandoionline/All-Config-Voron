@@ -71,8 +71,11 @@ Important source observations:
 
 ## Current MF-500 lighting setup
 
-- The nozzle light is a WCMCU eight-pixel WS2812B ring powered and controlled
-  independently by an ESP32-C3 Mini at 5%. It is not connected to Klipper.
+- The camera's supplied/default nozzle illumination is sufficient for the
+  detector and is the only lighting assumed by kTAMV/ToolVision. A WCMCU
+  eight-pixel WS2812B ring powered independently by an ESP32-C3 Mini is only a
+  temporary workaround while the camera light is not mechanically installed;
+  it is not connected to Klipper and is not controlled or calibrated.
 - `T0_LED` is the separate three-pixel toolhead chain. It produces reflections
   below the nozzle and must be disabled while using the camera:
 
@@ -116,8 +119,9 @@ an emergency stop ready. A failure does not guarantee exact return to the
 starting coordinate.
 
 The 2026-08-31 measurement used operator-approved Z40, disabled each tool LED
-and did not control the independent 5% ESP32-C3 ring. Heater targets remained
-zero.
+and used the camera's supplied/default nozzle illumination. The independent
+ESP32-C3/WS2812B ring is a temporary external workaround, not controlled,
+assumed or calibrated by kTAMV/ToolVision. Heater targets remained zero.
 
 ## Manual comparison workflow
 
@@ -127,20 +131,23 @@ frame margin for the 0.5 mm pattern.
 
 1. While the machine is idle and attended, home through the normal machine
    workflow and select T0 with X/Y offsets equal to zero.
-2. Move T0 near the camera center at a safe Z. Disable `T0_LED`, keep the
-   ESP32-C3 ring at 5%, then run `KTAMV_SETUP`, preview and
+2. Move T0 near the camera center at a safe Z. Disable `T0_LED`, use the
+   camera's supplied/default illumination, then run `KTAMV_SETUP`, preview and
    `KTAMV_SIMPLE_NOZZLE_POSITION`. Continue only when repeated detections mark
    the actual center highlight at the same coordinates.
 3. Stop preview and run `KTAMV_CALIB_CAMERA`. Continue only when
    `KTAMV_STATUS` reports calibrated with a valid mm/pixel value.
 4. Run `KTAMV_FIND_NOZZLE_CENTER`, then `KTAMV_SET_ORIGIN` exactly once for T0.
-5. For each T1–T4, select it through KTC and run
-   `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`. The wrapper disables `Tn_LED`,
-   keeps Z40, returns to the same origin before every sample and reports raw
-   samples, mean and spread.
-6. Only when active/detected tools match, all three samples exist and per-axis
-   spread is at most `0.12 mm`, run `KTAMV_APPLY_ACTIVE_TOOL_XY`. The candidate
-   is `loaded offset + mean residual`; T0 is rejected because it is reference.
+5. For each independent cycle, select `T0` then `T1`…`T4`; immediately before
+   every sample send `GET_POSITION` and record the dynamic safe pose. After each
+   pickup run `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=1 Z=40 MAX_SPREAD=0.12`.
+   Do not infer dock repeatability from three consecutive samples in one pickup;
+   keep raw results from at least three complete cycles and compute outer
+   median/mean.
+6. Only when active/detected tools match, inner spread and T0 return drift pass,
+   and all required raw samples exist, run `KTAMV_APPLY_ACTIVE_TOOL_XY` as a
+   separate reviewed step. The candidate is `loaded offset + residual`; T0 is
+   rejected because it is reference.
 7. After reviewing every tool, run `SAVE_CONFIG` once. It restarts Klipper and
    clears the RAM-only camera calibration/origin. Z remains unchanged.
 
@@ -149,11 +156,13 @@ frame margin for the 0.5 mm pattern.
 - `ktamv-multi-object-selection.patch` fixes keypoint access and method binding
   when a detector pipeline returns multiple objects.
 - `ktamv-center-highlight-fallback.patch` rejects far keypoints, adds a compact
-  highlight detector for the MF-500/5% ring, and guards one-sample `stdev`.
+  highlight detector for the MF-500 camera illumination, and guards one-sample
+  `stdev`.
 - `ktamv-repeat-xy-measurement.patch` stops mm/pixel filtering from mutating
   caller lists, keeps MPP/space/camera removals aligned, returns a consistent
-  failure tuple, enforces the real 75% retained threshold, and adds native
-  three-sample XY state with Z40 and active/detected-tool guards.
+  failure tuple, enforces the real 75% retained threshold on independent motion
+  points (excluding the repeated endpoint), and adds native XY state with Z40
+  and active/detected-tool guards.
 
 The user-facing measure and apply macros are intentionally separate. Klipper
 Jinja renders before the native measurement updates status, and the boundary
@@ -172,7 +181,10 @@ also provides an explicit review point before staging configuration.
 | Recovery | Limited; native commands may leave a shifted position | KTC restore verification and cleanup evidence |
 | Updates | Pinned/manual because of a local patch | Previously managed by Moonraker |
 
-The comparison is not a claim that one detector is universally better. On this
+The three-cycle raw evidence is stored at
+`extras/experiments/ktamv-xy-independent-cycles-20260831.md`; T3 has one
+first-cycle X outlier, so outer-cycle statistics are required. The comparison
+is not a claim that one detector is universally better. On this
 specific MF-500 setup, both systems saw ambiguous reflective features. The
 2026-08-22 kTAMV calibration accepted only six of ten points; its processed
 marker sat on a bright reflection below the actual nozzle hole, and one accepted

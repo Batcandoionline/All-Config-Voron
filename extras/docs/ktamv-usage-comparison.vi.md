@@ -65,8 +65,10 @@ Các sự thật quan trọng từ source:
 
 ## Thiết lập ánh sáng MF-500 hiện tại
 
-- Vòng soi nozzle là WCMCU WS2812B tám LED do ESP32-C3 Mini cấp nguồn/điều
-  khiển riêng ở độ sáng 5%; nó không nối Klipper.
+- Ánh sáng mặc định do camera cung cấp đủ cho detector và là nguồn sáng duy
+  nhất mà kTAMV/ToolVision giả định. Vòng WCMCU WS2812B tám LED do ESP32-C3
+  Mini cấp riêng chỉ là giải pháp tạm thời khi đèn camera chưa lắp cơ khí; vòng
+  này không nối Klipper, không được điều khiển hay hiệu chuẩn.
 - `T0_LED` là ba LED trên toolhead, hoàn toàn khác vòng camera. Ba LED này tạo
   bóng phản xạ dưới nozzle và phải tắt trong lúc dùng camera:
 
@@ -109,7 +111,9 @@ máy, camera/dây chắc chắn, đường dock trống và emergency stop sẵn
 kTAMV không đảm bảo trở về chính xác tọa độ bắt đầu.
 
 Phiên đo 2026-08-31 dùng Z40 do operator xác nhận, tắt LED của từng tool và
-không điều khiển vòng ESP32-C3 5% độc lập. Heater target luôn bằng 0.
+dùng ánh sáng mặc định do camera cung cấp. Vòng ESP32-C3/WS2812B 8 LED là giải
+pháp tạm thời ngoài camera nên không được điều khiển hay đưa vào giả định của
+kTAMV/ToolVision. Heater target luôn bằng 0.
 
 ## Workflow đối chiếu thủ công
 
@@ -118,18 +122,21 @@ sáng mềm/đều, focus rõ lỗ nozzle và để đủ margin cho pattern 0.5
 
 1. Khi máy idle và có người giám sát, home bằng workflow bình thường rồi chọn T0
    có offset X/Y bằng 0.
-2. Đưa T0 gần tâm camera ở Z an toàn. Tắt `T0_LED`, giữ vòng ESP32-C3 ở 5%, rồi
-   chạy `KTAMV_SETUP`, preview và `KTAMV_SIMPLE_NOZZLE_POSITION`. Chỉ chấp nhận
+2. Đưa T0 gần tâm camera ở Z an toàn. Tắt `T0_LED`, dùng ánh sáng mặc định của
+   camera, rồi chạy `KTAMV_SETUP`, preview và `KTAMV_SIMPLE_NOZZLE_POSITION`. Chỉ chấp nhận
    khi marker bám đúng phản xạ trung tâm và nhiều lần trả cùng tọa độ.
 3. Tắt preview rồi chạy `KTAMV_CALIB_CAMERA`. Chỉ tiếp tục khi `KTAMV_STATUS`
    báo calibrated và mm/pixel hợp lệ.
 4. Chạy `KTAMV_FIND_NOZZLE_CENTER`, sau đó `KTAMV_SET_ORIGIN` đúng một lần cho T0.
-5. Với từng T1–T4, chọn qua KTC rồi chạy
-   `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=3`. Wrapper tắt `Tn_LED`, giữ Z40,
-   đưa nozzle về cùng origin trước mỗi sample và báo raw samples, mean, spread.
-6. Chỉ khi active/detected tool khớp, đủ ba sample và spread mỗi trục không quá
-   `0.12 mm`, chạy `KTAMV_APPLY_ACTIVE_TOOL_XY`. Ứng viên được tính bằng
-   `offset đang nạp + mean residual`; T0 bị chặn vì là reference.
+5. Với từng chu kỳ độc lập, dùng `T0` rồi lần lượt `T1`…`T4`; ngay trước mỗi
+   phép đo gửi `GET_POSITION` để ghi pose an toàn hiện tại. Sau pickup, chạy
+   `KTAMV_MEASURE_ACTIVE_TOOL_XY SAMPLES=1 Z=40 MAX_SPREAD=0.12`. Không dùng
+   ba sample liên tiếp từ cùng một pickup để suy ra dock repeatability; lưu raw
+   result của ít nhất ba chu kỳ rồi tính median/mean giữa chu kỳ.
+6. Chỉ khi active/detected tool khớp, đủ raw samples, spread trong pickup và
+   drift T0 giữa chu kỳ đạt gate, chạy `KTAMV_APPLY_ACTIVE_TOOL_XY` riêng sau
+   khi review. Ứng viên được tính bằng `offset đang nạp + residual` và T0 bị
+   chặn vì là reference.
 7. Sau khi review tất cả tool, chạy `SAVE_CONFIG` đúng một lần. Lệnh này restart
    Klipper và xóa calibration/origin RAM. Z ngoài phạm vi và luôn giữ nguyên.
 
@@ -138,11 +145,13 @@ sáng mềm/đều, focus rõ lỗ nozzle và để đủ margin cho pattern 0.5
 - `ktamv-multi-object-selection.patch`: sửa truy cập keypoint và method binding
   khi pipeline trả nhiều vật thể.
 - `ktamv-center-highlight-fallback.patch`: loại keypoint quá xa tâm, thêm
-  detector highlight compact cho MF-500/vòng 5%, và guard `stdev` một sample.
+  detector highlight compact cho MF-500 với ánh sáng camera, và guard `stdev`
+  một sample.
 - `ktamv-repeat-xy-measurement.patch`: sửa bộ lọc mm/pixel không còn mutate list
   caller, xóa đồng bộ MPP/space/camera, trả tuple nhất quán khi fail, kiểm tra
-  thật tỷ lệ giữ 75%; thêm `KTAMV_MEASURE_TOOL_XY` cùng state raw/mean/spread,
-  Z40 và guard active/detected tool.
+  thật tỷ lệ giữ 75% trên các điểm chuyển động (không tính endpoint lặp); thêm
+  `KTAMV_MEASURE_TOOL_XY` cùng state raw/mean/spread, Z40 và guard
+  active/detected tool.
 
 Hai macro user-facing trong `Printer-Setup/ktamv.cfg` tách đo và áp dụng có chủ
 ý. Không ghép chúng trong một macro vì Jinja của Klipper render trước khi lệnh
@@ -161,7 +170,10 @@ native đo cập nhật status; tách riêng cũng tạo điểm review trước
 | Recovery | Giới hạn; lệnh native có thể để vị trí lệch | Kiểm tra restore KTC và evidence cleanup |
 | Update | Pin/thủ công do có patch local | Trước đây do Moonraker quản lý |
 
-Đây không phải kết luận detector nào luôn tốt hơn. Với MF-500 cụ thể này, cả hai
+Kết quả ba chu kỳ độc lập được lưu tại
+`extras/experiments/ktamv-xy-independent-cycles-20260831.md`; T3 có một outlier
+X ở chu kỳ đầu, chứng minh cần thống kê giữa pickup thay vì chỉ tin spread trong
+một pickup. Đây không phải kết luận detector nào luôn tốt hơn. Với MF-500 cụ thể này, cả hai
 hệ thống đều gặp vật thể phản xạ mơ hồ. Lần kTAMV 2026-08-22 chỉ nhận 6/10 điểm;
 marker nằm trên vùng sáng bên dưới lỗ nozzle thật và một scale hợp lệ `0.028`
 lệch cụm `0.041–0.044`. ToolVision cũng từ chối cảnh vì có nhiều vật thể giống

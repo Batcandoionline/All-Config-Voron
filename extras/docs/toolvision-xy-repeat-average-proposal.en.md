@@ -15,22 +15,30 @@ production path remains report-only.
 
 1. Add `xy_samples_per_tool`, default `3`, and
    `max_xy_sample_spread_mm`, default `0.12`.
-2. In `_measure_xy()`, call `_move_to_station("camera", tool_number)` before
-   **every** sample. Re-centering from an already centered position makes
-   samples two and three misleading zeros.
+2. In `_measure_xy()`, call a safe-position provider (a command/API equivalent
+   to `GET_POSITION`, or a `TOOLVISION_GET_SAFE_POSITION` macro) before **every**
+   sample and persist the returned pose. Validate homing, travel limits, Z
+   clearance and active/detected tool; never hard-code camera, dock, probe or
+   switch X/Y/Z coordinates. Raise Z at the current XY pose, then travel to the
+   calibrated camera origin. Re-centering from an already centered position
+   makes samples two and three misleading zeros.
 3. Persist every raw center position, station/reference residual and detector
    evidence. Compute per-axis mean/min/max/range and fail closed on missing
    samples or excessive range.
 4. Report `mean_residual_xy`, the starting `configured_xy`, and
    `candidate_xy = configured_xy + mean_residual_xy`, plus raw samples/spread.
-5. Keep the median across full attempts/pickup cycles as an outer statistic.
+5. Keep the median across full attempts/pickup cycles as an outer statistic;
+   the 2026-08-31 HIL run completed three independent T0-to-T4 cycles and
+   stored raw CSV/Markdown evidence.
    The three-sample mean measures detection/centering repeatability within one
    pickup; the median of at least three pickup means measures dock repeatability.
 6. Turn the existing T0 reference-return evidence into a configurable gate.
    This machine observed up to `Y+0.072 mm`; classify excessive return drift as
    `REVIEW_PICKUP_REPEATABILITY`.
-7. Add a pre-camera lighting hook. This machine disables only `Tn_LED`; the
-   independent 5% WCMCU WS2812B/ESP32-C3 ring must not be assumed controllable.
+7. Add a pre-camera lighting hook. This machine uses the camera's supplied
+   default nozzle illumination and disables only `Tn_LED`; the independent
+   WCMCU WS2812B/ESP32-C3 ring is a temporary external workaround and must not
+   be assumed, controlled, synchronized or included in calibration.
 8. If apply support is added, keep a separate
    `TOOL_VISION_APPLY_LAST_XY` command. Require matching active/detected tool,
    unchanged fingerprint/config snapshot, PASS status, non-T0 tool, accepted
@@ -53,8 +61,9 @@ production path remains report-only.
 
 - Camera at Z40, zero-XY T0 reference, heater targets zero and tool LEDs off.
 - Three complete samples per T1–T4; per-axis spread at most `0.12 mm`.
-- At least three pickup cycles per tool, with pickup means and their median kept
-  separately.
+- At least three complete T0-to-T4 pickup cycles per tool, with pickup means and
+  their median kept separately. Each sample must include evidence that the
+  dynamic safe-position command was called; missing evidence is fail-closed.
 - T0 return drift within a declared threshold; otherwise report only.
 - A report-only verification after trial application returns near zero at the
   camera resolution, while every Z offset remains byte-for-byte unchanged.
@@ -67,3 +76,7 @@ production path remains report-only.
   consume stale evidence.
 - Stability within one pickup does not prove dock repeatability. T0 return drift
   must gate any production-ready classification.
+- HIL evidence: T1 `(+0.004,-0.078)`, T2 `(+0.005,-0.104)`, T3 mean
+  `(+0.012667,-0.085)` versus median `(+0.005,-0.078)` because of one X outlier,
+  and T4 `(+0.003667,-0.069333)` mm. Report both estimators and never write
+  offsets implicitly.

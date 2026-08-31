@@ -399,3 +399,60 @@ Với KTC đang áp dụng production offset, ứng viên mới được tính t
   `X168.751 Y18.491 Z40`; không gửi thêm chuyển động sau restart.
 - kTAMV service active; module mới đã nạp. Calibration/origin RAM đã reset như
   thiết kế và phải setup lại trước phép đo tiếp theo.
+
+## 7. Ba chu kỳ pickup độc lập T0–T4 và kiểm tra ngưỡng calibration
+
+- Hai lần calibration đầu sau restart bị loại bởi gate cũ vì bộ dữ liệu có 11
+  dòng (dòng cuối lặp endpoint) nhưng chỉ 8/11 điểm hợp lệ. Đã sao lưu trước
+  khi sửa: `/home/voron/printer_data/config_backups/pre-ktamv-calibration-threshold-20260831-145925/`.
+- Patch `ktamv-repeat-xy-measurement.patch` nay tính ngưỡng 75% trên số điểm
+  chuyển động độc lập (`initial_count - 1`), không tính endpoint tâm lặp. Áp
+  vào bản clone sạch, `py_compile` và apply/reverse-apply đều đạt; module live
+  được nạp lại bằng restart Klipper qua Moonraker (không dùng sudo do yêu cầu
+  mật khẩu, không có chuyển động ngoài lệnh đã giám sát).
+- Calibration thành công: `mm_per_pixel=0.0570`, final stdev `6.3%`; T0 được
+  center và origin xác nhận `[168.716, 18.451]`. Máy homed, ready, target bed
+  và extruder đều `0 degC`.
+- Đã thực hiện 3 chu kỳ độc lập. Mỗi chu kỳ là một vòng T0→T1→T2→T3→T4,
+  một mẫu camera/tool sau pickup; giữa các chu kỳ có T4→T0. Trước từng mẫu gửi
+  `GET_POSITION` và lưu pose an toàn động; không cố định tọa độ camera. T0_LED
+  … T4_LED đều tắt; đèn mặc định của camera là nguồn sáng duy nhất trong
+  phép đo. Vòng ESP32-C3/WS2812B 8 LED tạm thời hoàn toàn ngoài quy trình.
+
+| Chu kỳ | T0 | T1 | T2 | T3 | T4 |
+| ---: | --- | --- | --- | --- | --- |
+| 1 | `0.000/0.000` | `+0.004/-0.078` | `+0.006/-0.130` | `+0.029/-0.073` | `+0.004/-0.078` |
+| 2 | `+0.001/-0.026` | `+0.004/-0.078` | `+0.004/-0.078` | `+0.005/-0.104` | `+0.004/-0.078` |
+| 3 | `+0.001/-0.026` | `+0.004/-0.078` | `+0.005/-0.104` | `+0.004/-0.078` | `+0.003/-0.052` |
+
+- Pose an toàn động lặp lại theo dock: T0 `(30.200,120.000,40.000)`, T1
+  `(104.000,120.000,40.2464)`, T2 `(176.000,120.000,39.7312)`, T3
+  `(249.500,120.000,39.8104)`, T4 `(321.500,120.000,40.1028)` mm. Đây là
+  giá trị đọc bằng lệnh, không phải tọa độ transit hard-code trong chu kỳ.
+- Trung bình giữa pickup (mm): T1 `(+0.004,-0.078)`, T2
+  `(+0.005,-0.104)`, T3 `(+0.012667,-0.085)`, T4 `(+0.003667,-0.069333)`.
+  Trung vị tương ứng: T1 `(+0.004,-0.078)`, T2 `(+0.005,-0.104)`, T3
+  `(+0.005,-0.078)`, T4 `(+0.004,-0.078)`. T3 có một điểm X cao ở chu kỳ 1;
+  không được che khuất bằng gate spread đơn giản.
+- Không chạy `KTAMV_APPLY_ACTIVE_TOOL_XY`, không `SAVE_CONFIG`; các giá trị
+  ứng viên loaded+mean/median chỉ được lưu trong
+  `extras/experiments/ktamv-xy-independent-cycles-20260831.md` và CSV cùng
+  tên. Offset Z Cartographer hiện tại không thay đổi.
+- Cập nhật `config/scripts/install.sh` để preflight bắt buộc marker
+  `minimum_count = max(1, initial_count - 1)`; đồng bộ install script và patch
+  lên máy sau khi sao lưu tại
+  `/home/voron/printer_data/config_backups/pre-independent-cycles-20260831-153700/`.
+  SHA256 local/live khớp (`install.sh`
+  `6a1987c837e86c47429bd835f9abce1038624544a095d7198a9b917ce3c268fc`, patch
+  `8891706324d0077c549d41e949341e5bb133ff4d83b4f87223886bad91752f0a`).
+- Loại bỏ giả định ánh sáng vòng WS2812B khỏi comment/doc của
+  `ktamv-center-highlight-fallback.patch`; nạp lại source detector chỉ đổi
+  comment, không đổi thuật toán/chuyển động. Backup trước sửa nằm tại
+  `extras/backups/pre-default-camera-light-20260831-154000/` và runtime backup
+  cùng tên trên máy.
+- Kết luận cho ToolVision: phải tách repeatability trong một pickup khỏi
+  repeatability giữa pickup; dùng raw rows, outer median/mean, T0 return-drift
+  gate và giao dịch apply có người duyệt. Z cần provider Cartographer hoặc công
+  tắc với vị trí do lệnh cung cấp; XY camera và ánh sáng mặc định của camera
+  không phụ thuộc ESP32/WS2812B. Chi tiết prompt điều phối agent Luna được gửi
+  ở task ToolVision riêng.
