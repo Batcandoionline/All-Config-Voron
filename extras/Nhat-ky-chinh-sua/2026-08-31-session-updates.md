@@ -154,3 +154,23 @@ về trục, persistence, detector, recovery và phạm vi an toàn. Chưa thự
 - Chỉ đọc API, source và log; không gửi thêm G-code, không sửa config/runtime.
 - Không chạy `KTAMV_FIND_NOZZLE_CENTER`; trước lần calibration mới phải xác minh
   marker trên ảnh processed nằm đúng lỗ nozzle và cải thiện ánh sáng/focus.
+
+## 3. Đối chiếu ảnh raw và processed sau calibration thất bại
+
+### Bằng chứng ảnh
+
+- Screenshot Mainsail lúc `2026-08-31 12:23:27` hiển thị đồng thời camera raw
+  và output processed kTAMV tại X `170`, Y `20`, Z `40`.
+- Marker đỏ processed nằm quanh vị trí detector gần `[308,262]`, trên vùng sáng
+  bão hòa ở giữa đầu nozzle. Ảnh raw có glare xanh/trắng mạnh; mép lỗ nozzle
+  thật không tách rõ khỏi điểm phản xạ trung tâm.
+- Marker tĩnh nhìn gần tâm ảnh nhưng không chứng minh cùng một feature được theo
+  dõi suốt pattern. Các scale `0.003–0.004` vẫn cho thấy detector đã nhảy khoảng
+  158–175 pixel tại bước 6–8.
+
+### Kết luận
+
+- Không dùng ảnh này để chấp nhận calibration hoặc chạy centering.
+- Giảm bão hòa/phản xạ, dùng ánh sáng khuếch tán và chỉnh focus để thấy rõ mép
+  lỗ nozzle trước lần thử mới; không tăng tolerance để ép detector pass.
+- Chỉ phân tích screenshot; không gửi G-code và không thay đổi máy.
