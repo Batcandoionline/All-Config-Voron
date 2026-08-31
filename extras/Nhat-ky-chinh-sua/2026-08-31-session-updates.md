@@ -139,8 +139,9 @@ về trục, persistence, detector, recovery và phạm vi an toàn. Chưa thự
 ### Nguyên nhân gốc
 
 - Dữ liệu detector chia thành hai cụm không tương thích: `0.060–0.067` và
-  `0.003–0.004`. Cụm rất nhỏ cho thấy marker gần như không dịch chuyển theo
-  move 0,5 mm, phù hợp với việc detector khóa vào reflection/blob sai.
+  `0.003–0.004`. Theo công thức `mm/pixel = quãng đường máy / quãng đường ảnh`,
+  cụm rất nhỏ tương ứng marker nhảy khoảng 158–175 pixel giữa các điểm, phù hợp
+  với việc detector chuyển sang reflection/blob khác.
 - Upstream có lỗi thứ cấp: bộ lọc không fail rõ ràng khi còn dưới hai sample mà
   để `statistics.stdev()` phát lỗi Python.
 
