@@ -112,3 +112,44 @@ về trục, persistence, detector, recovery và phạm vi an toàn. Chưa thự
 
 - Chỉ sau khi sửa ánh sáng/focus/cảnh phản xạ và có người đứng máy mới cân nhắc
   test `KTAMV_CALIB_CAMERA`/`KTAMV_FIND_NOZZLE_CENTER`.
+
+## 2. Chẩn đoán camera calibration kTAMV lỗi `stdev`
+
+### Triệu chứng
+
+- Operator đã home, đưa T0 tới X `170`, Y `20`, Z `40` và chạy
+  `KTAMV_CALIB_CAMERA` có giám sát.
+- Mười bước trả `0.042, 0.063, 0.064, 0.067, failed, 0.003, 0.004, 0.004,
+  0.064, 0.060`; sample về tâm là `0.0600`.
+- Lệnh kết thúc bằng
+  `_calibrate_px_mm failed _get_average_mpp_from_lists failed stdev requires at least two data points`.
+
+### Phân tích nhật ký
+
+- [klippy.log](file:///home/voron/printer_data/logs/klippy.log) — evidence tại
+  các dòng 15340–15490.
+- Source upstream gọi `statistics.stdev()` sau mỗi vòng lọc mà không kiểm tra
+  danh sách còn tối thiểu hai phần tử.
+- Mô phỏng đúng thuật toán với các sample trên: mean ban đầu `0.043`, stdev
+  `0.028045`; trước bộ lọc ±25% còn bảy giá trị với mean `0.042`; sau bộ lọc chỉ
+  còn `[0.042]`, nên `stdev()` phát exception.
+- Dòng `Calibrated camera center: mm/pixel found: 0.0600` chỉ là sample về tâm,
+  không phải kết quả calibration cuối.
+
+### Nguyên nhân gốc
+
+- Dữ liệu detector chia thành hai cụm không tương thích: `0.060–0.067` và
+  `0.003–0.004`. Cụm rất nhỏ cho thấy marker gần như không dịch chuyển theo
+  move 0,5 mm, phù hợp với việc detector khóa vào reflection/blob sai.
+- Upstream có lỗi thứ cấp: bộ lọc không fail rõ ràng khi còn dưới hai sample mà
+  để `statistics.stdev()` phát lỗi Python.
+
+### Kết quả và phạm vi an toàn
+
+- Klipper vẫn `ready`, printer `standby`, bed target `0`, homed `xyz`, vị trí
+  `[170,20,40]`; T0 được phần cứng phát hiện.
+- kTAMV giữ `is_calibrated=false`, `mm_per_pixels=null`, origin `null`; không có
+  matrix hoặc offset nào được chấp nhận.
+- Chỉ đọc API, source và log; không gửi thêm G-code, không sửa config/runtime.
+- Không chạy `KTAMV_FIND_NOZZLE_CENTER`; trước lần calibration mới phải xác minh
+  marker trên ảnh processed nằm đúng lỗ nozzle và cải thiện ánh sáng/focus.
