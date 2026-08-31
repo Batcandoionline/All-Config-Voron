@@ -242,3 +242,63 @@ về trục, persistence, detector, recovery và phạm vi an toàn. Chưa thự
 - Chưa chạy lại calibration vì nó có chuyển động và Klipper hiện chưa home.
   Lần test chuyển động tiếp theo chỉ thực hiện khi operator đứng máy và cho phép
   rõ ràng.
+
+## 5. Đo XY tool offset bằng kTAMV tại Z40
+
+### Cho phép và điều kiện đo
+
+- Operator xác nhận camera có Z an toàn `40` và vùng camera quanh
+  `X170 Y20 Z40`, đồng thời yêu cầu thực hiện phép đo XY.
+- Không thay đổi vị trí camera, không điều khiển vòng WCMCU WS2812B tám LED
+  dùng ESP32-C3 Mini độc lập; vòng này tiếp tục ở mức sáng 5%.
+- LED trên tool đang đo được tắt trước khi nhận dạng để tránh glare. Không bật
+  heater; tất cả heater target giữ `0 degC`.
+- T0 ban đầu đã được operator home và đặt tại `X170 Y20 Z40`. Mọi chuyển động
+  đo đều dùng Z G-code `40`; không đo hoặc thay đổi Z offset.
+
+### Camera calibration và origin
+
+- Lần calibration đầu trả mười sample
+  `0.036, 0.054, 0.059, 0.059, 0.056, 0.036, 0.010, 0.059, 0.056, 0.052`
+  và sample tâm `0.052`. Sau lọc thủ công còn 7/11 sample nên không được dùng,
+  dù code upstream báo nhận `0.055`.
+- Lần calibration thứ hai trả
+  `0.036, 0.056, 0.059, 0.056, 0.056, 0.036, 0.056, 0.059, 0.056, 0.052`
+  và sample tâm `0.052`. Sau lọc còn 9/11 sample, mean `0.056 mm/pixel`,
+  relative stdev `4.4%`; phép này được chấp nhận cho phiên đo.
+- T0 được căn tới UV `[320,240]`. Camera origin trong RAM được đặt tại
+  `X168.805 Y18.420`; kTAMV status cuối vẫn là `calibrated=True`,
+  `mm_per_pixel=0.056`, `origin=(168.805,18.42)`.
+- Phát hiện thêm lỗi upstream: `_get_average_mpp_from_lists()` thay đổi list
+  đầu vào tại chỗ, làm kiểm tra giữ tối thiểu 75% sample ở caller trở nên vô
+  hiệu. Vì vậy tiêu chí 9/11 nêu trên được kiểm tra độc lập; chưa sửa runtime
+  trong phần việc đo này.
+
+### Kết quả đo chỉ báo cáo
+
+`KTAMV_GET_OFFSET` là residual từ camera origin trong hệ G-code hiện hành.
+Với KTC đang áp dụng production offset, ứng viên mới được tính theo
+`offset đang nạp + residual đo được`.
+
+| Tool | Offset đang nạp X/Y (mm) | Residual lặp (mm) | Ứng viên phiên này X/Y (mm) |
+| --- | --- | --- | --- |
+| T1 | `-0.243 / -0.252` | pickup đầu `0.000 / 0.000`; pickup sau `+0.027 / +0.049`, `+0.027 / +0.032`, `+0.027 / +0.032` | theo mean pickup sau: `-0.216 / -0.214` |
+| T2 | `+0.746 / +0.086` | `+0.001 / +0.154` (3/3 giống nhau) | `+0.747 / +0.240` |
+| T3 | `+0.304 / +0.449` | `0.000 / +0.068` (3/3 giống nhau) | `+0.304 / +0.517` |
+| T4 | `+0.041 / +0.352` | `+0.079 / -0.091` (3/3 giống nhau) | `+0.120 / +0.261` |
+
+- T1 thể hiện sai khác giữa hai lần pickup. Sau khi hoàn tất T1-T4 và pickup
+  lại T0, T0 cần correction `X-0.052 Y+0.055 mm` để trở lại UV `[320,240]`.
+  Đây là bằng chứng độ lặp lại toolchange/detector cùng cỡ một pixel
+  (`0.056 mm`), nên các ứng viên trên chưa đủ để ghi production trực tiếp.
+- Không chạy `SAVE_CONFIG`, không sửa `gcode_x_offset`/`gcode_y_offset`, không
+  restart Klipper và không thay đổi file config/runtime trong phép đo.
+
+### Trạng thái máy khi bàn giao
+
+- Toolchanger `ready`; active tool và detected tool đều là T0; homed axes
+  `xyz`; printer ở trạng thái standby.
+- T0 được để đúng tâm camera tại `X168.753 Y18.475 Z40`, `T0_LED` tắt.
+- Extruder T0-T4 và bed đều target `0 degC`; nhiệt độ thực tế khoảng
+  `31-34 degC`.
+- Calibration và origin chỉ còn trong RAM và sẽ bị xóa khi Klipper restart.
