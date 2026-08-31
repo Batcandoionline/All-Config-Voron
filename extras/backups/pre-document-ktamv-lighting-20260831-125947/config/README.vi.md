@@ -87,8 +87,7 @@ và khối `SAVE_CONFIG` của `printer.cfg`.
 - Axiscope và `[tools_calibrate]` chỉ là nội dung rollback đã comment trong
   `calibration-probe.cfg`, không phải backend hoạt động.
 - Runtime kTAMV được pin tại commit upstream `72421f2`, chạy user service cổng
-  `8086`, tắt cloud upload và có các bản sửa nhiều vật thể, highlight tâm MF-500
-  và stdev một sample đã review.
+  `8086`, tắt cloud upload và có patch nhiều vật thể đã review.
 
 Toàn bộ `Generated-Data/` bị loại khỏi Git deployment và `rsync --delete`.
 
@@ -117,7 +116,7 @@ sudo systemctl restart moonraker klipper
 
 1. Sáu entry readonly KTC-Easy là symlink hợp lệ và target tồn tại.
 2. Nếu include kTAMV đang bật, checkout được pin, Python riêng, user service, hai
-   symlink Klipper chính xác và các patch runtime đã review phải tồn tại.
+   symlink Klipper chính xác và patch detector phải tồn tại.
 3. `tool_crash.py` đã được patch hoặc khớp đúng preimage đã review.
 4. Tạo snapshot có timestamp tại
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.

@@ -13,7 +13,7 @@ at commit `72421f2d54da0de8701c4f84449c6e6b7d060301`. That commit is still upstr
 | Item | Value |
 | --- | --- |
 | Source | `/home/voron/kTAMV` at reviewed commit `72421f2` |
-| Local fixes | `ktamv-multi-object-selection.patch` and `ktamv-center-highlight-fallback.patch` |
+| Local fix | `config/scripts/patches/ktamv-multi-object-selection.patch` |
 | Python | `/home/voron/ktamv-env`, with system OpenCV packages |
 | Service | user unit `ktamv-server.service` |
 | Server | `http://192.168.1.43:8086/` |
@@ -41,11 +41,9 @@ sudo systemctl daemon-reload
 ## What kTAMV actually does
 
 kTAMV consists of a Klipper extension and a Flask/Waitress image server. The
-server resizes each camera frame to 640×480 and tries five upstream OpenCV
-preprocessor/detector combinations. The local patch rejects a super-relaxed
-keypoint more than 120 pixels from center and uses the compact center highlight
-as a sixth fallback. A nozzle position must repeat three times within
-`detection_tolerance`; the configured value is zero pixels.
+server resizes each camera frame to 640×480 and tries five fixed OpenCV
+preprocessor/detector combinations. A nozzle position must repeat three times
+within `detection_tolerance`; the configured value is zero pixels.
 
 Camera calibration samples ten approximately 0.5 mm points around the starting
 position. It needs at least 75% valid samples, filters mm/pixel outliers and
@@ -65,28 +63,6 @@ Important source observations:
 - The README names `KTAMV_MOVE_TO_ORIGIN`, but the reviewed Python does not
   register that command. The repository only supplies a separate example macro,
   which this machine does not include.
-- The local `statistics.stdev()` guard returns zero deviation for one remaining
-  sample. The caller's 75% retained-point check still rejects that calibration
-  cleanly instead of exposing a Python exception.
-
-## Current MF-500 lighting setup
-
-- The nozzle light is a WCMCU eight-pixel WS2812B ring powered and controlled
-  independently by an ESP32-C3 Mini at 5%. It is not connected to Klipper.
-- `T0_LED` is the separate three-pixel toolhead chain. It produces reflections
-  below the nozzle and must be disabled while using the camera:
-
-```gcode
-SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
-```
-
-- `RESTART` runs `LED_INIT` and may turn the toolhead LEDs back on. Repeat the
-  command above before `KTAMV_SETUP`.
-- Keep the MF-500 controls at `brightness=0`, `contrast=36`, `gamma=120`.
-  Darker brightness/contrast trials made detection worse and were reverted.
-- In this scene, the correct marker is the circular white highlight near
-  `[336,253]` in the 640×480 processed image. `[192,134]` on the upper-left edge
-  of the aluminium block is a false detection and must not be calibrated.
 
 ## Command safety classification
 
@@ -125,10 +101,8 @@ frame margin for the 0.5 mm pattern.
 
 1. While the machine is idle and attended, home through the normal machine
    workflow and select T0 with X/Y offsets equal to zero.
-2. Move T0 near the camera center at a safe Z. Disable `T0_LED`, keep the
-   ESP32-C3 ring at 5%, then run `KTAMV_SETUP`, preview and
-   `KTAMV_SIMPLE_NOZZLE_POSITION`. Continue only when repeated detections mark
-   the actual center highlight at the same coordinates.
+2. Move T0 near the camera center at a safe Z, then run the non-motion setup,
+   preview and simple detection commands.
 3. Stop preview and run `KTAMV_CALIB_CAMERA`. Continue only when
    `KTAMV_STATUS` reports calibrated with a valid mm/pixel value.
 4. Run `KTAMV_FIND_NOZZLE_CENTER`, then `KTAMV_SET_ORIGIN` exactly once for T0.
@@ -192,7 +166,3 @@ continue to centering or offset collection.
 
 Restarting Klipper clears calibration and origin by design. The runtime has no
 automatic persistence or offset writeback.
-
-After the 2026-08-31 lighting change, static checks before and after `RESTART`
-both returned `[336,253]` in 5.42/5.09 seconds. Calibration was not repeated
-because it moves the printer and the restart cleared the homed state.

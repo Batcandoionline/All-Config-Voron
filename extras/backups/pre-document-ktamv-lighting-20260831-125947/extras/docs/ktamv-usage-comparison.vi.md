@@ -13,7 +13,7 @@ ngày 2024-04-02.
 | Hạng mục | Giá trị |
 | --- | --- |
 | Source | `/home/voron/kTAMV` tại commit `72421f2` đã review |
-| Bản sửa local | `ktamv-multi-object-selection.patch` và `ktamv-center-highlight-fallback.patch` |
+| Bản sửa local | `config/scripts/patches/ktamv-multi-object-selection.patch` |
 | Python | `/home/voron/ktamv-env`, dùng OpenCV package hệ thống |
 | Service | user unit `ktamv-server.service` |
 | Server | `http://192.168.1.43:8086/` |
@@ -39,10 +39,8 @@ sudo systemctl daemon-reload
 ## kTAMV thực sự làm gì
 
 kTAMV gồm extension Klipper và server ảnh Flask/Waitress. Server ép frame thành
-640×480 rồi thử năm pipeline tiền xử lý/detector OpenCV upstream. Bản sửa local
-loại keypoint “super relaxed” cách tâm quá 120 pixel và dùng phản xạ sáng gọn
-gần tâm làm pipeline fallback thứ sáu. Vị trí nozzle phải lặp ba lần trong
-`detection_tolerance`; cấu hình hiện dùng 0 pixel.
+640×480 rồi thử năm pipeline tiền xử lý/detector OpenCV cố định. Vị trí nozzle
+phải lặp ba lần trong `detection_tolerance`; cấu hình hiện dùng 0 pixel.
 
 Camera calibration lấy mười điểm cách vị trí đầu khoảng tối đa 0.5 mm. Nó cần ít
 nhất 75% sample hợp lệ, lọc outlier mm/pixel và tạo transform camera–máy. Lệnh
@@ -59,28 +57,6 @@ Các sự thật quan trọng từ source:
   camera calibration native dùng mặc định `F3000`, còn căn tâm dùng `F1000`.
 - README nêu `KTAMV_MOVE_TO_ORIGIN`, nhưng Python không đăng ký lệnh này. Repo
   chỉ có macro ví dụ riêng và máy này không include macro đó.
-- Guard local cho `statistics.stdev()` trả độ lệch chuẩn 0 khi chỉ còn một
-  sample; kiểm tra giữ tối thiểu 75% điểm của caller vẫn buộc calibration lỗi
-  rõ ràng thay vì phát exception Python.
-
-## Thiết lập ánh sáng MF-500 hiện tại
-
-- Vòng soi nozzle là WCMCU WS2812B tám LED do ESP32-C3 Mini cấp nguồn/điều
-  khiển riêng ở độ sáng 5%; nó không nối Klipper.
-- `T0_LED` là ba LED trên toolhead, hoàn toàn khác vòng camera. Ba LED này tạo
-  bóng phản xạ dưới nozzle và phải tắt trong lúc dùng camera:
-
-```gcode
-SET_LED LED=T0_LED RED=0 GREEN=0 BLUE=0 TRANSMIT=1
-```
-
-- `RESTART` chạy `LED_INIT` và có thể bật lại LED toolhead. Luôn gửi lại lệnh
-  trên trước `KTAMV_SETUP`.
-- Giữ camera MF-500 tại `brightness=0`, `contrast=36`, `gamma=120`. Các phép
-  thử giảm brightness/contrast làm detector tệ hơn và đã được hoàn nguyên.
-- Ở cảnh này, marker đúng nằm trên phản xạ tròn màu trắng gần `[336,253]` của
-  ảnh processed 640×480. Marker `[192,134]` trên góc trên-trái khối nhôm là bắt
-  nhầm và không được dùng cho calibration.
 
 ## Phân loại an toàn lệnh
 
@@ -116,9 +92,8 @@ sáng mềm/đều, focus rõ lỗ nozzle và để đủ margin cho pattern 0.5
 
 1. Khi máy idle và có người giám sát, home bằng workflow bình thường rồi chọn T0
    có offset X/Y bằng 0.
-2. Đưa T0 gần tâm camera ở Z an toàn. Tắt `T0_LED`, giữ vòng ESP32-C3 ở 5%, rồi
-   chạy `KTAMV_SETUP`, preview và `KTAMV_SIMPLE_NOZZLE_POSITION`. Chỉ chấp nhận
-   khi marker bám đúng phản xạ trung tâm và nhiều lần trả cùng tọa độ.
+2. Đưa T0 gần tâm camera ở Z an toàn, sau đó chạy setup, preview và kiểm tra nhận
+   diện không chuyển động.
 3. Tắt preview rồi chạy `KTAMV_CALIB_CAMERA`. Chỉ tiếp tục khi `KTAMV_STATUS`
    báo calibrated và mm/pixel hợp lệ.
 4. Chạy `KTAMV_FIND_NOZZLE_CENTER`, sau đó `KTAMV_SET_ORIGIN` đúng một lần cho T0.
@@ -178,7 +153,3 @@ tục căn tâm hay lấy offset.
 
 Restart Klipper làm mất calibration/origin theo thiết kế. Runtime không có cơ
 chế persistence hoặc tự ghi offset.
-
-Sau thay đổi ánh sáng 2026-08-31, hai phép nhận diện tĩnh trước/sau `RESTART`
-đều trả `[336,253]` sau 5,42/5,09 giây. Chưa chạy lại calibration vì bước đó có
-chuyển động và `RESTART` đã xóa trạng thái home.

@@ -52,8 +52,7 @@ fi
 
 # kTAMV is installed manually instead of using its system-wide upstream
 # installer. Refuse to deploy the active include unless the pinned checkout,
-# isolated Python, user service, exact Klipper links and reviewed runtime fixes
-# exist.
+# isolated Python, user service, exact Klipper links and detector fix exist.
 if grep -Eq '^[[:space:]]*\[include[[:space:]]+Printer-Setup/ktamv\.cfg\][[:space:]]*$' \
     "${SOURCE_CONFIG_DIR}/printer.cfg"; then
   if [[ ! -d "${KTAMV_RUNTIME}/.git" || ! -x "${KTAMV_VENV}" || \
@@ -78,13 +77,8 @@ if grep -Eq '^[[:space:]]*\[include[[:space:]]+Printer-Setup/ktamv\.cfg\][[:spac
   if ! grep -Fq 'def find_closest_keypoint(self, keypoints):' \
       "${KTAMV_DETECTOR}" ||
       ! grep -Fq 'np.around(keypoints[closest_index].pt)' \
-      "${KTAMV_DETECTOR}" ||
-      ! grep -Fq 'def find_center_highlight_keypoint(self, frame):' \
-      "${KTAMV_DETECTOR}" ||
-      ! grep -Fq 'self.__algorithm = 6' "${KTAMV_DETECTOR}" ||
-      ! grep -Fq 'stdev(mpps) if len(mpps) > 1 else 0.0' \
-      "${KTAMV_UTILITY_SOURCE}"; then
-    echo "ERROR: one or more reviewed kTAMV runtime patches are missing." >&2
+      "${KTAMV_DETECTOR}"; then
+    echo "ERROR: reviewed kTAMV multi-object detector patch is missing." >&2
     exit 1
   fi
 fi

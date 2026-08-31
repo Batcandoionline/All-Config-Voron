@@ -1,0 +1,91 @@
+diff --git a/server/ktamv_server_dm.py b/server/ktamv_server_dm.py
+--- a/server/ktamv_server_dm.py
++++ b/server/ktamv_server_dm.py
+@@ -206,7 +206,20 @@ class Ktamv_Server_Detection_Manager:
+                             keypointColor = (39,255,127)
+-                            if(len(keypoints) != 1):
+-                                # failed to detect a nozzle, correct return value object
+-                                keypoints = None
+-                            else:
++                            keypoints = [
++                                keypoint for keypoint in keypoints
++                                if np.linalg.norm(
++                                    np.array(keypoint.pt) - np.array([320, 240])
++                                ) <= 120
++                            ]
++                            if(len(keypoints) == 1):
+                                 self.__algorithm = 5
++                            else:
++                                # MF-500 fallback: locate the compact highlight
++                                # produced by the 5% nozzle-camera light ring.
++                                highlight = self.find_center_highlight_keypoint(nozzleDetectFrame)
++                                if highlight is None:
++                                    keypoints = None
++                                else:
++                                    keypoints = [highlight]
++                                    keypointColor = (0,255,255)
++                                    self.__algorithm = 6
+                         else:
+@@ -301,3 +314,45 @@ class Ktamv_Server_Detection_Manager:
+         return(outputFrame)
+-
++
++    def find_center_highlight_keypoint(self, frame):
++        """Return the compact nozzle highlight nearest the image center.
++
++        The machine's independent WS2812B camera ring is fixed at 5% output.
++        With the toolhead LEDs disabled, its stable white reflection is a more
++        reliable tracking feature than the super-relaxed blob detector.  The
++        bounds deliberately reject tiny sparkles, large overexposed regions,
++        elongated reflections, and candidates outside the calibration area.
++        """
++        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
++        _, mask = cv2.threshold(gray, 245, 255, cv2.THRESH_BINARY)
++        count, _, stats, centroids = cv2.connectedComponentsWithStats(mask, 8)
++        target_point = np.array([320, 240])
++        candidates = []
++
++        for index in range(1, count):
++            area = int(stats[index, cv2.CC_STAT_AREA])
++            width = int(stats[index, cv2.CC_STAT_WIDTH])
++            height = int(stats[index, cv2.CC_STAT_HEIGHT])
++            if height == 0:
++                continue
++
++            aspect_ratio = width / float(height)
++            point = centroids[index]
++            distance = np.linalg.norm(point - target_point)
++            if (
++                30 <= area <= 1200
++                and 0.35 <= aspect_ratio <= 2.8
++                and distance <= 120
++            ):
++                candidates.append((distance, -area, point, width, height))
++
++        if not candidates:
++            return None
++
++        _, _, point, width, height = min(
++            candidates, key=lambda item: (item[0], item[1])
++        )
++        return cv2.KeyPoint(
++            float(point[0]), float(point[1]), float(max(width, height))
++        )
++
+     def find_closest_keypoint(self, keypoints):
+diff --git a/extension/ktamv_utl.py b/extension/ktamv_utl.py
+--- a/extension/ktamv_utl.py
++++ b/extension/ktamv_utl.py
+@@ -213,5 +213,10 @@ def get_average_mpp(
+ def _get_std_dev_and_mean(mpps: list):
+-    # Calculate the average mm per pixel and the standard deviation
+-    mpps_std_dev = stdev(mpps)
++    # A heavily filtered calibration may leave one sample.  Let the caller's
++    # minimum-retained-points check reject that calibration instead of raising
++    # statistics.StatisticsError here.
++    if not mpps:
++        raise ValueError("Cannot calculate mm per pixel from an empty list")
++
+     mpp = round(mean(mpps), 3)
++    mpps_std_dev = stdev(mpps) if len(mpps) > 1 else 0.0
+     return mpps_std_dev, mpp

@@ -80,7 +80,7 @@ Tài liệu dùng các nhãn sau một cách có chủ ý:
 | Macro lõi KTC | `~/klipper-toolchanger-easy` | Kiểm tra và giữ nguyên sáu symlink readonly |
 | Đường máy và tool KTC | All-Config | `toolchanger-config.cfg` và `tools/T0.cfg`…`T4.cfg` |
 | Plugin Cartographer | Update Manager Cartographer | Chỉ quản lý geometry/mesh riêng của máy |
-| Runtime kTAMV | Checkout `~/kTAMV` được pin, cập nhật thủ công | Camera URL, service port và các patch runtime đã review |
+| Runtime kTAMV | Checkout `~/kTAMV` được pin, cập nhật thủ công | Camera URL, service port và patch detector đã review |
 | Klipper/Moonraker/Crowsnest | Updater upstream tương ứng | Payload `.cfg`/`.conf` riêng của máy |
 | Kết quả sinh tự động | Runtime máy in | Giữ local; không bị ghi đè bởi `rsync --delete` |
 
@@ -484,7 +484,7 @@ chuyển quyền sở hữu an toàn từ timer dryer đang chạy.
 | Hạng mục | Giá trị hiện tại |
 | --- | --- |
 | Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pin commit `72421f2` |
-| Runtime checkout | `~/kTAMV` cùng các bản sửa nhiều vật thể, highlight MF-500 và stdev |
+| Runtime checkout | `~/kTAMV` cùng patch detector nhiều vật thể đã review |
 | Môi trường Python | `~/ktamv-env`, dùng OpenCV package hệ thống |
 | Host service/API | user service `ktamv-server.service`, cổng `8086` |
 | Config riêng máy | `Printer-Setup/ktamv.cfg` |
@@ -606,7 +606,7 @@ có `config/printer.cfg`, gọi `install.sh` và xóa source tạm bằng trap.
 `install.sh` sau đó:
 
 1. Kiểm tra quyền sở hữu readonly của KTC-Easy.
-2. Kiểm tra runtime kTAMV được pin, user service, module link và các patch runtime.
+2. Kiểm tra runtime kTAMV được pin, user service, module link và patch detector.
 3. Dry-run hoặc nhận biết patch `tool_crash.py` đã review.
 4. Copy toàn bộ config máy hiện tại vào
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.

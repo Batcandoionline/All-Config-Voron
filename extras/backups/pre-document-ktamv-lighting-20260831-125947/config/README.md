@@ -88,8 +88,7 @@ The five tool CAN UUIDs, docks and production offsets are documented in the
 - Axiscope and `[tools_calibrate]` are commented rollback material in
   `calibration-probe.cfg`, not active backends.
 - The kTAMV runtime is pinned to upstream commit `72421f2`, runs on user-service
-  port `8086`, disables cloud upload and carries reviewed multi-object,
-  MF-500 center-highlight and single-sample stdev fixes.
+  port `8086`, disables cloud upload and carries a reviewed multi-object fix.
 
 The entire `Generated-Data/` tree is excluded from Git deployment and from
 `rsync --delete`.
@@ -119,7 +118,7 @@ sudo systemctl restart moonraker klipper
 
 1. All six KTC-Easy readonly entries are valid symlinks with existing targets.
 2. If the kTAMV include is active, the pinned checkout, isolated Python, user
-   service, two exact Klipper symlinks and reviewed runtime patches exist.
+   service, two exact Klipper symlinks and detector patch exist.
 3. The installed `tool_crash.py` is already patched or exactly matches the
    reviewed patch preimage.
 4. A timestamped snapshot is created under

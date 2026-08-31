@@ -81,7 +81,7 @@ Documentation uses the following labels deliberately:
 | KTC core macros | `~/klipper-toolchanger-easy` | Verify and preserve six readonly symlinks |
 | Machine KTC paths/tools | All-Config | `toolchanger-config.cfg` and `tools/T0.cfg`…`T4.cfg` |
 | Cartographer plugin | Cartographer Update Manager entry | Machine geometry and mesh settings only |
-| kTAMV runtime | Pinned `~/kTAMV` checkout, manual updates | Machine camera URL, service port and reviewed runtime patches |
+| kTAMV runtime | Pinned `~/kTAMV` checkout, manual updates | Machine camera URL, service port and reviewed detector patch |
 | Klipper/Moonraker/Crowsnest | Their upstream updaters | Machine-specific `.cfg`/`.conf` payload |
 | Generated results | Printer runtime | Preserve locally; never overwrite via `rsync --delete` |
 
@@ -255,7 +255,7 @@ Voron 5 Tool/
 │       ├── install.sh             # Preflight, backup and protected deploy
 │       ├── update.sh              # Temporary main-branch archive updater
 │       ├── cleanup-voron.sh       # Strict legacy-path cleaner
-│       └── patches/               # Reviewed downstream runtime patches
+│       └── patches/               # Reviewed downstream runtime patch
 ├── Orca Config/                   # Machine/process/filament profiles + sync
 └── extras/
     ├── docs/                      # Current bilingual guides
@@ -492,7 +492,7 @@ dryer timer.
 | Item | Current value |
 | --- | --- |
 | Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pinned commit `72421f2` |
-| Runtime checkout | `~/kTAMV` with reviewed multi-object, MF-500 highlight and stdev fixes |
+| Runtime checkout | `~/kTAMV` with the reviewed multi-object detector patch |
 | Python environment | `~/ktamv-env` using system OpenCV packages |
 | Host service/API | user service `ktamv-server.service`, port `8086` |
 | Machine config | `Printer-Setup/ktamv.cfg` |
@@ -619,7 +619,7 @@ bash scripts/update.sh
 `install.sh` then:
 
 1. Validates KTC-Easy readonly ownership.
-2. Validates the pinned kTAMV runtime, user service, module links and runtime patches.
+2. Validates the pinned kTAMV runtime, user service, module links and detector patch.
 3. Dry-runs or recognizes the reviewed `tool_crash.py` patch.
 4. Copies the entire current printer config to
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
