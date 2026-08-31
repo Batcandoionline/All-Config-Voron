@@ -2,9 +2,10 @@
 
 [English](huong-dan-he-thong-stealthchanger.en.md) | [Tiếng Việt](huong-dan-he-thong-stealthchanger.md)
 
-This guide was refreshed on 2026-08-31 after reading the full Markdown corpus,
-active configuration, kTAMV source and deployment scripts. Historical journals
-are not rewritten as current state.
+This guide was rewritten on 2026-08-24 after reading `printer.cfg`, every
+`Printer-Setup/*.cfg`, `toolchanger-config.cfg`, T0–T4 and the deployment
+scripts. It describes tracked commit `9d848f04`; historical journals are not
+rewritten as current state.
 
 ## 1. Ownership boundaries
 
@@ -13,10 +14,8 @@ are not rewritten as current state.
 - All-Config owns `toolchanger-config.cfg`, `tools/T0.cfg`…`T4.cfg` and the
   overrides under `Printer-Setup/`.
 - Cartographer is active for Z homing and bed mesh.
-- kTAMV is active for supervised camera-based X/Y comparison only.
+- ToolVision is active as a report-only offset canary; PF2 is its Z switch.
 - Axiscope and `[tools_calibrate]` are disabled, commented rollback material.
-- There is no active tool-offset Z backend; PF2 remains physically present but
-  unused by kTAMV.
 
 ## 2. Include and override order
 
@@ -26,7 +25,7 @@ The active load order in `printer.cfg` is:
 mainsail.cfg
 KTC-Easy readonly toolchanger include
 calibration-probe.cfg
-ktamv.cfg
+tool-vision.cfg
 hardware.cfg
 fans-leds.cfg
 input-shaper.cfg
@@ -74,7 +73,7 @@ Main motion limits:
 
 Cartographer offsets are X `0`, Y `35`. Bed mesh spans X `20..320`,
 Y `45..325` at 55 × 55 samples. Touch uses
-`bed_mesh.zero_reference_position`; kTAMV does not participate in production Z.
+`bed_mesh.zero_reference_position`; ToolVision is not the production Z probe.
 
 `G32` runs the current homing/QGL macro. Before manual maintenance motion,
 verify carriage, mounted tool, docks and clearance.
@@ -144,8 +143,8 @@ Production offsets in `printer.cfg` are:
 | T3 | +0.304 | +0.449 | -0.268 |
 | T4 | +0.041 | +0.352 | -0.014 |
 
-The operator considers the baseline first layer visually good. Two retired
-ToolVision runs on 2026-08-23 remain diagnostic evidence:
+The operator considers the baseline first layer visually good. Two ToolVision
+runs on 2026-08-23 remain diagnostic evidence:
 
 | Tool | Production | PF2 switch | Cartographer Touch |
 | --- | ---: | ---: | ---: |
@@ -155,18 +154,14 @@ ToolVision runs on 2026-08-23 remain diagnostic evidence:
 | T3 | -0.268 | -0.154 | -0.160 |
 | T4 | -0.014 | +0.078 | +0.102 |
 
-The retired ToolVision integration calculated Z as `raw(tool) - raw(reference)`.
-It is a candidate
+ToolVision calculates Z as `raw(tool) - raw(reference)`. It is a candidate
 absolute value relative to T0, not a delta to add to the configured offset. PF2
 return drift was `+0.028 mm`; Cartographer return drift was `-0.008 mm`. One
 run cannot replace a print-tested baseline; repeat the same method/temperature
 and validate independently.
 
-The active kTAMV backend does not measure Z. It reports X/Y only, keeps camera
-calibration/origin in RAM and does not save tool offsets. See the
-[kTAMV usage and method comparison](ktamv-usage-comparison.en.md). The old
-[ToolVision integration guide](toolvision-integration-guide.en.md) is retained
-only as retired evidence.
+See the [ToolVision integration guide](toolvision-integration-guide.en.md) and
+[UX implementation status](toolvision-z-calibration-ux-proposal.md).
 
 ## 9. Input shaper
 
@@ -186,7 +181,7 @@ sudo systemctl restart moonraker klipper
 ```
 
 `update.sh` downloads a temporary `main` archive and calls the installer. The
-installer preflights KTC, pinned kTAMV and the two reviewed runtime patches, then creates a
+installer preflights KTC, ToolVision and the tool-crash patch and creates a
 backup before `rsync`. It does not restart services.
 
 Non-motion checks after deployment:
@@ -194,7 +189,7 @@ Non-motion checks after deployment:
 ```text
 CALIBRATION_STATUS
 QUERY_ENDSTOPS
-KTAMV_STATUS
+TOOL_VISION_STATUS
 ```
 
 Only home, toolchange or probe after the operator confirms an empty motion
@@ -206,6 +201,5 @@ path, correct docks and an available emergency stop.
 - Never edit `readonly-configs/`.
 - Never replace production offsets from one measurement.
 - Never deploy while printing, paused or calibrating.
-- Keep retired ToolVision archives immutable; do not restore them into active
-  config unless performing an explicit rollback.
+- Do not erase `Generated-Data/ToolVision/` during configuration updates.
 - Do not rewrite old journals/backups; create new evidence.

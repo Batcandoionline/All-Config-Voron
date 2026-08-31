@@ -10,8 +10,8 @@ máy khác.
 > [!IMPORTANT]
 > Mã phần cứng, giới hạn chuyển động, tọa độ dock và offset trong tài liệu là
 > giá trị riêng của máy này. Hãy đọc file source được nêu cạnh từng giá trị
-> trước khi áp dụng cho máy khác. Tích hợp calibration được đọc lại ngày
-> 2026-08-31 theo commit upstream kTAMV `72421f2`.
+> trước khi áp dụng cho máy khác. Cấu hình được đọc lại ngày 2026-08-24 từ
+> revision `1a09b7f`.
 
 ## Bắt đầu từ đây
 
@@ -22,7 +22,7 @@ máy khác.
 | Tìm lệnh Mainsail/Klipper | [Bảng macro vận hành](#bảng-macro-vận-hành) |
 | Xem offset đang nạp mà không chuyển động | `CHECK_OFFSETS` |
 | Xem backend calibration đang hoạt động | `CALIBRATION_STATUS` |
-| Đối chiếu offset XY bằng kTAMV | [kTAMV đối chiếu XY có giám sát](#ktamv-đối-chiếu-xy-có-giám-sát) |
+| Dùng ToolVision | [ToolVision calibration chỉ báo cáo](#toolvision-calibration-chỉ-báo-cáo) |
 | Vệ sinh hoặc purge nozzle | [Vệ sinh nozzle và prime line](#vệ-sinh-nozzle-và-prime-line) |
 | Sấy filament trên bed | [Hệ thống sấy filament bằng bed](#hệ-thống-sấy-filament-bằng-bed) |
 | Cập nhật cấu hình máy | [Cài đặt và cập nhật](#cài-đặt-và-cập-nhật) |
@@ -44,7 +44,7 @@ Tài liệu dùng các nhãn sau một cách có chủ ý:
 
 ## Tóm tắt an toàn
 
-- Không deploy, home, probe, căn dock, đổi tool hoặc chạy lệnh kTAMV có chuyển động khi đang in.
+- Không deploy, home, probe, căn dock, đổi tool hoặc chạy ToolVision khi đang in.
 - Giữ emergency stop sẵn sàng trong lần chuyển động đầu tiên sau khi sửa cơ khí
   hoặc cấu hình.
 - Không sửa `config/toolchanger/readonly-configs/`; KTC-Easy sở hữu thư mục này.
@@ -66,7 +66,7 @@ Tài liệu dùng các nhãn sau một cách có chủ ý:
 | Board tool | Năm BTT EBB36 V1.2 qua CAN |
 | Extruder/hotend | Năm WW BMG, năm TZ V6 2.0, nozzle 0.4 mm |
 | Z/mesh production | Cartographer V3 Touch + Scan, cố định trên shuttle |
-| Chẩn đoán offset tool | kTAMV camera chỉ đối chiếu X/Y; không có backend tool-offset Z active |
+| Chẩn đoán offset tool | ToolVision development canary; method PF2 switch và Cartographer Touch; chỉ báo cáo |
 | Bed | Heater silicone AC 1000 W 220 V qua SSR |
 | Vệ sinh nozzle | Purge bucket và pad silicone Bambu A1 ở vùng Y âm |
 | Camera | MF-500 USB qua Crowsnest/camera-streamer |
@@ -80,7 +80,7 @@ Tài liệu dùng các nhãn sau một cách có chủ ý:
 | Macro lõi KTC | `~/klipper-toolchanger-easy` | Kiểm tra và giữ nguyên sáu symlink readonly |
 | Đường máy và tool KTC | All-Config | `toolchanger-config.cfg` và `tools/T0.cfg`…`T4.cfg` |
 | Plugin Cartographer | Update Manager Cartographer | Chỉ quản lý geometry/mesh riêng của máy |
-| Runtime kTAMV | Checkout `~/kTAMV` được pin, cập nhật thủ công | Camera URL, service port và patch detector đã review |
+| Runtime ToolVision | `~/Tool-Vision`, Moonraker updater | Pin máy, UI wrapper và đường generated data |
 | Klipper/Moonraker/Crowsnest | Updater upstream tương ứng | Payload `.cfg`/`.conf` riêng của máy |
 | Kết quả sinh tự động | Runtime máy in | Giữ local; không bị ghi đè bởi `rsync --delete` |
 
@@ -103,7 +103,7 @@ Giá trị lấy từ `config/Printer-Setup/hardware.cfg` và `fans-leds.cfg`.
 | Pin step Z1 | `PB4` |
 | Pin step Z2 | `PG13` |
 | Pin step Z3 | `PB8` |
-| Switch offset không active | `^PF2` với GND; giữ phần cứng nhưng kTAMV không dùng |
+| Switch ToolVision | `^PF2` với GND |
 | SSR bed / thermistor bed | `PA1` / `PB0` |
 | Thermistor chamber | Generic 3950 tại `PB1` |
 | TMC fan / CM4 fan / enclosure fan / bed fan | `PF9` / `PF6` / `PF7` / `PF8` |
@@ -219,8 +219,8 @@ Z cuối. `G32` xóa mesh, home, chạy QGL và park tại `X180 Y180 Z30`.
 | Version Cartographer đã lưu | software `1.8.0`, MCU `CARTOGRAPHER V3 6.1.0` |
 
 Cartographer cố định trên shuttle và là probe production cho Z-home/bed mesh.
-kTAMV chỉ đối chiếu X/Y bằng camera; nó không thay Cartographer và không đo Z
-giữa các tool.
+ToolVision đo offset tool tương đối; nó không thay Cartographer trong homing
+bình thường trước khi in.
 
 ## Cấu trúc repository và config
 
@@ -235,7 +235,7 @@ Voron 5 Tool/
 │   ├── KlipperScreen.conf         # Màn cảm ứng tiếng Việt
 │   ├── Printer-Setup/
 │   │   ├── calibration-probe.cfg  # Cartographer và routing calibration
-│   │   ├── ktamv.cfg              # Tích hợp kTAMV XY được pin và giám sát
+│   │   ├── tool-vision.cfg        # ToolVision riêng máy và panel
 │   │   ├── hardware.cfg           # MCU, stepper, bed, sensor
 │   │   ├── fans-leds.cfg          # Fan, LED và RESUME override
 │   │   ├── input-shaper.cfg       # Shaper fallback, resonance, ShakeTune
@@ -268,7 +268,7 @@ Voron 5 Tool/
 1. `mainsail.cfg`
 2. `toolchanger-include.cfg` của KTC-Easy
 3. `Printer-Setup/calibration-probe.cfg`
-4. `Printer-Setup/ktamv.cfg`
+4. `Printer-Setup/tool-vision.cfg`
 5. `hardware.cfg`, `fans-leds.cfg`, `input-shaper.cfg`
 6. `nozzle-clean.cfg`, `prime-lines.cfg`, `print-macros.cfg`
 7. `tool-crash.cfg`
@@ -282,12 +282,13 @@ raise lỗi rõ ràng thay vì gọi probe owner không tồn tại.
 Installer giữ các đường dẫn sau qua `rsync --delete`:
 
 ```text
+Generated-Data/ToolVision/state.json
+Generated-Data/ToolVision/results.json
 Generated-Data/ShakeTune/
 ```
 
-Markdown, archive tải về, chẩn đoán local và symlink readonly KTC cũng bị loại
-khỏi đồng bộ cấu hình. Dữ liệu ToolVision đã retired được archive trước khi gỡ
-và không còn trong cây config active.
+Markdown, archive tải về, chẩn đoán local, JSON ToolVision legacy và symlink
+readonly KTC cũng bị loại khỏi đồng bộ cấu hình.
 
 ## Quy trình in bình thường
 
@@ -388,11 +389,8 @@ upstream không tương thích.
 | `DRYER_STATUS` | Báo cycle/thermal hiện tại | Không |
 | `CALIBRATION_STATUS` | Báo backend/method calibration | Không |
 | `CHECK_OFFSETS` | Báo offset XYZ T0–T4 đang nạp | Không |
-| `KTAMV_STATUS` | Báo camera calibration, mm/pixel và origin | Không |
-| `KTAMV_SETUP` | Gửi camera URL/options sang server | Không |
-| `KTAMV_SIMPLE_NOZZLE_POSITION` | Nhận diện ảnh mà không jog | Không |
-| `KTAMV_CALIB_CAMERA` | Calibrate camera bằng pattern mười điểm XY | Có |
-| `KTAMV_FIND_NOZZLE_CENTER` | Nhận diện và jog X/Y về tâm camera | Có |
+| `TOOL_VISION` | Mở panel ToolVision | Chỉ prompt trước khi chọn action |
+| `TOOL_VISION_STATUS` | Báo readiness/error ToolVision | Không |
 | `QUERY_ENDSTOPS` | Đọc trạng thái endstop/switch | Không |
 | `BED_FAN_ON [SPEED=0.5]` / `BED_FAN_OFF` | Điều khiển tuần hoàn chamber | Chỉ fan |
 | `LIGHTS_ON` / `LIGHTS_OFF` | Đèn chamber ở mức an toàn đã cấu hình | Chỉ LED |
@@ -404,7 +402,7 @@ dùng trong quy trình căn chỉnh có người giám sát và đã backup.
 
 Các lệnh legacy `CALIBRATE_MOVE_OVER_PROBE`, `CALIBRATE_ALL_OFFSETS` và
 `CALIBRATE_NOZZLE_PROBE_OFFSET` bị `calibration-probe.cfg` tắt có chủ ý và sẽ
-raise giải thích kTAMV chỉ hỗ trợ XY.
+raise hướng dẫn chuyển sang ToolVision.
 
 ## Vệ sinh nozzle và prime line
 
@@ -477,59 +475,87 @@ tại X175 Y310 trước khi nóng. Airflow boost khi chamber lạnh, chạy moi
 flush 30 giây mỗi 20 phút và giảm bed/fan khi chamber quá nóng. `PRINT_START`
 chuyển quyền sở hữu an toàn từ timer dryer đang chạy.
 
-## kTAMV đối chiếu XY có giám sát
+## ToolVision calibration chỉ báo cáo
 
 ### Tích hợp đang deploy trên máy
 
 | Hạng mục | Giá trị hiện tại |
 | --- | --- |
-| Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pin commit `72421f2` |
-| Runtime checkout | `~/kTAMV` cùng patch detector nhiều vật thể đã review |
-| Môi trường Python | `~/ktamv-env`, dùng OpenCV package hệ thống |
-| Host service/API | user service `ktamv-server.service`, cổng `8086` |
-| Config riêng máy | `Printer-Setup/ktamv.cfg` |
-| Camera nguồn | `http://127.0.0.1/webcam/?action=snapshot` |
-| Upload ảnh cloud | tắt |
+| Runtime checkout | `~/Tool-Vision` |
+| Môi trường Python | `~/tool-vision-env` |
+| Host service/API | `tool-vision.service`, cổng loopback `8085` |
+| Config riêng máy | `Printer-Setup/tool-vision.cfg` |
+| Switch vật lý | Manta `^PF2` |
+| Learned state | `Generated-Data/ToolVision/state.json` |
+| Kết quả mới nhất | `Generated-Data/ToolVision/results.json` |
+| Bằng chứng runtime production | ToolVision `aee9c3c`, báo `3.4.0-rc2` |
 
-kTAMV chỉ active như backend đối chiếu có người giám sát. Nó calibrate biến đổi
-camera–chuyển động, đưa nozzle nhìn thấy về tâm và báo chênh X/Y raw so với
-origin tham chiếu. Nó không đo Z, không ghi file tool và mất transform/origin
-sau khi Klipper restart.
+ToolVision là backend offset tool chỉ báo cáo đang hoạt động. Axiscope và
+`[tools_calibrate]` tiếp tục tắt. Một entry `TOOL_VISION` chứa action Z bằng
+Physical switch hoặc Cartographer Touch, XY camera, XYZ camera+Z, setup và kết
+quả mới nhất. Mỗi action thường dùng trang xác nhận, tự chạy `G28` đầy đủ, đặt
+method tường minh và không che lỗi KTC/probe/heater.
 
-### Đối chiếu phương pháp
+Máy này bật `INITIALIZE_TOOLCHANGER` làm hook recovery KTC sau lỗi ToolVision.
+Đây là setting riêng đã review, không phải default để sao chép sang máy khác.
 
-| Hành vi | kTAMV | Tích hợp ToolVision đã retired |
-| --- | --- | --- |
-| Trục | Chỉ X/Y | Camera X/Y cộng Z bằng PF2 hoặc Cartographer Touch |
-| Setup | Gửi server config, calibrate camera, đặt origin T0 thủ công | Setup station/provider có hướng dẫn |
-| Lưu trạng thái | Chỉ RAM; mất sau Klipper restart | State/result/history trên ổ đĩa |
-| Áp offset | Chỉ báo số để operator ghi | Máy này cũng dùng report-only |
-| Detector | Pipeline OpenCV cố định trên ảnh resize 640×480 | Profile học ở native resolution và kiểm tra ambiguity |
-| Chuỗi tool | Operator tự chọn/jog từng tool | Batch năm tool và kiểm tra restore tích hợp |
-| Bề mặt an toàn | Lệnh native có thể jog ngay | Prompt guard, full-home và cleanup/recovery |
-| Khả năng Z | Không có | So sánh switch và Cartographer Touch |
+Camera XY tồn tại trong ToolVision nhưng chưa ready ở status máy gần nhất và
+file này không cấu hình camera source/name. Không xem camera XY là đường
+calibration production đang hoạt động.
 
-Lần thử kTAMV ngày 2026-08-22 với MF-500 này thất bại camera calibration: chỉ
-6/10 điểm hợp lệ, vùng phản xạ sáng bị chọn gần lỗ nozzle thật và ảnh 1280×720
-bị kéo thành 640×480. Bằng chứng vẫn còn giá trị vì HEAD upstream chưa đổi. Không
-nới `detection_tolerance` để ép một cảnh mơ hồ pass; hãy sửa focus, khoảng cách,
-ánh sáng mềm và độ sạch nozzle trước.
+### Ý nghĩa kết quả
 
-### Ranh giới sử dụng
+Dấu Z đã cài đặt:
 
-Các lệnh không chuyển động gồm `KTAMV_SETUP`, `KTAMV_STATUS`,
-`KTAMV_SEND_SERVER_CFG`, bật/tắt preview, `KTAMV_SIMPLE_NOZZLE_POSITION`,
-`KTAMV_SET_ORIGIN`, `KTAMV_GET_OFFSET`. `KTAMV_CALIB_CAMERA` chạy pattern mười
-điểm và có thể dịch tới tâm tính toán; `KTAMV_FIND_NOZZLE_CENTER` jog X/Y lặp
-và có thể wiggle khi mất detection. Hai lệnh có chuyển động yêu cầu home đầy đủ,
-operator đứng tại máy và sẵn emergency stop. Phiên cài ngày 2026-08-31 không
-chạy bất kỳ lệnh chuyển động nào.
+```text
+measured Z(tool) = raw contact Z(tool) - raw contact Z(reference T0)
+```
 
-Dùng T0 với offset X/Y bằng 0 làm reference: setup server, preview/kiểm tra nhận
-diện, calibrate camera, đưa T0 về tâm, đặt origin đúng một lần; sau đó đưa từng
-T1–T4 về tâm và đọc `KTAMV_GET_OFFSET`. Đo ít nhất ba lượt mỗi tool và xác minh
-quy ước dấu trước khi cân nhắc sửa cấu hình. Xem tài liệu song ngữ
-[sử dụng kTAMV và đối chiếu phương pháp](extras/docs/ktamv-usage-comparison.vi.md).
+Đây là giá trị absolute ứng viên tương đối T0, không phải residual delta để cộng
+vào offset production đang cấu hình. ToolVision không ghi file production
+T0–T4.
+
+HIL hậu-update ngày 2026-08-26 dùng `G28` đầy đủ trước mỗi lượt, bàn PETG 70 °C
+và nozzle 150 °C. Năm lượt switch hoàn tất; Cartographer có bốn lượt hợp lệ
+trong năm lượt thử, một lượt lỗi sampling tại T3.
+
+| Tool | Z production | PF2 mean (range) | Cartographer mean (range) |
+| --- | ---: | ---: | ---: |
+| T0 | +0.000 | +0.000 | +0.000 |
+| T1 | +0.2464 | +0.0832 (+0.064..+0.104) | +0.2485 (+0.240..+0.264) |
+| T2 | -0.2688 | -0.4004 (-0.486..-0.368) | -0.2685 (-0.272..-0.262) |
+| T3 | -0.1896 | -0.1580 (-0.172..-0.148) | -0.1335 (-0.148..-0.120) |
+| T4 | +0.1028 | +0.0772 (+0.064..+0.108) | +0.1105 (+0.102..+0.118) |
+
+Mean Cartographer hợp lệ ngày 26/08 lệch mean ba lượt ngày 25/08 lần
+lượt `+0.0058`, `-0.0005`, `+0.0525`, `+0.0058 mm` ở T1-T4; so với bộ
+live đã in lệch `+0.0021`, `+0.0003`, `+0.0561`, `+0.0077 mm`. T3 cũng là
+tool có một lượt mười Touch không hội tụ. Không kết quả nào ngày 26/08
+được apply hoặc in test; cần lặp T0/T3 và in A/B có kiểm soát. PF2
+lệch hệ thống ở T1/T2 và có range T2 `0.118 mm`, nên chỉ là phép
+kiểm tra chéo.
+
+Mẫu bốn mặt dùng mean năm lượt Cartographer hợp lệ ở bàn 70 °C ngày
+25/08: T1 `+0.2464`, T2 `-0.2688`, T3 `-0.1896`, T4 `+0.1028 mm`. Nguồn
+này được xác minh bằng năm history, phép tính mean khớp tuyệt đối, lần upload
+`printer.cfg` lúc 20:54-20:55 và job mẫu bắt đầu 20:59. Mean ba lượt ghi
+riêng là `+0.24267`, `-0.26800`, `-0.18600`, `+0.10467 mm`; đó không phải
+bộ được load cho bản in này. Git/máy tính giữ bộ cũ tới khi sync live ngày
+26/08. Mẫu in gần đồng phẳng, không có bậc theo tool lặp quanh bốn mặt;
+ảnh ủng hộ giữ bộ live đã in, nhưng không xác nhận hay cho phép áp bộ
+26/08 chưa in.
+
+### Canary UI và console
+
+Nhánh `codex/compact-mainsail-output` tại `aee9c3c` đã qua test source và HIL.
+Guard chặn action khi in/pause, Close idempotent. Mainsail và KlipperScreen dùng
+cùng macro; màn hình đầu hiện có tám action nên có thể phải cuộn trên BTT 5-inch.
+Calibration dài qua UI lặp lại HTTP 504 khoảng 60 giây dù ToolVision vẫn chạy và
+lưu kết quả; cần theo dõi `busy` + history và không lọc warning/error bằng regex.
+
+Đọc [hướng dẫn tích hợp](extras/docs/toolvision-integration-guide.vi.md) và
+[nhật ký 2026-08-26](extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md)
+trước khi đổi runtime, station hoặc panel.
 
 ## Camera và giao diện người dùng
 
@@ -542,9 +568,9 @@ Máy từng quan sát MJPEG chỉ 15–20 fps khi host tải cao; WebRTC
 `/webcam/webrtc` là workaround đã ghi nhận. 1080p/1440p từng tạo màn hình đen,
 nên 1280×720 vẫn là setting ổn định được tài liệu hóa.
 
-Mainsail là web UI chính. KlipperScreen dùng tiếng Việt. kTAMV dùng lệnh native
-trực tiếp thay vì prompt có guard; phải đọc bảng chuyển động trước khi gọi.
-Dryer và các thao tác phức tạp khác vẫn dùng prompt wrapper.
+Mainsail là web UI chính. KlipperScreen dùng tiếng Việt. ToolVision, dryer và
+các thao tác phức tạp expose một macro nhìn thấy để mở prompt; helper có tên bắt
+đầu `_` là nội bộ.
 
 ## Profile OrcaSlicer
 
@@ -573,8 +599,8 @@ hữu khi dùng `-Commit`. `-Push` tự bật `-Commit`.
 
 1. Printer idle, không paused hoặc calibrating.
 2. KTC-Easy đã cài và sáu symlink readonly hợp lệ.
-3. Checkout kTAMV được pin, venv, user service và hai symlink extension Klipper
-   chính xác tồn tại vì config active đang include kTAMV.
+3. Checkout ToolVision, venv, service và năm symlink extension Klipper tồn tại
+   vì config active đang include ToolVision.
 4. Config hiện tại và generated calibration data có backup dùng được.
 5. Operator sẵn sàng đọc output và restart service thủ công.
 
@@ -589,9 +615,9 @@ rm -rf -- "${tmp_dir}"
 sudo systemctl restart moonraker klipper
 ```
 
-Git checkout All-Config không được giữ trên CM4. Checkout runtime kTAMV được pin
-và KTC-Easy là riêng biệt vì owner service/symlink nằm ngoài payload config.
-kTAMV không tự update khi còn patch local.
+Git checkout All-Config không được giữ trên CM4. Checkout runtime ToolVision và
+KTC-Easy là riêng biệt và phải tồn tại vì service, symlink và Update Manager
+dùng trực tiếp chúng.
 
 ### Cập nhật All-Config bình thường
 
@@ -606,7 +632,7 @@ có `config/printer.cfg`, gọi `install.sh` và xóa source tạm bằng trap.
 `install.sh` sau đó:
 
 1. Kiểm tra quyền sở hữu readonly của KTC-Easy.
-2. Kiểm tra runtime kTAMV được pin, user service, module link và patch detector.
+2. Kiểm tra runtime/service/module link ToolVision.
 3. Dry-run hoặc nhận biết patch `tool_crash.py` đã review.
 4. Copy toàn bộ config máy hiện tại vào
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
@@ -626,9 +652,8 @@ sudo systemctl restart klipper
 Trên host:
 
 ```bash
-systemctl is-active klipper moonraker crowsnest
-systemctl --user is-active ktamv-server
-curl --fail --silent http://127.0.0.1:8086/
+systemctl is-active klipper moonraker crowsnest tool-vision
+curl --fail --silent http://127.0.0.1:8085/api/v2/health
 ```
 
 Trong Mainsail:
@@ -637,12 +662,12 @@ Trong Mainsail:
 CALIBRATION_STATUS
 CHECK_OFFSETS
 QUERY_ENDSTOPS
-KTAMV_STATUS
+TOOL_VISION_STATUS
 DRYER_STATUS
 ```
 
-Mong đợi: Klipper ready, printer idle, service kTAMV active, heater target 0 và
-không có lỗi server chưa giải thích. Các kiểm tra này không
+Mong đợi: Klipper ready, printer idle, ToolVision không busy, PF2 thường open,
+heater target 0 và không có last error chưa giải thích. Các kiểm tra này không
 chủ động home, probe hoặc chọn tool.
 
 ## Backup, rollback và dọn dẹp
@@ -653,7 +678,7 @@ chủ động home, probe hoặc chọn tool.
 | --- | --- |
 | Snapshot theo task trong repository | `extras/backups/pre-<task>-YYYYMMDD-HHMMSS/` |
 | Snapshot config tự động trên máy | `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/` |
-| Snapshot gỡ ToolVision | `pre-replace-toolvision-with-ktamv-20260831-113047/` trên repository và CM4 |
+| State/result ToolVision | `Generated-Data/ToolVision/` cộng bản off-device riêng trước khi đổi runtime/schema |
 
 Snapshot backup được theo dõi và journal ngày là evidence bất biến. Không sửa
 README backup cũ để mô tả hệ thống mới. Chỉ mục song ngữ liên kết ba rollback
@@ -663,8 +688,8 @@ point gần đây mà không thay nội dung chúng.
 
 1. Dừng khi printer idle và tạo thêm backup trạng thái hiện tại.
 2. Xác định config, runtime revision và generated-data schema tương ứng.
-3. Chỉ restore file mục tiêu; giữ dữ liệu ToolVision đã retired trong archive có
-   ngày trừ khi rollback rõ ràng về tích hợp đó.
+3. Chỉ restore file mục tiêu; không thay mù quáng
+   `Generated-Data/ToolVision/` trong rollback chỉ liên quan config.
 4. Kiểm tra config/JSON, restart service có kiểm soát và chạy kiểm tra không
    chuyển động trước.
 5. Ghi rollback vào journal ngày.
@@ -687,12 +712,11 @@ Script chỉ liệt kê/xóa đường legacy đã kiểm tra chặt khớp
 
 | Triệu chứng | Kiểm tra đầu tiên | Hướng an toàn |
 | --- | --- | --- |
-| Klipper báo `Unknown config object 'ktamv'` | Hai symlink `ktamv*.py` và checkout đã pin | Sửa link đã review, rồi restart Klipper lúc idle |
+| Klipper báo `Unknown section 'tool_vision'` | Năm symlink `tool_vision*.py` và checkout ToolVision | Sửa runtime, rồi restart Klipper lúc idle |
 | All-Config từ chối KTC readonly | Sáu entry dưới `toolchanger/readonly-configs/` | Chạy `bash ~/klipper-toolchanger-easy/install.sh` lúc idle; không chép file thường vào đó |
-| kTAMV báo `Camera URL not set` | Trạng thái config server | Chạy `KTAMV_SETUP`; lệnh này không di chuyển máy |
-| kTAMV không thấy nozzle | Ảnh raw/processed, focus, ánh sáng, độ sạch | Sửa cảnh quang học; không tăng tolerance để nhận blob giả |
-| Camera calibration mất hơn 25% điểm | Frame xử lý và độ phân tán mm/pixel | Dừng đối chiếu; không tiếp tục căn tâm/lấy offset |
-| Calibration/origin biến mất | Lịch sử restart Klipper | Bình thường: kTAMV chỉ giữ RAM; setup lại có giám sát |
+| `ToolVision switch` triggered khi không chạm | Wiring PF2, pull-up/inversion và switch cơ khí | Dừng calibration; đọc `QUERY_ENDSTOPS` trước chuyển động |
+| Setup/result ToolVision có vẻ mất | `Generated-Data/ToolVision/state.json` và `results.json` | Giữ file/log; không tạo JSON placeholder hoặc teach lại ngay |
+| Result PF2 biến mất sau run Cartographer | Runtime hiện chỉ có một latest `results.json` | Dùng console/journal theo ngày; history mới chỉ ở nhánh UX chưa deploy |
 | Cartographer lỗi sau restart | `klippy.log`, nhiệt Cartographer và trạng thái `can0` | Thu evidence trước power-cycle; không xem giả thuyết CAN cũ là kết luận |
 | Bed báo sai tốc độ gia nhiệt | Wiring thermistor/SSR và nhiệt tăng thực tế | Dừng nếu nhiệt bất thường; không nới `[verify_heater]` khi chưa có evidence |
 | Detection pin pause sai | Active KTC tool, pin detection và patch marker | Giữ log; kiểm tra tương thích patch thay vì tắt bảo vệ |
@@ -706,7 +730,7 @@ Các lệnh log hữu ích trên host:
 ```bash
 journalctl -u klipper -n 100 --no-pager
 journalctl -u moonraker -n 100 --no-pager
-journalctl --user -u ktamv-server -n 100 --no-pager
+journalctl -u tool-vision -n 100 --no-pager
 journalctl -u crowsnest -n 100 --no-pager
 ```
 
@@ -715,15 +739,15 @@ redact lên issue công khai.
 
 ## Giới hạn hiện tại và công việc chờ
 
-- Upstream kTAMV chưa đổi từ năm 2024 và lần thử MF-500 trước thất bại vì cảnh
-  có nhiều vật thể/phản xạ giống nozzle.
-- kTAMV không lưu calibration, không có batch statistic, không đo Z và không tự
-  lưu offset.
+- ToolVision vẫn là development canary chỉ báo cáo. UI method/history cải tiến
+  đã cài trên feature branch nhưng chưa deploy/HIL ở đây.
+- Camera XY ToolVision chưa phải đường calibration production active.
 - Pressure Advance chưa calibration riêng theo tool/vật liệu.
 - Hành vi cooling riêng từng tool vẫn chờ review.
 - Cảnh báo/giám sát nhiệt Cartographer bổ sung vẫn đang chờ.
 - `cleanup-voron.sh` không có chính sách “giữ N bản mới nhất” cho backup
   installer bình thường.
+- Runtime ToolVision hiện chỉ giữ latest result.
 - Chế độ MF-500 ổn định được tài liệu hóa là 1280×720 WebRTC, không phải
   resolution danh nghĩa cao nhất.
 
@@ -737,7 +761,8 @@ sách task/sự cố được duy trì.
 | Tham khảo hệ thống chính | [README](README.md) | [README](README.vi.md) |
 | Payload config active | [Config README](config/README.md) | [Config README](config/README.vi.md) |
 | Vận hành StealthChanger | [Hướng dẫn](extras/docs/huong-dan-he-thong-stealthchanger.en.md) | [Hướng dẫn](extras/docs/huong-dan-he-thong-stealthchanger.md) |
-| Sử dụng kTAMV và đối chiếu phương pháp | [Hướng dẫn](extras/docs/ktamv-usage-comparison.en.md) | [Hướng dẫn](extras/docs/ktamv-usage-comparison.vi.md) |
+| Tích hợp ToolVision | [Hướng dẫn](extras/docs/toolvision-integration-guide.en.md) | [Hướng dẫn](extras/docs/toolvision-integration-guide.vi.md) |
+| Evidence/trạng thái UX ToolVision | [Báo cáo](extras/docs/toolvision-z-calibration-ux-proposal.md) | [Báo cáo](extras/docs/toolvision-z-calibration-ux-proposal.vi.md) |
 | Profile OrcaSlicer | [README](Orca%20Config/README.md) | [README](Orca%20Config/README.vi.md) |
 | Chính sách docs/history | [Chỉ mục](extras/docs/README.md) | [Chỉ mục](extras/docs/README.vi.md) |
 

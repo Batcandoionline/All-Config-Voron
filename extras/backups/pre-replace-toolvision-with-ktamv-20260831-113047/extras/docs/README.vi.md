@@ -7,8 +7,9 @@ sở hữu và đang dùng được duy trì theo cặp Anh–Việt. Journal l�
 backup và snapshot tải từ máy phải giữ nguyên nội dung tại thời điểm ghi; viết
 lại sẽ làm mất ý nghĩa rollback/audit.
 
-Baseline của lần cập nhật này là config production hiện tại, toàn bộ Markdown
-trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
+Baseline đọc source của lần cập nhật này: All-Config commit `9d848f04`, bằng
+chứng ToolVision đã deploy `2b3bf2c6`, nhánh UX ToolVision đang phát triển
+`2d936f3`, review ngày 2026-08-24.
 
 ## Tài liệu song ngữ hiện hành
 
@@ -18,7 +19,8 @@ trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
 | Payload config hoạt động | [README](../../config/README.md) | [README](../../config/README.vi.md) |
 | Đồng bộ/profile OrcaSlicer | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | Vận hành StealthChanger | [Hướng dẫn](huong-dan-he-thong-stealthchanger.en.md) | [Hướng dẫn](huong-dan-he-thong-stealthchanger.md) |
-| Sử dụng kTAMV và đối chiếu phương pháp | [Hướng dẫn](ktamv-usage-comparison.en.md) | [Hướng dẫn](ktamv-usage-comparison.vi.md) |
+| Tích hợp ToolVision trên máy | [Hướng dẫn](toolvision-integration-guide.en.md) | [Hướng dẫn](toolvision-integration-guide.vi.md) |
+| Trạng thái UX đo Z ToolVision | [Bằng chứng/trạng thái](toolvision-z-calibration-ux-proposal.md) | [Bằng chứng/trạng thái](toolvision-z-calibration-ux-proposal.vi.md) |
 
 ## Nội dung lịch sử và retired
 
@@ -30,25 +32,21 @@ trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
   tắt song ngữ trong [`FORK_INFO.md`](../axiscope-cartographer/FORK_INFO.md).
 - [`retired-configs/2026-08-20-config-merge/`](../retired-configs/2026-08-20-config-merge/README.md):
   file không còn được `printer.cfg` include; README có cả hai ngôn ngữ.
-- [`retired-configs/2026-08-31-toolvision-removal/`](../retired-configs/2026-08-31-toolvision-removal/README.md):
-  CFG ToolVision cuối cùng của máy, giữ nguyên byte sau khi chuyển sang kTAMV.
-- [Hướng dẫn tích hợp ToolVision](toolvision-integration-guide.vi.md) và
-  [evidence/trạng thái UX Z](toolvision-z-calibration-ux-proposal.vi.md): bằng
-  chứng implementation đã retired, không mô tả backend active.
 - `extras/Config download/`: snapshot tải từ máy, không phải tài liệu repository
   hiện hành và không được sửa.
 
-## Snapshot rollback được theo dõi gần đây
+## Ba snapshot rollback được theo dõi gần đây
 
 Chỉ thêm liên kết và context hiện tại ở đây; nội dung snapshot giữ bất biến.
 
-1. [`pre-replace-toolvision-with-ktamv-20260831-113047`](../backups/pre-replace-toolvision-with-ktamv-20260831-113047/README.md) — trước khi gỡ tích hợp ToolVision active và cài kTAMV được pin.
-2. [`pre-move-toolvision-to-printer-setup-20260823-220605`](../backups/pre-move-toolvision-to-printer-setup-20260823-220605/README.md) — trước khi chuyển config ToolVision riêng của máy vào `Printer-Setup/` và định tuyến JSON dưới `Generated-Data/ToolVision/`.
-3. [`pre-toolvision-z-canary-20260823-211530`](../backups/pre-toolvision-z-canary-20260823-211530/README.md) — trước khi bật canary ToolVision PF2 chỉ báo cáo.
+1. [`pre-move-toolvision-to-printer-setup-20260823-220605`](../backups/pre-move-toolvision-to-printer-setup-20260823-220605/README.md) — trước khi chuyển config ToolVision riêng của máy vào `Printer-Setup/` và định tuyến JSON dưới `Generated-Data/ToolVision/`.
+2. [`pre-toolvision-z-canary-20260823-211530`](../backups/pre-toolvision-z-canary-20260823-211530/README.md) — trước khi bật canary ToolVision PF2 chỉ báo cáo.
+3. [`pre-ktc-ownership-and-doc-sync-20260823-083206`](../backups/pre-ktc-ownership-and-doc-sync-20260823-083206/README.md) — trước khi đồng bộ quyền sở hữu KTC và tài liệu.
 
-Đây là snapshot được Git repository theo dõi, không phải tuyên bố các thư mục đó
-hiện tồn tại trên CM4. Hành động retention phía máy được ghi trong journal bất
-biến theo ngày tương ứng.
+Đây là snapshot được Git repository theo dõi, không phải tuyên bố ba thư mục
+hiện tồn tại trên CM4. Việc dọn retention trên máy và ba recovery point được giữ
+đã ghi trong journal bất biến
+[`2026-08-23-session-updates.md`](../Nhat-ky-chinh-sua/2026-08-23-session-updates.md).
 
 ## Quy tắc cập nhật tài liệu sau này
 

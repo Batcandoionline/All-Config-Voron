@@ -10,8 +10,8 @@ drop-in configuration.
 > [!IMPORTANT]
 > Hardware identifiers, motion limits, dock coordinates and offsets in this
 > document are machine-specific. Read the source file named beside each value
-> before adapting anything to another printer. Configuration state was reviewed
-> again on 2026-08-24 from revision `1a09b7f`.
+> before adapting anything to another printer. Calibration integration was
+> reviewed again on 2026-08-31 against kTAMV upstream commit `72421f2`.
 
 ## Start here
 
@@ -22,7 +22,7 @@ drop-in configuration.
 | Find a Mainsail/Klipper command | [Operator macro reference](#operator-macro-reference) |
 | Check current offsets without motion | `CHECK_OFFSETS` |
 | Check the active calibration backend | `CALIBRATION_STATUS` |
-| Use ToolVision | [ToolVision report-only calibration](#toolvision-report-only-calibration) |
+| Compare XY offsets with kTAMV | [kTAMV supervised XY comparison](#ktamv-supervised-xy-comparison) |
 | Clean or purge a nozzle | [Nozzle cleaning and prime lines](#nozzle-cleaning-and-prime-lines) |
 | Dry filament on the bed | [Heated-bed filament dryer](#heated-bed-filament-dryer) |
 | Update the printer configuration | [Install and update](#install-and-update) |
@@ -44,7 +44,7 @@ Documentation uses the following labels deliberately:
 
 ## Safety summary
 
-- Never deploy, home, probe, align a dock, change a tool or run ToolVision while
+- Never deploy, home, probe, align a dock, change a tool or run a moving kTAMV command while
   a print is active.
 - Keep an emergency stop available during first motion after mechanical or
   configuration work.
@@ -67,7 +67,7 @@ Documentation uses the following labels deliberately:
 | Tool boards | Five BTT EBB36 V1.2 boards over CAN |
 | Extruders/hotends | Five WW BMG geared extruders, five TZ V6 2.0 hotends, 0.4 mm nozzles |
 | Production Z/mesh | Cartographer V3 Touch + Scan, fixed to the shuttle |
-| Tool-offset diagnostics | ToolVision development canary; PF2 switch and Cartographer Touch methods; report-only |
+| Tool-offset diagnostics | kTAMV camera comparison for X/Y only; no active tool-offset Z backend |
 | Bed | 1000 W 220 V AC silicone heater through SSR |
 | Nozzle service | Purge bucket and Bambu A1 silicone pad at negative Y |
 | Camera | MF-500 USB camera through Crowsnest/camera-streamer |
@@ -81,7 +81,7 @@ Documentation uses the following labels deliberately:
 | KTC core macros | `~/klipper-toolchanger-easy` | Verify and preserve six readonly symlinks |
 | Machine KTC paths/tools | All-Config | `toolchanger-config.cfg` and `tools/T0.cfg`…`T4.cfg` |
 | Cartographer plugin | Cartographer Update Manager entry | Machine geometry and mesh settings only |
-| ToolVision runtime | `~/Tool-Vision`, Moonraker updater | Machine pin, UI wrapper and generated-data paths |
+| kTAMV runtime | Pinned `~/kTAMV` checkout, manual updates | Machine camera URL, service port and reviewed detector patch |
 | Klipper/Moonraker/Crowsnest | Their upstream updaters | Machine-specific `.cfg`/`.conf` payload |
 | Generated results | Printer runtime | Preserve locally; never overwrite via `rsync --delete` |
 
@@ -105,7 +105,7 @@ Values come from `config/Printer-Setup/hardware.cfg` and `fans-leds.cfg`.
 | Z1 step pin | `PB4` |
 | Z2 step pin | `PG13` |
 | Z3 step pin | `PB8` |
-| ToolVision switch | `^PF2` plus GND |
+| Inactive offset switch | `^PF2` plus GND; retained physically, not owned by the active kTAMV backend |
 | Bed SSR / bed thermistor | `PA1` / `PB0` |
 | Chamber thermistor | Generic 3950 on `PB1` |
 | TMC fan / CM4 fan / enclosure fan / bed fan | `PF9` / `PF6` / `PF7` / `PF8` |
@@ -223,8 +223,8 @@ pass and a final Z home. `G32` clears the mesh, homes, runs QGL and parks at
 | Saved Cartographer versions | software `1.8.0`, MCU `CARTOGRAPHER V3 6.1.0` |
 
 Cartographer is fixed to the shuttle and remains the production Z-home and bed
-mesh probe. ToolVision measures relative tool offsets; it does not replace
-Cartographer for normal print homing.
+mesh probe. kTAMV only compares tool X/Y through the camera; it does not replace
+Cartographer and it does not measure tool Z.
 
 ## Repository and configuration layout
 
@@ -239,7 +239,7 @@ Voron 5 Tool/
 │   ├── KlipperScreen.conf         # Touchscreen, Vietnamese language
 │   ├── Printer-Setup/
 │   │   ├── calibration-probe.cfg  # Cartographer and calibration routing
-│   │   ├── tool-vision.cfg        # Machine ToolVision settings and panel
+│   │   ├── ktamv.cfg              # Pinned supervised kTAMV XY integration
 │   │   ├── hardware.cfg           # MCU, steppers, bed and sensors
 │   │   ├── fans-leds.cfg          # Fans, LEDs and RESUME override
 │   │   ├── input-shaper.cfg       # Fallback shaper, resonance, ShakeTune
@@ -272,7 +272,7 @@ Voron 5 Tool/
 1. `mainsail.cfg`
 2. KTC-Easy `toolchanger-include.cfg`
 3. `Printer-Setup/calibration-probe.cfg`
-4. `Printer-Setup/tool-vision.cfg`
+4. `Printer-Setup/ktamv.cfg`
 5. `hardware.cfg`, `fans-leds.cfg`, `input-shaper.cfg`
 6. `nozzle-clean.cfg`, `prime-lines.cfg`, `print-macros.cfg`
 7. `tool-crash.cfg`
@@ -287,13 +287,12 @@ probe owner.
 The installer preserves these paths across `rsync --delete`:
 
 ```text
-Generated-Data/ToolVision/state.json
-Generated-Data/ToolVision/results.json
 Generated-Data/ShakeTune/
 ```
 
-Markdown, downloaded archives, local diagnostics, legacy ToolVision JSON and
-KTC readonly symlinks are also excluded from configuration synchronization.
+Markdown, downloaded archives, local diagnostics and KTC readonly symlinks are
+also excluded from configuration synchronization. Retired ToolVision data was
+archived before removal and is not part of the active config tree.
 
 ## Normal print workflow
 
@@ -394,8 +393,11 @@ an incompatible upstream source.
 | `DRYER_STATUS` | Print current cycle/thermal status | No |
 | `CALIBRATION_STATUS` | Report active calibration backend/method | No |
 | `CHECK_OFFSETS` | Report loaded T0–T4 XYZ offsets | No |
-| `TOOL_VISION` | Open ToolVision panel | Prompt only until action |
-| `TOOL_VISION_STATUS` | Report ToolVision readiness/error state | No |
+| `KTAMV_STATUS` | Report camera calibration, mm/pixel and origin state | No |
+| `KTAMV_SETUP` | Send the configured camera URL/options to the server | No |
+| `KTAMV_SIMPLE_NOZZLE_POSITION` | Run image detection without jogging | No |
+| `KTAMV_CALIB_CAMERA` | Calibrate the camera with a ten-point XY pattern | Yes |
+| `KTAMV_FIND_NOZZLE_CENTER` | Detect and jog X/Y toward camera center | Yes |
 | `QUERY_ENDSTOPS` | Read endstop/switch states | No |
 | `BED_FAN_ON [SPEED=0.5]` / `BED_FAN_OFF` | Manual chamber circulation control | Fan only |
 | `LIGHTS_ON` / `LIGHTS_OFF` | Chamber lighting at configured safe level | LEDs only |
@@ -407,7 +409,7 @@ Use them only during an explicit attended alignment procedure with a backup.
 
 Legacy `CALIBRATE_MOVE_OVER_PROBE`, `CALIBRATE_ALL_OFFSETS` and
 `CALIBRATE_NOZZLE_PROBE_OFFSET` are deliberately disabled by
-`calibration-probe.cfg` and raise instructions to use ToolVision instead.
+`calibration-probe.cfg` and explain that kTAMV is XY-only.
 
 ## Nozzle cleaning and prime lines
 
@@ -483,96 +485,61 @@ uses a 30-second moisture flush every 20 minutes and reduces bed/fan output when
 the chamber is too hot. `PRINT_START` safely takes ownership from an active
 dryer timer.
 
-## ToolVision report-only calibration
+## kTAMV supervised XY comparison
 
 ### Deployed machine integration
 
 | Item | Current value |
 | --- | --- |
-| Runtime checkout | `~/Tool-Vision` |
-| Python environment | `~/tool-vision-env` |
-| Host service/API | `tool-vision.service`, loopback port `8085` |
-| Machine config | `Printer-Setup/tool-vision.cfg` |
-| Physical switch | Manta `^PF2` |
-| Learned state | `Generated-Data/ToolVision/state.json` |
-| Latest result | `Generated-Data/ToolVision/results.json` |
-| Production runtime evidence | ToolVision `aee9c3c`, reported `3.4.0-rc2` |
+| Upstream | [TypQxQ/kTAMV](https://github.com/TypQxQ/kTAMV), pinned commit `72421f2` |
+| Runtime checkout | `~/kTAMV` with the reviewed multi-object detector patch |
+| Python environment | `~/ktamv-env` using system OpenCV packages |
+| Host service/API | user service `ktamv-server.service`, port `8086` |
+| Machine config | `Printer-Setup/ktamv.cfg` |
+| Camera source | `http://127.0.0.1/webcam/?action=snapshot` |
+| Cloud image upload | disabled |
 
-ToolVision is the active report-only tool-offset backend. Axiscope and
-`[tools_calibrate]` remain disabled. The single `TOOL_VISION` entry exposes
-explicit Physical-switch and Cartographer-Touch Z actions, camera XY, combined
-camera+Z XYZ actions, setup shortcuts and latest results. Every routine action
-shows a confirmation, performs its own full `G28`, names the selected Z method
-and uses quiet ToolVision output without hiding KTC, probe or heater errors.
+kTAMV is active only as an attended method-comparison backend. It calibrates a
+camera-to-motion transform, centers a visible nozzle and reports raw X/Y
+differences from a reference origin. It does not measure Z, write tool files or
+retain its transform/origin after Klipper restarts.
 
-This machine opts into `INITIALIZE_TOOLCHANGER` as ToolVision's post-error KTC
-recovery hook. The hook initializes from the physically detected tool and
-ToolVision verifies active state before attempting to restore T0. It is a
-reviewed machine-specific setting, not a portable ToolVision default.
+### Method comparison
 
-Camera XY exists in ToolVision but was not ready in the last recorded printer
-status and no camera source/name is configured here. Do not treat camera XY as
-an active production calibration path.
+| Behavior | kTAMV | Retired ToolVision integration |
+| --- | --- | --- |
+| Axes | X/Y only | X/Y camera plus PF2 or Cartographer Touch Z |
+| Setup | Manual server setup, camera calibration, T0 origin | Guided station/provider setup |
+| Persistence | RAM only; lost on Klipper restart | State/result/history files on disk |
+| Offset application | Reports values only; operator records them | Report-only on this printer |
+| Detection | Fixed OpenCV pipelines at resized 640×480 | Native-resolution learned profile and ambiguity checks |
+| Tool sequence | Operator selects/jogs each tool | Integrated five-tool batches and restore checks |
+| Safety surface | Native commands can jog immediately | Prompt guards, full-home workflow and cleanup/recovery logic |
+| Z capability | None | Switch and Cartographer Touch comparison |
 
-### Result meaning
+The previous 2026-08-22 kTAMV trial with this MF-500 failed camera calibration:
+only six of ten points were accepted, a bright reflection was selected near the
+real nozzle opening, and the raw 1280×720 image was distorted to 640×480. That
+evidence still applies because upstream HEAD is unchanged. Do not loosen
+`detection_tolerance` to make an ambiguous scene pass; improve focus, distance,
+soft lighting and nozzle cleanliness first.
 
-For Z, the implemented sign is:
+### Usage boundary
 
-```text
-measured Z(tool) = raw contact Z(tool) - raw contact Z(reference T0)
-```
+The non-motion commands are `KTAMV_SETUP`, `KTAMV_STATUS`,
+`KTAMV_SEND_SERVER_CFG`, preview start/stop, `KTAMV_SIMPLE_NOZZLE_POSITION`,
+`KTAMV_SET_ORIGIN` and `KTAMV_GET_OFFSET`. `KTAMV_CALIB_CAMERA` moves through a
+ten-point pattern and may make a final centering move;
+`KTAMV_FIND_NOZZLE_CENTER` repeatedly jogs X/Y and may wiggle when detection is
+lost. Both moving commands require full homing, direct supervision and an
+emergency stop. No motion command was run during the 2026-08-31 installation.
 
-This is a candidate absolute tool value relative to T0. It is not a residual
-delta to add to the configured production offset. ToolVision never writes the
-T0–T4 production files.
-
-The post-update HIL on 2026-08-26 used a full `G28` before every attempt, a
-70 °C PETG bed and 150 °C nozzles. Five Physical-switch sessions completed;
-four of five Cartographer sessions completed, with one T3 sampling failure.
-
-| Tool | Production Z | PF2 mean (range) | Cartographer Touch mean (range) |
-| --- | ---: | ---: | ---: |
-| T0 | +0.000 | +0.000 | +0.000 |
-| T1 | +0.2464 | +0.0832 (+0.064..+0.104) | +0.2485 (+0.240..+0.264) |
-| T2 | -0.2688 | -0.4004 (-0.486..-0.368) | -0.2685 (-0.272..-0.262) |
-| T3 | -0.1896 | -0.1580 (-0.172..-0.148) | -0.1335 (-0.148..-0.120) |
-| T4 | +0.1028 | +0.0772 (+0.064..+0.108) | +0.1105 (+0.102..+0.118) |
-
-The valid 2026-08-26 Cartographer means differ from the recorded three-run
-2026-08-25 means by `+0.0058`, `-0.0005`, `+0.0525` and `+0.0058 mm` on T1-T4.
-They differ from the print-tested live values by `+0.0021`, `+0.0003`, `+0.0561`
-and `+0.0077 mm`. T3 also produced the only ten-touch sampling failure, so no
-2026-08-26 candidate has been applied or print-tested; repeat T0/T3 testing and
-a controlled print A/B are required. PF2 shows systematic disagreement on
-T1/T2 and one `0.118 mm` T2 range, so it remains a diagnostic cross-check.
-
-The supplied four-face coupon used the mean of five valid 70 °C Cartographer
-runs on 2026-08-25: T1 `+0.2464`, T2 `-0.2688`, T3 `-0.1896` and T4
-`+0.1028 mm`. This provenance is confirmed by the five history files, exact
-mean arithmetic, the `printer.cfg` upload at 20:54-20:55 and the coupon job
-starting at 20:59. The separate recorded three-run means were `+0.24267`,
-`-0.26800`, `-0.18600` and `+0.10467 mm`; they were not the set loaded for this
-print. The Git/computer copy still held the old values until the 2026-08-26
-live-value sync. The coupon's colour transitions remain broadly coplanar on
-every face with no repeated tool-specific ledge. It supports retaining the
-existing print-tested live set, but does not validate or justify applying the
-unprinted 2026-08-26 results.
-
-### Canary UI and console evidence
-
-The canary branch `codex/compact-mainsail-output` at `aee9c3c` passed source
-tests and attended HIL. Prompt guards fail closed while printing or paused, and
-Close is idempotent. Mainsail and KlipperScreen use the same macros; the current
-first screen contains eight routine/setup actions and may scroll on the BTT
-5-inch display. Long UI-triggered calibrations repeatedly return nginx HTTP 504
-after about 60 seconds even though ToolVision continues and saves a valid
-result. Treat the transport timeout as an integration issue, follow
-`tool_vision.busy` plus history, and never hide `action:prompt_*`, warnings or
-probe/toolchanger errors with a frontend regex.
-
-Read the [integration guide](extras/docs/toolvision-integration-guide.en.md) and
-[2026-08-26 journal](extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md)
-before changing the runtime, station or panel.
+Use T0 with zero X/Y offsets as the reference: configure the server, preview and
+verify detection, calibrate the camera, center T0, set the origin once, then
+center each T1–T4 and read `KTAMV_GET_OFFSET`. Repeat every tool at least three
+times and verify sign conventions before considering any configuration change.
+The detailed bilingual [kTAMV usage and method comparison](extras/docs/ktamv-usage-comparison.en.md)
+is the authoritative procedure.
 
 ## Camera and user interfaces
 
@@ -585,9 +552,9 @@ The machine previously observed only 15–20 fps in MJPEG view under host load;
 WebRTC `/webcam/webrtc` is the recorded workaround. 1080p/1440p previously
 produced a black view, so 1280×720 remains the documented stable setting.
 
-Mainsail is the main web UI. KlipperScreen is configured in Vietnamese.
-ToolVision, dryer and other complex operations expose one visible macro that
-opens a prompt; helpers whose names begin with `_` remain internal.
+Mainsail is the main web UI. KlipperScreen is configured in Vietnamese. kTAMV
+uses direct native commands rather than a guarded prompt; check the motion table
+before invoking one. Dryer and other complex operations retain prompt wrappers.
 
 ## OrcaSlicer profiles
 
@@ -618,8 +585,8 @@ used. `-Push` implies `-Commit`.
 
 1. Printer is idle, not paused and not calibrating.
 2. KTC-Easy is installed and its six readonly symlinks are valid.
-3. ToolVision checkout, venv, service and five Klipper extension symlinks exist
-   because the active config includes ToolVision.
+3. The pinned kTAMV checkout, venv, user service and two exact Klipper extension
+   symlinks exist because the active config includes kTAMV.
 4. Current configuration and generated calibration data have a usable backup.
 5. The operator is prepared to review output and restart services manually.
 
@@ -634,9 +601,9 @@ rm -rf -- "${tmp_dir}"
 sudo systemctl restart moonraker klipper
 ```
 
-The All-Config Git checkout is not kept on the CM4. The ToolVision and KTC-Easy
-runtime checkouts are separate and remain present because their services,
-symlinks and Update Manager entries use them directly.
+The All-Config Git checkout is not kept on the CM4. The pinned kTAMV and
+KTC-Easy runtime checkouts are separate because their service/symlink owners are
+outside the configuration payload. kTAMV is not auto-updated while patched.
 
 ### Routine All-Config update
 
@@ -652,7 +619,7 @@ bash scripts/update.sh
 `install.sh` then:
 
 1. Validates KTC-Easy readonly ownership.
-2. Validates ToolVision runtime/service/module links.
+2. Validates the pinned kTAMV runtime, user service, module links and detector patch.
 3. Dry-runs or recognizes the reviewed `tool_crash.py` patch.
 4. Copies the entire current printer config to
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
@@ -673,8 +640,9 @@ sudo systemctl restart klipper
 Host:
 
 ```bash
-systemctl is-active klipper moonraker crowsnest tool-vision
-curl --fail --silent http://127.0.0.1:8085/api/v2/health
+systemctl is-active klipper moonraker crowsnest
+systemctl --user is-active ktamv-server
+curl --fail --silent http://127.0.0.1:8086/
 ```
 
 Mainsail console:
@@ -683,12 +651,12 @@ Mainsail console:
 CALIBRATION_STATUS
 CHECK_OFFSETS
 QUERY_ENDSTOPS
-TOOL_VISION_STATUS
+KTAMV_STATUS
 DRYER_STATUS
 ```
 
-Expected: Klipper ready, printer idle, ToolVision not busy, PF2 normally open,
-heater targets zero and no unexplained last error. These checks do not
+Expected: Klipper ready, printer idle, kTAMV service active, heater targets zero
+and no unexplained server error. These checks do not
 intentionally home, probe or select a tool.
 
 ## Backups, rollback and cleanup
@@ -699,7 +667,7 @@ intentionally home, probe or select a tool.
 | --- | --- |
 | Repository task snapshot | `extras/backups/pre-<task>-YYYYMMDD-HHMMSS/` |
 | Automatic printer config snapshot | `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/` |
-| ToolVision state/result | `Generated-Data/ToolVision/` plus a separate off-device copy before runtime/schema work |
+| Retired ToolVision removal snapshot | `pre-replace-toolvision-with-ktamv-20260831-113047/` on both repository and CM4 |
 
 Tracked backup snapshots and daily journals are immutable evidence. Do not edit
 old backup READMEs to describe a newer system. The bilingual documentation
@@ -710,8 +678,8 @@ index links three recent tracked rollback points without changing them.
 1. Stop while the printer is idle and create another backup of the current
    state.
 2. Identify the matching config, runtime revision and generated-data schema.
-3. Restore only the intended files; do not blindly replace
-   `Generated-Data/ToolVision/` during a config-only rollback.
+3. Restore only the intended files; keep retired ToolVision data in its dated
+   archive unless explicitly rolling that integration back.
 4. Validate config/JSON, restart services in a controlled order and run
    non-motion checks first.
 5. Record the rollback in the daily journal.
@@ -734,11 +702,12 @@ It only lists/removes strictly validated legacy paths matching
 
 | Symptom | Check first | Safe response |
 | --- | --- | --- |
-| Klipper says `Unknown section 'tool_vision'` | Five `tool_vision*.py` symlinks and ToolVision checkout | Repair the runtime installation, then restart Klipper while idle |
+| Klipper says `Unknown config object 'ktamv'` | Two `ktamv*.py` symlinks and the pinned checkout | Repair the reviewed links, then restart Klipper while idle |
 | All-Config deploy refuses KTC readonly files | Six entries under `toolchanger/readonly-configs/` | Run `bash ~/klipper-toolchanger-easy/install.sh` while idle; do not copy regular files there |
-| `ToolVision switch` is triggered while untouched | PF2 wiring, pull-up/inversion and physical switch | Stop calibration; inspect with `QUERY_ENDSTOPS` before motion |
-| ToolVision setup/result appears missing | `Generated-Data/ToolVision/state.json` and `results.json` | Preserve files/logs; do not create placeholder JSON or immediately re-teach |
-| PF2 result disappeared after Cartographer run | Current runtime stores one latest `results.json` | Use dated console/journal evidence; history is only in the un-deployed UX branch |
+| kTAMV says `Camera URL not set` | Server config state | Run `KTAMV_SETUP`; this does not move the printer |
+| kTAMV cannot find the nozzle | Raw/processed frame, focus, lighting and cleanliness | Improve the optical scene; do not raise tolerance to accept a false blob |
+| Camera calibration loses more than 25% of points | Processed frames and mm/pixel spread | Stop the comparison; do not continue to centering or offset capture |
+| Calibration/origin vanished | Klipper restart history | Expected: kTAMV state is RAM-only; repeat setup under supervision |
 | Cartographer fails after restart | `klippy.log`, Cartographer temperature and `can0` state | Capture evidence before power-cycling; do not assume the old CAN hypothesis is proven |
 | Bed reports heat-rate failure | Bed thermistor/SSR wiring and actual temperature rise | Stop if heating is abnormal; do not weaken `[verify_heater]` further without evidence |
 | Tool-presence edge pauses incorrectly | Active KTC tool, detection pins and installed patch marker | Preserve logs; verify installer patch compatibility instead of disabling protection |
@@ -752,7 +721,7 @@ Useful log commands on the host:
 ```bash
 journalctl -u klipper -n 100 --no-pager
 journalctl -u moonraker -n 100 --no-pager
-journalctl -u tool-vision -n 100 --no-pager
+journalctl --user -u ktamv-server -n 100 --no-pager
 journalctl -u crowsnest -n 100 --no-pager
 ```
 
@@ -761,15 +730,14 @@ configuration into public issues.
 
 ## Current limitations and pending work
 
-- ToolVision remains a monitored report-only development canary. Its improved
-  method-specific/history UI is implemented upstream on a feature branch but
-  not deployed/HIL-tested here.
-- ToolVision camera XY is not an active production calibration path.
+- kTAMV upstream has not changed since 2024 and the previous MF-500 trial failed
+  because the optical scene contained multiple/reflected nozzle-like objects.
+- kTAMV has no persistent calibration, batch statistics, Z measurement or
+  automatic offset storage.
 - Pressure Advance is not yet calibrated per tool/material.
 - Per-tool cooling behavior still has a pending review task.
 - Additional Cartographer temperature warning/monitoring remains pending.
 - `cleanup-voron.sh` has no “keep newest N” policy for normal installer backups.
-- The current ToolVision runtime keeps only the latest result file.
 - The MF-500 documented stable mode is 1280×720 WebRTC, not its highest nominal
   resolution.
 
@@ -783,8 +751,7 @@ maintained task and incident lists.
 | Main system reference | [README](README.md) | [README](README.vi.md) |
 | Active config payload | [Config README](config/README.md) | [Config README](config/README.vi.md) |
 | StealthChanger operation | [Guide](extras/docs/huong-dan-he-thong-stealthchanger.en.md) | [Guide](extras/docs/huong-dan-he-thong-stealthchanger.md) |
-| ToolVision integration | [Guide](extras/docs/toolvision-integration-guide.en.md) | [Guide](extras/docs/toolvision-integration-guide.vi.md) |
-| ToolVision UX evidence/status | [Report](extras/docs/toolvision-z-calibration-ux-proposal.md) | [Report](extras/docs/toolvision-z-calibration-ux-proposal.vi.md) |
+| kTAMV usage and method comparison | [Guide](extras/docs/ktamv-usage-comparison.en.md) | [Guide](extras/docs/ktamv-usage-comparison.vi.md) |
 | OrcaSlicer profiles | [README](Orca%20Config/README.md) | [README](Orca%20Config/README.vi.md) |
 | Documentation/history policy | [Index](extras/docs/README.md) | [Index](extras/docs/README.vi.md) |
 

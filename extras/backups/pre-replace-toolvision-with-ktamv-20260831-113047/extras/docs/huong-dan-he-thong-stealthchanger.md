@@ -2,9 +2,10 @@
 
 [Tiếng Việt](huong-dan-he-thong-stealthchanger.md) | [English](huong-dan-he-thong-stealthchanger.en.md)
 
-Tài liệu được làm mới ngày 2026-08-31 sau khi đọc toàn bộ Markdown, config active,
-source kTAMV và script triển khai. Nhật ký lịch sử không được viết lại thành
-hiện trạng mới.
+Tài liệu này được viết lại ngày 2026-08-24 sau khi đọc `printer.cfg`, toàn bộ
+`Printer-Setup/*.cfg`, `toolchanger-config.cfg`, T0–T4 và script triển khai.
+Nó mô tả cấu hình đang được Git theo dõi tại `9d848f04`; nhật ký cũ không được
+viết lại thành hiện trạng mới.
 
 ## 1. Ranh giới sở hữu
 
@@ -13,9 +14,8 @@ hiện trạng mới.
 - All-Config sở hữu `toolchanger-config.cfg`, `tools/T0.cfg`…`T4.cfg` và các
   override trong `Printer-Setup/`.
 - Cartographer đang hoạt động cho Z homing và bed mesh.
-- kTAMV đang hoạt động để đối chiếu X/Y bằng camera có người giám sát.
+- ToolVision đang hoạt động như canary chỉ báo cáo offset; PF2 là switch đo Z.
 - Axiscope và `[tools_calibrate]` đã tắt, chỉ giữ comment để rollback.
-- Không có backend tool-offset Z active; PF2 còn phần cứng nhưng kTAMV không dùng.
 
 ## 2. Include và thứ tự override
 
@@ -25,7 +25,7 @@ Thứ tự đang nạp trong `printer.cfg` là:
 mainsail.cfg
 KTC-Easy readonly toolchanger include
 calibration-probe.cfg
-ktamv.cfg
+tool-vision.cfg
 hardware.cfg
 fans-leds.cfg
 input-shaper.cfg
@@ -72,7 +72,8 @@ Giới hạn chuyển động chính:
 
 Cartographer có offset X `0`, Y `35`. Bed mesh cấu hình X `20..320`,
 Y `45..325`, 55 × 55 mẫu. Touch lấy mốc tại
-`bed_mesh.zero_reference_position`; kTAMV không tham gia Z production.
+`bed_mesh.zero_reference_position`; không dùng ToolVision như probe Z
+production.
 
 `G32` thực hiện home/QGL theo macro hiện hành. Với mọi thao tác bảo trì thủ
 công, kiểm tra carriage/tool/dock và khoảng hở trước khi home hoặc di chuyển.
@@ -142,7 +143,7 @@ Offset production hiện nằm trong `SAVE_CONFIG` của `printer.cfg`:
 | T4 | +0.041 | +0.352 | -0.014 |
 
 Người vận hành đã đánh giá first layer của baseline này tốt bằng mắt. Hai phép
-đo ToolVision đã retired ngày 2026-08-23 chỉ là evidence chẩn đoán:
+đo ToolVision ngày 2026-08-23 chỉ là evidence chẩn đoán:
 
 | Tool | Production | PF2 switch | Cartographer Touch |
 | --- | ---: | ---: | ---: |
@@ -152,16 +153,13 @@ Người vận hành đã đánh giá first layer của baseline này tốt bằ
 | T3 | -0.268 | -0.154 | -0.160 |
 | T4 | -0.014 | +0.078 | +0.102 |
 
-Tích hợp ToolVision đã retired tính Z theo `raw(tool) - raw(reference)`. Đây là
-candidate absolute
+ToolVision tính Z theo `raw(tool) - raw(reference)`. Đây là candidate absolute
 tương đối so với T0, không phải delta để cộng vào offset đang có. PF2 run có
 T0 return drift `+0.028 mm`; Cartographer run `-0.008 mm`. Một run không đủ để
 thay baseline đang in tốt; cần lặp cùng method/nhiệt độ và kiểm chứng độc lập.
 
-kTAMV active không đo Z. Nó chỉ báo X/Y, giữ camera calibration/origin trong RAM
-và không lưu offset tool. Xem [hướng dẫn sử dụng và đối chiếu kTAMV](ktamv-usage-comparison.vi.md).
-[Hướng dẫn ToolVision cũ](toolvision-integration-guide.vi.md) chỉ còn là evidence
-đã retired.
+Xem [hướng dẫn ToolVision](toolvision-integration-guide.vi.md) và
+[trạng thái cải tiến UX](toolvision-z-calibration-ux-proposal.vi.md).
 
 ## 9. Input shaper
 
@@ -181,15 +179,14 @@ sudo systemctl restart moonraker klipper
 ```
 
 `update.sh` tải archive `main` tạm và gọi installer. Installer kiểm tra KTC,
-kTAMV được pin và hai patch runtime đã review, tạo backup rồi mới `rsync`. Nó
-không tự restart.
+ToolVision, patch tool-crash, tạo backup rồi mới `rsync`. Nó không tự restart.
 
 Kiểm tra không chuyển động sau deploy:
 
 ```text
 CALIBRATION_STATUS
 QUERY_ENDSTOPS
-KTAMV_STATUS
+TOOL_VISION_STATUS
 ```
 
 Sau đó mới xem trạng thái service/log. Chỉ home/toolchange/probe khi operator
@@ -201,6 +198,5 @@ Sau đó mới xem trạng thái service/log. Chỉ home/toolchange/probe khi op
 - Không sửa `readonly-configs/`.
 - Không thay offset production từ một lần đo.
 - Không deploy khi đang in/paused/calibration.
-- Giữ archive ToolVision đã retired bất biến; không restore vào config active
-  trừ khi rollback rõ ràng.
+- Không xóa `Generated-Data/ToolVision/` khi cập nhật cấu hình.
 - Không viết lại journal/backup cũ; tạo journal hoặc snapshot mới.

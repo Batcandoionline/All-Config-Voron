@@ -7,9 +7,9 @@ owned guides are maintained as English/Vietnamese pairs. Historical journals,
 backup snapshots and downloaded machine snapshots preserve what was recorded at
 their date; rewriting them would destroy rollback/audit meaning.
 
-Source-review baseline for this documentation pass: current production config,
-the full repository Markdown corpus and kTAMV upstream commit `72421f2`, reviewed
-on 2026-08-31.
+Source-review baseline for this documentation pass: All-Config commit
+`9d848f04`, ToolVision deployed evidence `2b3bf2c6`, ToolVision development UX
+branch `2d936f3`, reviewed on 2026-08-24.
 
 ## Current bilingual documentation
 
@@ -19,7 +19,8 @@ on 2026-08-31.
 | Active config payload | [README](../../config/README.md) | [README](../../config/README.vi.md) |
 | OrcaSlicer sync/profiles | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | StealthChanger operation | [Guide](huong-dan-he-thong-stealthchanger.en.md) | [Guide](huong-dan-he-thong-stealthchanger.md) |
-| kTAMV usage and method comparison | [Guide](ktamv-usage-comparison.en.md) | [Guide](ktamv-usage-comparison.vi.md) |
+| ToolVision machine integration | [Guide](toolvision-integration-guide.en.md) | [Guide](toolvision-integration-guide.vi.md) |
+| ToolVision Z UX status | [Evidence/status](toolvision-z-calibration-ux-proposal.md) | [Evidence/status](toolvision-z-calibration-ux-proposal.vi.md) |
 
 ## Historical and retired material
 
@@ -31,26 +32,22 @@ on 2026-08-31.
   bilingually in [`FORK_INFO.md`](../axiscope-cartographer/FORK_INFO.md).
 - [`retired-configs/2026-08-20-config-merge/`](../retired-configs/2026-08-20-config-merge/README.md):
   files no longer included by `printer.cfg`; README contains both languages.
-- [`retired-configs/2026-08-31-toolvision-removal/`](../retired-configs/2026-08-31-toolvision-removal/README.md):
-  the final machine ToolVision CFG retained byte-for-byte after kTAMV cutover.
-- [ToolVision integration guide](toolvision-integration-guide.en.md) and
-  [Z UX evidence/status](toolvision-z-calibration-ux-proposal.md): retired
-  implementation evidence; neither describes the active backend.
 - `extras/Config download/`: downloaded printer snapshots. They are not current
   repository documentation and are not edited.
 
-## Recent tracked rollback snapshots
+## Three recent tracked rollback snapshots
 
 Only links and current context are added here; snapshot contents remain
 immutable.
 
-1. [`pre-replace-toolvision-with-ktamv-20260831-113047`](../backups/pre-replace-toolvision-with-ktamv-20260831-113047/README.md) — before removing the active ToolVision integration and installing pinned kTAMV.
-2. [`pre-move-toolvision-to-printer-setup-20260823-220605`](../backups/pre-move-toolvision-to-printer-setup-20260823-220605/README.md) — before moving the machine ToolVision config into `Printer-Setup/` and routing JSON under `Generated-Data/ToolVision/`.
-3. [`pre-toolvision-z-canary-20260823-211530`](../backups/pre-toolvision-z-canary-20260823-211530/README.md) — before enabling the PF2 report-only ToolVision canary.
+1. [`pre-move-toolvision-to-printer-setup-20260823-220605`](../backups/pre-move-toolvision-to-printer-setup-20260823-220605/README.md) — before moving the machine ToolVision config into `Printer-Setup/` and routing JSON under `Generated-Data/ToolVision/`.
+2. [`pre-toolvision-z-canary-20260823-211530`](../backups/pre-toolvision-z-canary-20260823-211530/README.md) — before enabling the PF2 report-only ToolVision canary.
+3. [`pre-ktc-ownership-and-doc-sync-20260823-083206`](../backups/pre-ktc-ownership-and-doc-sync-20260823-083206/README.md) — before KTC ownership and documentation synchronization.
 
-These are repository-tracked snapshots, not a statement about which directories
-currently exist on the CM4. Printer-side retention actions remain recorded in
-their dated immutable journals.
+These are repository-tracked snapshots, not a statement about which three
+directories currently exist on the CM4. The printer-side retention action and
+its three retained recovery points are recorded in the immutable journal
+[`2026-08-23-session-updates.md`](../Nhat-ky-chinh-sua/2026-08-23-session-updates.md).
 
 ## Rules for future documentation changes
 

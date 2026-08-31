@@ -14,7 +14,7 @@ khỏi payload triển khai.
 [include mainsail.cfg]
 [include toolchanger/readonly-configs/toolchanger-include.cfg]
 [include Printer-Setup/calibration-probe.cfg]
-[include Printer-Setup/ktamv.cfg]
+[include Printer-Setup/tool-vision.cfg]
 [include Printer-Setup/hardware.cfg]
 [include Printer-Setup/fans-leds.cfg]
 [include Printer-Setup/input-shaper.cfg]
@@ -40,7 +40,7 @@ config/
 ├── KlipperScreen.conf
 ├── Printer-Setup/
 │   ├── calibration-probe.cfg
-│   ├── ktamv.cfg
+│   ├── tool-vision.cfg
 │   ├── hardware.cfg
 │   ├── fans-leds.cfg
 │   ├── input-shaper.cfg
@@ -71,7 +71,7 @@ config/
 | Sensor chamber | Generic 3950 tại `PB1` |
 | Fan dưới bed | `PF8` |
 | LED chamber | WS2812 tại `PD15` |
-| Switch tool-offset không active | Manta `^PF2` với GND; kTAMV không dùng |
+| Switch ToolVision | Manta `^PF2` với GND |
 
 CAN UUID, dock và offset production của năm tool được ghi trong
 [README gốc](../README.vi.md), còn giá trị thực nằm trong `toolchanger/tools/`
@@ -82,12 +82,19 @@ và khối `SAVE_CONFIG` của `printer.cfg`.
 - Cartographer Touch dùng để home Z production.
 - Cartographer Scan tạo adaptive bed mesh. Mesh cấu hình từ X `20..320`,
   Y `45..325` với 55 × 55 mẫu.
-- kTAMV được nạp từ `Printer-Setup/ktamv.cfg` để đối chiếu X/Y có giám sát. Nó
-  không đo Z, không lưu offset và mất camera/origin sau Klipper restart.
+- ToolVision được nạp từ `Printer-Setup/tool-vision.cfg`, chỉ báo cáo và dùng PF2
+  cho phương pháp switch vật lý.
 - Axiscope và `[tools_calibrate]` chỉ là nội dung rollback đã comment trong
   `calibration-probe.cfg`, không phải backend hoạt động.
-- Runtime kTAMV được pin tại commit upstream `72421f2`, chạy user service cổng
-  `8086`, tắt cloud upload và có patch nhiều vật thể đã review.
+- Camera XY ToolVision không được repository này cấu hình; chỉ ready sau khi
+  teach camera có người giám sát.
+
+Dữ liệu sinh của ToolVision được định tuyến rõ tới:
+
+```text
+Generated-Data/ToolVision/state.json
+Generated-Data/ToolVision/results.json
+```
 
 Toàn bộ `Generated-Data/` bị loại khỏi Git deployment và `rsync --delete`.
 
@@ -115,14 +122,14 @@ sudo systemctl restart moonraker klipper
 `install.sh` kiểm tra trước khi deploy:
 
 1. Sáu entry readonly KTC-Easy là symlink hợp lệ và target tồn tại.
-2. Nếu include kTAMV đang bật, checkout được pin, Python riêng, user service, hai
-   symlink Klipper chính xác và patch detector phải tồn tại.
+2. Nếu include ToolVision đang bật, checkout, Python riêng, systemd unit và năm
+   symlink module Klipper chính xác phải tồn tại.
 3. `tool_crash.py` đã được patch hoặc khớp đúng preimage đã review.
 4. Tạo snapshot có timestamp tại
    `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
 
-Deployment loại Markdown, `Generated-Data/`, snapshot tải về, chẩn đoán local
-và `toolchanger/readonly-configs/`. Script không tự
+Deployment loại Markdown, `Generated-Data/`, snapshot tải về, chẩn đoán local,
+JSON ToolVision legacy và `toolchanger/readonly-configs/`. Script không tự
 restart service.
 
 `cleanup-voron.sh` mặc định chỉ liệt kê candidate legacy. `--apply` chỉ xóa các
@@ -138,8 +145,8 @@ idle có thể chạy:
 ```text
 CALIBRATION_STATUS
 QUERY_ENDSTOPS
-KTAMV_STATUS
+TOOL_VISION_STATUS
 ```
 
-Các lệnh này không chủ động home, probe hoặc chọn tool. Không dùng
-`KTAMV_CALIB_CAMERA` hoặc `KTAMV_FIND_NOZZLE_CENTER` để kiểm tra vì cả hai jog X/Y.
+Các lệnh này không chủ động home, probe hoặc chọn tool. Mở macro `TOOL_VISION`
+chỉ mở panel; các action Setup và Calibrate có thể làm máy chuyển động và nóng.
