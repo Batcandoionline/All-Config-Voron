@@ -417,28 +417,37 @@ SexBolt/SexBall station for XYZ; it is not a ToolVision command. It,
 
 ## Nozzle cleaning and prime lines
 
-### Physical cleaning geometry
+### Physical cleaning geometry and parameters
 
-| Item | Coordinate/setting |
-| --- | --- |
-| Purge bucket | X `320`, Y `-8` |
-| Brush center Y | `-8` |
-| Flick start X | `307` |
-| Scrub X range | `277..309` |
-| Clean Z / safe Z | `1.2` / `15` mm |
-| Circular scrub radius | `1.5` mm |
+`CLEAN_NOZZLE` implements a parameterized two-stage cleaning architecture:
+1. **Silicone Pad:** Circular arc scrubbing (`G2`) and slow peel zig-zag wiping (`F200`) to adhere and strip soft plastic.
+2. **Brush:** Medium-speed linear strokes (`F2000`) and high-speed flick passes (`F12000`) across dual Y tracks to clear nozzle edges and strings.
 
-`CLEAN_NOZZLE` requires a real active KTC tool. It may home XYZ if needed,
-raises Z before traveling, optionally purges, makes the configured number of
-flicks, performs clockwise/counter-clockwise circular scrubs and returns to the
-bucket at safe Z.
+| Parameter / Zone | Default value | Description |
+| --- | --- | --- |
+| `variable_bucket_x` / `y` | `320.0` / `-8.0` | Purge bucket / safe parking location |
+| `variable_safe_z` | `15.0 mm` | Safe travel Z clearance |
+| `variable_pad_start_x` / `end_x` | `130.0` / `140.0` | Silicone pad X travel range |
+| `variable_pad_y_start` / `mid` / `end` | `5.0` / `6.0` / `8.0` | Silicone pad 3-track Y coordinates |
+| `variable_pad_z` / `speed` | `0.1 mm` / `200 mm/min` | Silicone contact Z and slow scrub feedrate |
+| `variable_pad_swirl_count` / `speed` | `20` / `600 mm/min` | Number of G2 arc swirls and swirl feedrate |
+| `variable_brush_start_x` / `end_x` | `164.0` / `180.0` | Brush X travel range |
+| `variable_brush_y_med` / `y_fast` | `3.0` / `1.0` | Y tracks for medium vs high-speed brushing |
+| `variable_brush_z` / `hop_z` | `-0.8 mm` / `0.5 mm` | Bristle plunge Z and track hop clearance |
+| `variable_brush_med_speed` / `fast_speed` | `2000` / `12000 mm/min` | Medium wipe and rapid flick feedrates |
+
+`CLEAN_NOZZLE` requires a real active KTC tool. It raises Z before traveling,
+optionally purges, runs the silicone pad scrub, executes dual-speed brush passes,
+and returns to safe Z.
 
 Examples:
 
 ```gcode
 CLEAN_NOZZLE
 CLEAN_NOZZLE WIPES=8 TEMP=230
-PURGE_AND_CLEAN
+CLEAN_NOZZLE SKIP_PAD=1               ; Brush only
+CLEAN_NOZZLE SKIP_BRUSH=1             ; Silicone pad only
+CLEAN_NOZZLE PAD_Z=0.1 BRUSH_Z=-0.8   ; Runtime Z override
 PURGE_AND_CLEAN PURGE=20 PURGE_TEMP=250 TEMP=150 WIPES=6
 ```
 
