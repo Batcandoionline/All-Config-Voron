@@ -412,39 +412,33 @@ SexBolt/SexBall để đo XYZ; nó không phải lệnh ToolVision. Cả lệnh 
 
 ## Vệ sinh nozzle và prime line
 
-### Hình học và thông số hệ thống vệ sinh đầu in trên tấm PEI
+### Hình học vệ sinh thực tế
 
-`CLEAN_NOZZLE` (kèm alias `CLEAR_NOZZLE`) triển khai quy trình vệ sinh đầu in trực tiếp trên mép trước của tấm bàn in PEI:
-1. **Ép dính & Xoay tròn trên PEI (PEI Bed Rub):** Nozzle ở $Z = 0.1\text{mm}$ quét zíc-zắc chậm ($F200$) kết hợp 21 vòng xoay cung tròn $G2$ ($F600$) tại $X = 130 \dots 140, Y = 5 \dots 8$ để màng nhựa mềm bám dính chặt và bóc sạch khỏi vát đầu phun.
-2. **Miết mép & Gạt flick nhanh (Edge Flick):** Di chuyển ra mép tấm thép PEI ($Z = -0.8\text{mm}$, $X = 164 \dots 180$) quét tốc độ vừa ($F2000$ tại $Y=3$) và gạt flick tốc độ cực cao ($F12000$ tại $Y=1$) để giật đứt hoàn toàn tơ nhựa thừa.
+| Thành phần | Tọa độ/setting |
+| --- | --- |
+| Purge bucket | X `320`, Y `-8` |
+| Y tâm brush | `-8` |
+| X bắt đầu flick | `307` |
+| Vùng scrub X | `277..309` |
+| Z vệ sinh / Z an toàn | `1.2` / `15` mm |
+| Bán kính vòng scrub | `1.5` mm |
 
-| Thông số / Khu vực | Giá trị mặc định | Mô tả |
-| --- | --- | --- |
-| `variable_safe_z` | `10.0 mm` | Độ cao Z an toàn khi di chuyển |
-| `variable_travel_speed` | `12000 mm/min` | Tốc độ di chuyển XY nhanh |
-| `variable_approach_x` | `125.0` | Tọa độ X tiếp cận ban đầu |
-| `variable_rub_start_x` / `end_x` | `130.0` / `140.0` | Phạm vi quét X trên tấm PEI |
-| `variable_rub_y1` / `y2` / `y3` | `5.0` / `6.0` / `8.0` | 3 đường tọa độ Y trên tấm PEI |
-| `variable_rub_z` / `slow_speed` | `0.1 mm` / `200 mm/min` | Độ cao Z tiếp xúc PEI và tốc độ quét chậm |
-| `variable_rub_swirl_count` / `speed` | `21` / `600 mm/min` | Số vòng xoay tròn G2 và tốc độ xoay |
-| `variable_flick_start_x` / `end_x` | `164.0` / `180.0` | Phạm vi quét X miết mép bàn |
-| `variable_flick_y_med` / `y_fast` | `3.0` / `1.0` | Tọa độ Y đường gạt vừa và flick nhanh |
-| `variable_flick_z` / `hop_z` | `-0.8 mm` / `0.5 mm` | Độ sâu Z miết mép và độ nhấc Z |
-| `variable_flick_med_speed` / `fast_speed` | `2000` / `12000 mm/min` | Tốc độ miết vừa và gạt flick nhanh |
-
-`CLEAN_NOZZLE` yêu cầu có active tool thật theo KTC. Macro tự động nâng Z trước khi đi,
-thực hiện chà PEI, gạt mép 2 cấp tốc độ và trở về Z an toàn.
+`CLEAN_NOZZLE` yêu cầu có active tool thật theo KTC. Macro có thể home XYZ nếu
+cần, nâng Z trước khi đi, purge tùy chọn, flick theo số lần yêu cầu, scrub vòng
+thuận/nghịch và quay về bucket tại Z an toàn.
 
 Ví dụ:
 
 ```gcode
-CLEAN_NOZZLE                          ; Chạy chu trình chà PEI chuẩn
-CLEAR_NOZZLE                          ; Gọi qua tên alias
-CLEAN_NOZZLE TEMP=150                 ; Gia nhiệt đầu in 150 C trước khi chà
-CLEAN_NOZZLE SKIP_SWIRL=1             ; Chỉ gạt mép
-CLEAN_NOZZLE SKIP_FLICK=1             ; Chỉ chà xoay trên mặt PEI
-CLEAN_NOZZLE RUB_Z=0.1 FLICK_Z=-0.8   ; Ghi đè Z tạm thời
+CLEAN_NOZZLE
+CLEAN_NOZZLE WIPES=8 TEMP=230
+PURGE_AND_CLEAN
+PURGE_AND_CLEAN PURGE=20 PURGE_TEMP=250 TEMP=150 WIPES=6
 ```
+
+Khi `PURGE>0`, nhiệt độ purge thực tế ít nhất 200 °C và không thấp hơn nhiệt độ
+purge/clean yêu cầu. Sau đó macro dùng part fan hạ về nhiệt độ vệ sinh rồi mới
+scrub.
 
 ### Hành vi prime line
 

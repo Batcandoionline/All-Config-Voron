@@ -417,39 +417,34 @@ SexBolt/SexBall station for XYZ; it is not a ToolVision command. It,
 
 ## Nozzle cleaning and prime lines
 
-### Physical cleaning geometry and parameters
+### Physical cleaning geometry
 
-`CLEAN_NOZZLE` (with alias `CLEAR_NOZZLE`) implements a parameterized nozzle cleaning routine performed directly on the front border of the PEI build plate:
-1. **PEI Bed Rub:** Soft plastic adhesion via slow zig-zag wiping (`F200`) and multi-turn circular arc scrubbing (`G2`, 21 swirls @ `F600`) at `Z = 0.1 mm` across `X = 130..140`, `Y = 5..8`.
-2. **Edge Flick:** Medium-speed scraping (`F2000`) and high-speed flick passes (`F12000`) at the sheet edge (`Z = -0.8 mm`, `X = 164..180`, `Y = 3` and `Y = 1`) to cleanly snap off residue strings.
+| Item | Coordinate/setting |
+| --- | --- |
+| Purge bucket | X `320`, Y `-8` |
+| Brush center Y | `-8` |
+| Flick start X | `307` |
+| Scrub X range | `277..309` |
+| Clean Z / safe Z | `1.2` / `15` mm |
+| Circular scrub radius | `1.5` mm |
 
-| Parameter / Zone | Default value | Description |
-| --- | --- | --- |
-| `variable_safe_z` | `10.0 mm` | Safe travel Z clearance |
-| `variable_travel_speed` | `12000 mm/min` | Fast XY positioning speed |
-| `variable_approach_x` | `125.0` | Initial entry approach X coordinate |
-| `variable_rub_start_x` / `end_x` | `130.0` / `140.0` | PEI bed rub X travel range |
-| `variable_rub_y1` / `y2` / `y3` | `5.0` / `6.0` / `8.0` | PEI bed rub 3-track Y coordinates |
-| `variable_rub_z` / `slow_speed` | `0.1 mm` / `200 mm/min` | PEI contact Z and slow scrub feedrate |
-| `variable_rub_swirl_count` / `speed` | `21` / `600 mm/min` | Number of G2 arc swirls and swirl feedrate |
-| `variable_flick_start_x` / `end_x` | `164.0` / `180.0` | Sheet edge flick X travel range |
-| `variable_flick_y_med` / `y_fast` | `3.0` / `1.0` | Y tracks for medium vs high-speed flicking |
-| `variable_flick_z` / `hop_z` | `-0.8 mm` / `0.5 mm` | Edge plunge Z and track hop clearance |
-| `variable_flick_med_speed` / `fast_speed` | `2000` / `12000 mm/min` | Medium wipe and rapid flick feedrates |
-
-`CLEAN_NOZZLE` requires a real active KTC tool. It safely moves over the PEI border,
-performs the rub and flick routines, and lifts to safe Z.
+`CLEAN_NOZZLE` requires a real active KTC tool. It may home XYZ if needed,
+raises Z before traveling, optionally purges, makes the configured number of
+flicks, performs clockwise/counter-clockwise circular scrubs and returns to the
+bucket at safe Z.
 
 Examples:
 
 ```gcode
-CLEAN_NOZZLE                          ; Run standard PEI bed rub & edge flick
-CLEAR_NOZZLE                          ; Alias call
-CLEAN_NOZZLE TEMP=150                 ; Heat to 150 C before cleaning
-CLEAN_NOZZLE SKIP_SWIRL=1             ; Edge flick only
-CLEAN_NOZZLE SKIP_FLICK=1             ; PEI bed rub only
-CLEAN_NOZZLE RUB_Z=0.1 FLICK_Z=-0.8   ; Runtime Z override
+CLEAN_NOZZLE
+CLEAN_NOZZLE WIPES=8 TEMP=230
+PURGE_AND_CLEAN
+PURGE_AND_CLEAN PURGE=20 PURGE_TEMP=250 TEMP=150 WIPES=6
 ```
+
+For `PURGE>0`, the actual purge temperature is at least 200 °C and at least the
+requested purge/clean temperatures. The macro then cools to cleaning
+temperature with the part fan before scrubbing.
 
 ### Prime-line behavior
 
