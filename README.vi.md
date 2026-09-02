@@ -129,8 +129,9 @@ Mỗi EBB dùng cùng pin logic với prefix `EBBn` tương ứng:
 | Chip-select ADXL345 | `PB12` |
 
 Mỗi tool dùng nozzle 0.4 mm, filament 1.75 mm, gear ratio 50:10 và
-max extrude-only distance 101 mm. Hotend tối đa 290 °C. Pressure Advance vẫn bị
-comment vì đang chờ calibration riêng theo tool/vật liệu.
+max extrude-only distance 101 mm. Hotend tối đa 290 °C. Pressure Advance được
+hiệu chuẩn và quản lý động theo từng profile filament trong OrcaSlicer (theo dõi tại
+`Orca Config/`) thông qua lệnh `SET_PRESSURE_ADVANCE` khi đổi tool/nhựa.
 
 ## Sơ đồ tool
 
@@ -722,7 +723,6 @@ redact lên issue công khai.
   có nhiều vật thể/phản xạ giống nozzle.
 - kTAMV không lưu calibration, không có batch statistic, không đo Z và không tự
   lưu offset.
-- Pressure Advance chưa calibration riêng theo tool/vật liệu.
 - Hành vi cooling riêng từng tool vẫn chờ review.
 - Cảnh báo/giám sát nhiệt Cartographer bổ sung vẫn đang chờ.
 - `cleanup-voron.sh` không có chính sách “giữ N bản mới nhất” cho backup

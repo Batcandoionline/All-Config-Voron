@@ -133,7 +133,8 @@ Each EBB board uses the same logical pin layout with its own `EBBn` prefix:
 
 Every tool uses a 0.4 mm nozzle, 1.75 mm filament, 50:10 gear ratio and maximum
 extrude-only distance 101 mm. Hotend maximum temperature is 290 °C. Pressure
-Advance remains commented pending per-tool/material calibration.
+Advance is calibrated and dynamically managed per filament in OrcaSlicer profiles
+(tracked under `Orca Config/`) via `SET_PRESSURE_ADVANCE` on tool/filament change.
 
 ## Tool map
 
@@ -736,7 +737,6 @@ configuration into public issues.
   because the optical scene contained multiple/reflected nozzle-like objects.
 - kTAMV has no persistent calibration, batch statistics, Z measurement or
   automatic offset storage.
-- Pressure Advance is not yet calibrated per tool/material.
 - Per-tool cooling behavior still has a pending review task.
 - Additional Cartographer temperature warning/monitoring remains pending.
 - `cleanup-voron.sh` has no “keep newest N” policy for normal installer backups.
