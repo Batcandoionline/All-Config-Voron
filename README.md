@@ -419,41 +419,37 @@ SexBolt/SexBall station for XYZ; it is not a ToolVision command. It,
 
 ### Physical cleaning geometry and parameters
 
-`CLEAN_NOZZLE` implements a parameterized two-stage cleaning architecture:
-1. **Silicone Pad:** Circular arc scrubbing (`G2`) and slow peel zig-zag wiping (`F200`) to adhere and strip soft plastic.
-2. **Brush:** Medium-speed linear strokes (`F2000`) and high-speed flick passes (`F12000`) across dual Y tracks to clear nozzle edges and strings.
+`CLEAN_NOZZLE` (with alias `CLEAR_NOZZLE`) implements a parameterized nozzle cleaning routine performed directly on the front border of the PEI build plate:
+1. **PEI Bed Rub:** Soft plastic adhesion via slow zig-zag wiping (`F200`) and multi-turn circular arc scrubbing (`G2`, 21 swirls @ `F600`) at `Z = 0.1 mm` across `X = 130..140`, `Y = 5..8`.
+2. **Edge Flick:** Medium-speed scraping (`F2000`) and high-speed flick passes (`F12000`) at the sheet edge (`Z = -0.8 mm`, `X = 164..180`, `Y = 3` and `Y = 1`) to cleanly snap off residue strings.
 
 | Parameter / Zone | Default value | Description |
 | --- | --- | --- |
-| `variable_bucket_x` / `y` | `320.0` / `-8.0` | Purge bucket / safe parking location |
-| `variable_safe_z` | `15.0 mm` | Safe travel Z clearance |
-| `variable_pad_start_x` / `end_x` | `130.0` / `140.0` | Silicone pad X travel range |
-| `variable_pad_y_start` / `mid` / `end` | `5.0` / `6.0` / `8.0` | Silicone pad 3-track Y coordinates |
-| `variable_pad_z` / `speed` | `0.1 mm` / `200 mm/min` | Silicone contact Z and slow scrub feedrate |
-| `variable_pad_swirl_count` / `speed` | `20` / `600 mm/min` | Number of G2 arc swirls and swirl feedrate |
-| `variable_brush_start_x` / `end_x` | `164.0` / `180.0` | Brush X travel range |
-| `variable_brush_y_med` / `y_fast` | `3.0` / `1.0` | Y tracks for medium vs high-speed brushing |
-| `variable_brush_z` / `hop_z` | `-0.8 mm` / `0.5 mm` | Bristle plunge Z and track hop clearance |
-| `variable_brush_med_speed` / `fast_speed` | `2000` / `12000 mm/min` | Medium wipe and rapid flick feedrates |
+| `variable_safe_z` | `10.0 mm` | Safe travel Z clearance |
+| `variable_travel_speed` | `12000 mm/min` | Fast XY positioning speed |
+| `variable_approach_x` | `125.0` | Initial entry approach X coordinate |
+| `variable_rub_start_x` / `end_x` | `130.0` / `140.0` | PEI bed rub X travel range |
+| `variable_rub_y1` / `y2` / `y3` | `5.0` / `6.0` / `8.0` | PEI bed rub 3-track Y coordinates |
+| `variable_rub_z` / `slow_speed` | `0.1 mm` / `200 mm/min` | PEI contact Z and slow scrub feedrate |
+| `variable_rub_swirl_count` / `speed` | `21` / `600 mm/min` | Number of G2 arc swirls and swirl feedrate |
+| `variable_flick_start_x` / `end_x` | `164.0` / `180.0` | Sheet edge flick X travel range |
+| `variable_flick_y_med` / `y_fast` | `3.0` / `1.0` | Y tracks for medium vs high-speed flicking |
+| `variable_flick_z` / `hop_z` | `-0.8 mm` / `0.5 mm` | Edge plunge Z and track hop clearance |
+| `variable_flick_med_speed` / `fast_speed` | `2000` / `12000 mm/min` | Medium wipe and rapid flick feedrates |
 
-`CLEAN_NOZZLE` requires a real active KTC tool. It raises Z before traveling,
-optionally purges, runs the silicone pad scrub, executes dual-speed brush passes,
-and returns to safe Z.
+`CLEAN_NOZZLE` requires a real active KTC tool. It safely moves over the PEI border,
+performs the rub and flick routines, and lifts to safe Z.
 
 Examples:
 
 ```gcode
-CLEAN_NOZZLE
-CLEAN_NOZZLE WIPES=8 TEMP=230
-CLEAN_NOZZLE SKIP_PAD=1               ; Brush only
-CLEAN_NOZZLE SKIP_BRUSH=1             ; Silicone pad only
-CLEAN_NOZZLE PAD_Z=0.1 BRUSH_Z=-0.8   ; Runtime Z override
-PURGE_AND_CLEAN PURGE=20 PURGE_TEMP=250 TEMP=150 WIPES=6
+CLEAN_NOZZLE                          ; Run standard PEI bed rub & edge flick
+CLEAR_NOZZLE                          ; Alias call
+CLEAN_NOZZLE TEMP=150                 ; Heat to 150 C before cleaning
+CLEAN_NOZZLE SKIP_SWIRL=1             ; Edge flick only
+CLEAN_NOZZLE SKIP_FLICK=1             ; PEI bed rub only
+CLEAN_NOZZLE RUB_Z=0.1 FLICK_Z=-0.8   ; Runtime Z override
 ```
-
-For `PURGE>0`, the actual purge temperature is at least 200 °C and at least the
-requested purge/clean temperatures. The macro then cools to cleaning
-temperature with the part fan before scrubbing.
 
 ### Prime-line behavior
 

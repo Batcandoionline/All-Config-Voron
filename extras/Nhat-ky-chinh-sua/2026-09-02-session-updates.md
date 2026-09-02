@@ -48,51 +48,50 @@ Hạng mục Pressure Advance theo từng loại nhựa đã được đóng ho�
 
 ---
 
-## 2. Nâng cấp hệ thống hóa macro CLEAN_NOZZLE 2 giai đoạn (Silicone Pad + Brush 2 tốc độ)
+## 2. Nâng cấp hệ thống hóa macro CLEAN_NOZZLE theo phương pháp chà trực tiếp trên tấm PEI (PEI Bed Rub & Edge Wipe)
 
 ### Mục tiêu
-Chuyển đổi và hệ thống hóa macro làm sạch đầu in tham khảo từ cộng đồng StealthChanger thành cấu trúc macro tham số hóa toàn diện (`variable_...` & runtime parameters), hỗ trợ tùy biến linh hoạt tọa độ $(X, Y, Z)$, bước quét zíc-zắc, xoay tròn cung $G2$ trên silicon và chải chổi 2 cấp tốc độ ($F2000$ & $F12000$).
+Chuyển đổi hoàn toàn cơ chế làm sạch đầu in sang phương pháp chà miết trực tiếp trên bề mặt mép tấm PEI (PEI Bed Rubbing & Edge Flicking), loại bỏ sự phụ thuộc vào khay/chổi phụ bên ngoài mép bàn in. Cung cấp bảng biến cấu hình tham số hóa đầy đủ và alias `CLEAR_NOZZLE`.
 
 ### File đã sửa đổi
-- `Voron 5 Tool/config/Printer-Setup/nozzle-clean.cfg` — Tái cấu trúc macro `CLEAN_NOZZLE`, `_CLEAN_NOZZLE_PARK`, `PURGE_AND_CLEAN`.
-- `Voron 5 Tool/README.md` — Cập nhật bảng thông số và ví dụ gọi macro vệ sinh.
-- `Voron 5 Tool/README.vi.md` — Cập nhật bản tiếng Việt cho tài liệu README.
+- `Voron 5 Tool/config/Printer-Setup/nozzle-clean.cfg` — Tái cấu trúc macro `CLEAN_NOZZLE`, bổ sung `CLEAR_NOZZLE`, `_CLEAN_NOZZLE_PARK`, `PURGE_AND_CLEAN`.
+- `Voron 5 Tool/README.md` — Cập nhật tài liệu kỹ thuật và bảng thông số PEI Bed Rub.
+- `Voron 5 Tool/README.vi.md` — Cập nhật bản tiếng Việt cho README.
 
 ### Sao lưu
-- [nozzle-clean.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-parameterized-nozzle-clean-20260902-200100/nozzle-clean.cfg)
+- [nozzle-clean.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-pei-bed-rub-clean-20260902-200600/nozzle-clean.cfg)
 
 ### Chi tiết thay đổi
 
-1. **Hệ thống hóa bảng biến cấu hình (`[gcode_macro CLEAN_NOZZLE]`):**
-   - **Vùng an toàn & Khay Purge:** `variable_safe_z: 15.0`, `variable_travel_speed: 12000`, `variable_bucket_x: 320.0`, `variable_bucket_y: -8.0`.
-   - **Vùng 1 - Miếng đệm Silicon:**
-     - Tọa độ: `variable_pad_start_x: 130.0`, `variable_pad_end_x: 140.0`, các đường $Y$: `5.0, 6.0, 8.0`.
-     - Độ cao tiếp xúc: `variable_pad_z: 0.1`.
-     - Xoay tròn cung `G2`: `variable_pad_swirl_count: 20`, $I = 0.5, J = 0.5$, tốc độ $F600$.
-     - Quét zíc-zắc chậm: tốc độ $F200$ bám dính lột mảng nhựa.
-   - **Vùng 2 - Chổi kim loại/lông cước (2 cấp tốc độ):**
-     - Tọa độ: `variable_brush_start_x: 164.0`, `variable_brush_end_x: 180.0`.
-     - 2 đường $Y$: `variable_brush_y_med: 3.0` và `variable_brush_y_fast: 1.0`.
-     - Độ sâu ngập chổi: `variable_brush_z: -0.8`, độ nhấc chuyển đường: `variable_brush_hop_z: 0.5`.
-     - 2 cấp tốc độ: $F2000$ (quét sạch rãnh nozzle) và $F12000$ (flick nhanh gạt tơ nhựa).
-2. **Hỗ trợ tham số ghi đè khi gọi (Runtime Overrides):**
-   - `CLEAN_NOZZLE TEMP=... WIPES=... PURGE=... PURGE_TEMP=...`
-   - `CLEAN_NOZZLE SKIP_PAD=1` / `CLEAN_NOZZLE SKIP_BRUSH=1`
-   - `CLEAN_NOZZLE PAD_Z=... BRUSH_Z=...`
-3. **An toàn phần cứng StealthChanger:**
-   - Kiểm tra chặt chẽ `printer.toolchanger.tool_number >= 0` trước khi di chuyển.
-   - Luôn nâng $Z \ge 15\text{mm}$ khi di chuyển tiếp cận trạm.
-   - Thiết kế nhấc Z nhẹ khi chuyển vùng để tránh tì đè lực ngang quá mức lên chốt khóa shuttle.
+1. **Nguyên lý hoạt động 2 giai đoạn trên tấm PEI:**
+   - **Giai đoạn 1 — Ép dính & Xoay tròn trên mặt PEI ($Z = 0.1\text{mm}$):**
+     - Tiếp cận `X=125, Y=5` $\rightarrow$ hạ xuống tiếp xúc $Z = 0.1\text{mm}$.
+     - 3 vòng xoay cung tròn $G2$ ($I=0.5, J=0.5$) ở tốc độ $F600$.
+     - Quét zíc-zắc chậm $F200$ qua các đường $Y=5 \rightarrow 6 \rightarrow 8$ ($X=130 \dots 140$) để màng nhựa mềm bám dính chắc vào lớp phủ nhám của PEI.
+     - Xoay liên tục 21 vòng cung tròn $G2$ ở $F600$ để cuộn và bóc sạch nhựa bẩn quanh vát đầu phun.
+   - **Giai đoạn 2 — Miết mép tấm PEI & Gạt flick tốc độ cao ($Z = -0.8\text{mm}$):**
+     - Nhấc lên $Z = 0.2\text{mm}$, di chuyển sang $X=180, Y=3$ ($F12000$).
+     - Hạ xuống mép tấm thép PEI tại $Z = -0.8\text{mm}$.
+     - Quét qua lại 7 lượt giữa $X164 \leftrightarrow X180$ ở tốc độ vừa $F2000$.
+     - Nhấc Z chuyển sang đường $Y=1$, hạ lại $Z=-0.8\text{mm}$.
+     - Gạt flick nhanh 7 lượt ở tốc độ cực cao $F12000$ để giật đứt hoàn toàn tơ nhựa thừa.
+2. **Hệ thống biến tham số hóa tập trung (`[gcode_macro CLEAN_NOZZLE]`):**
+   - `variable_safe_z: 10.0`, `variable_travel_speed: 12000`
+   - Vùng PEI Rub: `variable_approach_x: 125.0`, `variable_rub_start_x: 130.0`, `variable_rub_end_x: 140.0`, `variable_rub_y1..3: 5.0, 6.0, 8.0`, `variable_rub_z: 0.1`, `variable_rub_swirl_count: 21`.
+   - Vùng Edge Flick: `variable_flick_start_x: 164.0`, `variable_flick_end_x: 180.0`, `variable_flick_y_med: 3.0`, `variable_flick_y_fast: 1.0`, `variable_flick_z: -0.8`, `variable_flick_hop_z: 0.5`.
+3. **An toàn phần cứng & Khả năng tương thích:**
+   - Kiểm tra `printer.toolchanger.tool_number >= 0` trước mọi chuyển động.
+   - Giữ nguyên tích hợp trong `PRINT_START`, `_CLEAN_NOZZLE_PARK`, `PURGE_AND_CLEAN`.
+   - Cung cấp alias `CLEAR_NOZZLE` để gọi linh hoạt.
 
 ### Kiểm tra
-- **Kiểm tra cú pháp Klipper:** Đạt, cú pháp Jinja2 và Klipper Macro chuẩn xác.
-- **Tính tương thích:** Hoàn toàn tương thích với `_CLEAN_NOZZLE_PARK`, `PURGE_AND_CLEAN`, `PRINT_START` và các hiệu ứng LED trạng thái.
-- **Giới hạn chuyển động:** Toàn bộ tọa độ mặc định nằm trong hành trình máy in ($X: 0 \dots 348$, $Y: -10 \dots 336$, $Z: -5 \dots 347$).
+- **Kiểm tra cú pháp Klipper:** Đạt, Jinja2 logic và arc command syntax chuẩn xác.
+- **Tính toán hành trình:** Toàn bộ chuyển động ($X: 125 \dots 180$, $Y: 1 \dots 8$, $Z: -0.8 \dots 10.0$) nằm hoàn toàn trong phạm vi an toàn của bàn in và tấm PEI.
 
 ### Kết quả
-Hệ thống macro vệ sinh đầu in mới đã được nạp hoàn chỉnh, cho phép người vận hành dễ dàng căn chỉnh tọa độ trạm $X/Y/Z$ bất kỳ lúc nào ngay trong file cấu hình.
+Hệ thống vệ sinh đầu phun bằng phương pháp chà trực tiếp trên tấm PEI đã được triển khai hoàn chỉnh.
 
 ### Vấn đề còn lại
 - Người vận hành chạy `FIRMWARE_RESTART` trên Mainsail.
-- Khuyến nghị chạy thử nghiệm kiểm tra quỹ đạo không chạm ở $Z$ cao trước khi hạ $Z$ xuống mức tiếp xúc làm sạch thực tế.
+- Chạy thử nghiệm `CLEAN_NOZZLE` / `CLEAR_NOZZLE` trên máy in để kiểm chứng chất lượng làm sạch đầu phun.
 
