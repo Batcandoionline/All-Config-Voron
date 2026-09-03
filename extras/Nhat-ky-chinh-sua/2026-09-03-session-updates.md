@@ -32,3 +32,43 @@ Cập nhật các tham số giới hạn chuyển động trong section `[printe
 ### Vấn đề còn lại
 - Chạy `FIRMWARE_RESTART` trên Mainsail để nạp cấu hình mới.
 - Theo dõi quá trình dock/undock tool và kiểm tra chất lượng góc in xem có bị bo tròn do smoothing không.
+
+---
+
+## 2. Cập nhật thông số Input Shaper cho đầu in T0 từ kết quả đo ShakeTune
+
+### Mục tiêu
+Cập nhật thông số bộ lọc Input Shaper cho đầu in T0 (`T0.cfg`) và cấu hình fallback mặc định của hệ thống (`input-shaper.cfg`) dựa trên kết quả đo đạc thực tế mới nhất qua Klippain Shake&Tune vào ngày 2026-09-03.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/toolchanger/tools/T0.cfg` — Cập nhật `params_input_shaper_*` của T0.
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg` — Cập nhật `[input_shaper]` fallback mặc định.
+
+### Sao lưu
+- [T0.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-t0-input-shaper-calibrate-20260903-073600/T0.cfg)
+- [input-shaper.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-t0-input-shaper-calibrate-20260903-073600/input-shaper.cfg)
+
+### Chi tiết thay đổi
+- **Trục X (T0 & Fallback):**
+  - Loại shaper (`shaper_type_x`): `3hump_ei` → `mzv`
+  - Tần số (`shaper_freq_x`): `98.6` → `46.8` Hz (khớp đỉnh cộng hưởng chính $\omega_0 = 46.6$ Hz, rung động chỉ 2.2%, smoothing 0.093)
+  - Hệ số cản (`damping_ratio_x`): `0.081` → `0.113`
+- **Trục Y (T0 & Fallback):**
+  - Loại shaper (`shaper_type_y`): `mzv` (giữ nguyên)
+  - Tần số (`shaper_freq_y`): `35.0` → `30.6` Hz (khớp đỉnh cộng hưởng chính $\omega_0 = 29.5$ Hz, triệt rung 99.9%, còn 0.1%)
+  - Hệ số cản (`damping_ratio_y`): `0.076` → `0.091`
+
+### Lý do
+1. Kết quả đo trực tiếp trên cảm biến ADXL345 của toolhead T0 (EBB0:PB12) qua ShakeTune ngày 2026-09-03 cung cấp dữ liệu chính xác về trạng thái cơ khí hiện tại.
+2. Việc chuyển trục X từ `3hump_ei` sang `mzv` giúp giảm mạnh hiện tượng làm mượt góc (smoothing), duy trì độ sắc nét của các chi tiết in.
+3. Điều chỉnh tần số trục Y về đúng $30.6\text{ Hz}$ giúp triệt tiêu rung động triệt để, ngăn chặn hiện tượng bóng mờ (ghosting/ringing) trên bề mặt sản phẩm in.
+
+### Kiểm tra
+- Cú pháp Klipper: Đạt chuẩn.
+- Cấu trúc file cấu hình và các macro KTC-Easy: Nguyên vẹn.
+
+### Kết quả
+Đã đồng bộ thông số hiệu chuẩn mới vào kho lưu trữ Git và sẵn sàng cho việc in thử nghiệm.
+
+### Vấn đề còn lại
+- Chạy `FIRMWARE_RESTART` trên Mainsail để nạp thông số Input Shaper mới.
