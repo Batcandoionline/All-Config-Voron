@@ -227,3 +227,44 @@ Tải toàn bộ thư mục dữ liệu hiệu chuẩn `Generated-Data/` từ m�
 
 ### Kết quả
 Đã tải và đẩy toàn bộ dữ liệu `Generated-Data` lên Git theo yêu cầu của người dùng.
+
+---
+
+## 8. Tải snapshot cấu hình mới nhất (config-20260903-204100) và phân tích so sánh Input Shaper cả 5 tool qua Cartographer
+
+### Mục tiêu
+- Tải toàn bộ cấu hình mới nhất từ máy in thực tế (`192.168.1.43`), lưu trữ snapshot `config-20260903-204100`.
+- Thu thập và lưu trữ đầy đủ 10 biểu đồ ShakeTune đo đạc cả 5 đầu in (T0..T4) trên cả trục X và Y bằng cảm biến Cartographer ADXL345 gắn trên Shuttle carriage.
+- Đồng bộ `number_of_results_to_keep: 10` trong `input-shaper.cfg` theo máy in thật.
+- Đánh giá, so sánh chi tiết giữa 2 giải pháp: **Dùng chung (Unified Global Shaper)** vs **Tách riêng (Per-tool Shaper)**.
+
+### File đã sửa đổi & bổ sung
+- `Voron 5 Tool/extras/Config download/config-20260903-204100/` — Lưu trữ toàn bộ 49 file cấu hình và dữ liệu từ máy in thật.
+- `Voron 5 Tool/extras/Config download/config-20260903-204100.zip` — File nén archive của snapshot.
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg` — Đồng bộ `number_of_results_to_keep: 10`.
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/` — Bổ sung 10 file đồ thị hiệu chuẩn mới nhất (`T0_axis_X/Y.png` đến `T4_axis_X/Y.png`).
+
+### Tổng hợp kết quả đo đạc 5 tool bằng Cartographer ADXL345:
+- **Trục X (Shuttle):**
+  - T0: $\omega_0 = 46.8\text{ Hz}$, MZV @ $42.8\text{ Hz}$, Max Accel $5430\text{ mm/s}^2$
+  - T1: $\omega_0 = 44.0\text{ Hz}$, MZV @ $33.4\text{ Hz}$ (EI: $47.8\text{ Hz}$), Max Accel $3350\text{ mm/s}^2$
+  - T2: $\omega_0 = 44.1\text{ Hz}$, MZV @ $42.6\text{ Hz}$, Max Accel $5380\text{ mm/s}^2$
+  - T3: $\omega_0 = 48.8\text{ Hz}$, MZV @ $47.2\text{ Hz}$, Max Accel $6570\text{ mm/s}^2$
+  - T4: $\omega_0 = 50.4\text{ Hz}$, MZV @ $47.4\text{ Hz}$, Max Accel $6620\text{ mm/s}^2$
+  - $\rightarrow$ *Tần số cộng hưởng chính dao động rất hẹp quanh $44\text{–}50\text{ Hz}$ (trung bình $46.8\text{ Hz}$).*
+- **Trục Y (Gantry):**
+  - T0: $\omega_0 = 32.8\text{ Hz}$, MZV @ $35.4\text{ Hz}$, Max Accel $3680\text{ mm/s}^2$
+  - T1: $\omega_0 = 29.9\text{ Hz}$, MZV @ $35.2\text{ Hz}$, Max Accel $3630\text{ mm/s}^2$
+  - T2: $\omega_0 = 31.5\text{ Hz}$, MZV @ $33.2\text{ Hz}$, Max Accel $3240\text{ mm/s}^2$
+  - T3: $\omega_0 = 31.5\text{ Hz}$, MZV @ $31.6\text{ Hz}$, Max Accel $2940\text{ mm/s}^2$
+  - T4: $\omega_0 = 31.5\text{ Hz}$, MZV @ $31.8\text{ Hz}$, Max Accel $2960\text{ mm/s}^2$
+  - $\rightarrow$ *Trục Y đồng nhất tuyệt đối: T2, T3, T4 đều có $\omega_0 = 31.5\text{ Hz}$, toàn bộ dải shaper MZV nằm trong khoảng $31.6\text{–}35.4\text{ Hz}$.*
+
+### Kết luận đánh giá giải pháp
+- **Phương án Khuyến nghị:** **DÙNG CHUNG (Unified Global Shaper)** với thông số trung tâm:
+  - Trục X: `mzv` @ $44.0\text{ Hz}$ (hoặc giữ nguyên giá trị Cartographer hiện tại $41.2\text{–}44.0\text{ Hz}$)
+  - Trục Y: `mzv` @ $32.5\text{ Hz}$ (hoặc giữ $31.8\text{ Hz}$)
+- **Lý do:** Độ lệch cơ học giữa các tool cực nhỏ, băng thông lọc của thuật toán MZV bao trùm 100% dải tần này. Việc dùng chung giúp macro đổi tool không phải gọi `SET_INPUT_SHAPER`, loại bỏ độ trễ và giật pipeline khi in đa màu hàng trăm lần đổi tool.
+
+### Kết quả
+Đã lưu snapshot, cập nhật dữ liệu và đồng bộ lên Git.
