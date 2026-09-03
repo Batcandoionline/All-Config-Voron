@@ -72,3 +72,39 @@ Cập nhật thông số bộ lọc Input Shaper cho đầu in T0 (`T0.cfg`) và
 
 ### Vấn đề còn lại
 - Chạy `FIRMWARE_RESTART` trên Mainsail để nạp thông số Input Shaper mới.
+
+---
+
+## 3. Tinh chỉnh thông số Input Shaper T0 theo lần chạy ShakeTune thứ hai
+
+### Mục tiêu
+Cập nhật thông số Input Shaper cho T0 và fallback system sau lần đo kiểm chứng thứ hai (07:38/07:40 ngày 2026-09-03) để đạt độ chính xác tối đa.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/toolchanger/tools/T0.cfg` — Tinh chỉnh tham số T0.
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg` — Tinh chỉnh fallback system.
+
+### Sao lưu
+- [T0.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-t0-input-shaper-fine-tune-20260903-074600/T0.cfg)
+- [input-shaper.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-t0-input-shaper-fine-tune-20260903-074600/input-shaper.cfg)
+
+### Chi tiết thay đổi
+- **Trục X:**
+  - `shaper_type_x`: `mzv`
+  - `shaper_freq_x`: `46.8` → `47.2` Hz (đỉnh chính $\omega_0 = 48.1$ Hz, rung động 2.6%, smoothing 0.091, Max Accel 6600 mm/s²)
+  - `damping_ratio_x`: `0.113` → `0.121`
+- **Trục Y:**
+  - `shaper_type_y`: `mzv`
+  - `shaper_freq_y`: `30.6` → `31.0` Hz (đỉnh chính $\omega_0 = 31.0$ Hz, rung động 0.1%, smoothing 0.212, Max Accel 2830 mm/s²)
+  - `damping_ratio_y`: `0.091` (giữ nguyên)
+
+### Lý do
+Lần chạy thứ hai xác nhận tính ổn định và lặp lại của phép đo:
+- Trục X dao động nhẹ từ $46.8$ lên $47.2\text{ Hz}$, hệ số cản $0.121$.
+- Trục Y nhích từ $30.6$ lên $31.0\text{ Hz}$, độ dập rung triệt để $0.1\%$.
+
+### Kết quả
+Đã áp dụng thông số tinh chỉnh mới nhất vào cấu hình và đồng bộ lên Git.
+
+### Vấn đề còn lại
+- Chạy `FIRMWARE_RESTART` trên Mainsail.
