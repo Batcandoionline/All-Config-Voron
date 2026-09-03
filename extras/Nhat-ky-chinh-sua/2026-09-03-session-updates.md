@@ -108,3 +108,36 @@ Lần chạy thứ hai xác nhận tính ổn định và lặp lại của phé
 
 ### Vấn đề còn lại
 - Chạy `FIRMWARE_RESTART` trên Mainsail.
+
+---
+
+## 4. Cập nhật thông số Input Shaper cho đầu in T1 từ kết quả đo ShakeTune
+
+### Mục tiêu
+Cập nhật thông số bộ lọc Input Shaper cho đầu in T1 (`T1.cfg`) dựa trên kết quả đo đạc thực tế qua Klippain Shake&Tune vào ngày 2026-09-03 (07:50/07:52).
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/toolchanger/tools/T1.cfg` — Cập nhật `params_input_shaper_*` của T1.
+
+### Sao lưu
+- [T1.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-t1-input-shaper-calibrate-20260903-075800/T1.cfg)
+
+### Chi tiết thay đổi
+- **Trục X:**
+  - Loại shaper (`params_input_shaper_type_x`): `mzv` (giữ nguyên)
+  - Tần số (`params_input_shaper_freq_x`): `54.2` → `45.2` Hz (khớp đỉnh cộng hưởng chính $\omega_0 = 48.8$ Hz, rung động 4.7%, smoothing 0.097, Max Accel 6180 mm/s²)
+  - Hệ số cản (`params_input_shaper_damping_ratio_x`): `0.057` → `0.182`
+- **Trục Y:**
+  - Loại shaper (`params_input_shaper_type_y`): `mzv` (giữ nguyên)
+  - Tần số (`params_input_shaper_freq_y`): `35.4` → `30.6` Hz (khớp đỉnh cộng hưởng chính $\omega_0 = 29.9$ Hz, triệt rung 99.8%, còn 0.2%, Max Accel 2740 mm/s²)
+  - Hệ số cản (`params_input_shaper_damping_ratio_y`): `0.09` → `0.072`
+
+### Lý do
+1. Dữ liệu đo đạc thực tế trên cảm biến ADXL345 của T1 qua ShakeTune phản ánh đúng đặc tính rung động của toolhead T1 khi được gắp vào carriage.
+2. Tần số trục Y $30.6\text{ Hz}$ hoàn toàn đồng bộ với dải cộng hưởng chung của trục Y ($30.6 \dots 31.0\text{ Hz}$), đảm bảo triệt rung tuyệt đối cho cả T0 và T1.
+
+### Kết quả
+Đã áp dụng các thông số mới vào cấu hình T1 và đồng bộ lên Git.
+
+### Vấn đề còn lại
+- Chạy `FIRMWARE_RESTART` trên Mainsail.
