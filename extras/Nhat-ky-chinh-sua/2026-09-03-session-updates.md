@@ -323,3 +323,23 @@ Tải toàn bộ thư mục dữ liệu hiệu chuẩn `Generated-Data/` từ m�
 ### Kết quả
 Tất cả tài liệu kỹ thuật song ngữ (Anh - Việt) và các file cấu hình Klipper đã hoàn toàn nhất quán 100% với thực tế máy in đang vận hành.
 
+---
+
+## 11. Loại bỏ các file đồ thị Input Shaper cũ lỗi thời khỏi Git
+
+### Mục tiêu
+Loại bỏ 6 file đồ thị hiệu chuẩn tạm thời và file cache đo buổi sáng khỏi kho Git để chỉ giữ lại 10 file đồ thị chuẩn đo đạc cả 5 đầu in (T0..T4) bằng Cartographer ADXL345.
+
+### File đã xóa khỏi Git
+- `config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260903_075013_axis_Y.png`
+- `config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260903_080142_axis_X.png`
+- `config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260903_080142_axis_Y.png`
+- `config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260903_080916_axis_X.png`
+- `config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260903_080916_axis_Y.png`
+- `config/Generated-Data/ShakeTune/input_shaper/snt_tmp-f21d7e22.stdata`
+- Các bản sao tương ứng trong snapshot `extras/Config download/config-20260903-080600/`.
+
+### Kết quả
+Thư mục `config/Generated-Data/ShakeTune/input_shaper/` trên Git chỉ còn giữ lại đúng 10 file chuẩn: `T0_axis_X.png` đến `T4_axis_Y.png`.
+
+
