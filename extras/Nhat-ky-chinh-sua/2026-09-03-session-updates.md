@@ -204,3 +204,26 @@ Tải toàn bộ snapshot cấu hình đang vận hành từ máy in thật `192
 
 ### Vấn đề còn lại
 - Chạy `FIRMWARE_RESTART` trên Mainsail.
+
+---
+
+## 7. Bổ sung thư mục Generated-Data (ShakeTune kết quả hiệu chuẩn) vào Git
+
+### Mục tiêu
+Tải toàn bộ thư mục dữ liệu hiệu chuẩn `Generated-Data/` từ máy in thực tế, lưu vào snapshot tải về `extras/Config download/config-20260903-080600/`, cấu hình `config/Generated-Data/` và cập nhật lưu trữ lên GitHub.
+
+### File đã sửa đổi & bổ sung
+- `Voron 5 Tool/extras/Config download/config-20260903-080600/config/Generated-Data/ShakeTune/input_shaper/` — Lưu các biểu đồ phân tích tần số và spectrogram đo đạc hôm nay.
+- `Voron 5 Tool/extras/Config download/config-20260903-080600.zip` — Cập nhật bản nén ZIP chứa đầy đủ `Generated-Data`.
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/` — Đồng bộ dữ liệu hiệu chuẩn vào kho cấu hình.
+
+### Chi tiết các file kết quả đo
+- `inputshaper_20260903_075013_axis_Y.png` (T1 Y axis)
+- `inputshaper_20260903_080142_axis_X.png`
+- `inputshaper_20260903_080142_axis_Y.png`
+- `inputshaper_20260903_080916_axis_X.png` (Cartographer Shuttle X axis: MZV 41.2Hz)
+- `inputshaper_20260903_080916_axis_Y.png` (Cartographer Shuttle Y axis: MZV 31.8Hz)
+- `snt_tmp-f21d7e22.stdata`
+
+### Kết quả
+Đã tải và đẩy toàn bộ dữ liệu `Generated-Data` lên Git theo yêu cầu của người dùng.
