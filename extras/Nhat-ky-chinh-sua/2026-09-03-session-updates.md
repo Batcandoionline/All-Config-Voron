@@ -268,3 +268,25 @@ Tải toàn bộ thư mục dữ liệu hiệu chuẩn `Generated-Data/` từ m�
 
 ### Kết quả
 Đã lưu snapshot, cập nhật dữ liệu và đồng bộ lên Git.
+
+---
+
+## 9. Triển khai cấu hình Input Shaper dùng chung và đề xuất thiết lập Vận tốc/Gia tốc
+
+### Mục tiêu
+- Áp dụng bộ thông số Input Shaper dùng chung tối ưu cho toàn bộ hệ máy 5 tool dựa trên số liệu đo đạc thực tế từ Cartographer ADXL345 trên shuttle (X: MZV 43.6Hz, Y: MZV 33.4Hz).
+- Đưa ra đề xuất chi tiết về Vận tốc (Speed) và Gia tốc (Acceleration) tối ưu cho Slicer và Klipper.
+- Đẩy lên Git để sẵn sàng đồng bộ về máy in thật.
+
+### Chi tiết thay đổi
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg`:
+  - `shaper_type_x: mzv`, `shaper_freq_x: 43.6`, `damping_ratio_x: 0.124`
+  - `shaper_type_y: mzv`, `shaper_freq_y: 33.4`, `damping_ratio_y: 0.080`
+- `Voron 5 Tool/config/toolchanger/tools/T0.cfg` – `T4.cfg`:
+  - Cập nhật ghi chú thông số dùng chung thống nhất (43.6 / 33.4 Hz), giữ comment để KTC-Easy áp dụng cấu hình toàn cục `[input_shaper]`.
+
+### Sao lưu
+- Thư mục sao lưu: `Voron 5 Tool/extras/backups/pre-unified-shaper-deployment-20260903-205500/`.
+
+### Kết quả
+- Đã kiểm tra diff hoàn toàn chính xác và commit lên Git.
