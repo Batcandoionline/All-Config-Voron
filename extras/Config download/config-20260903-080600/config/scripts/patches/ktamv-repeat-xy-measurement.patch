@@ -1,0 +1,222 @@
+diff --git a/extension/ktamv.py b/extension/ktamv.py
+index 14ae4e4..055ed3c 100644
+--- a/extension/ktamv.py
++++ b/extension/ktamv.py
+@@ -1,4 +1,5 @@
+ from math import sqrt
++from statistics import mean
+ from . import ktamv_utl as utl
+ from .ktamv_utl import NozzleNotFoundException
+ import logging
+@@ -35,6 +36,17 @@ class ktamv:
+         self.mm_per_pixels = []  # List of mm per pixel for each calibration point
+         self.cp = None  # Center position used for offset calculations
+         self.last_calculated_offset = [0, 0]
++        self.last_offset_samples = []
++        self.last_offset_average = None
++        self.last_offset_spread = None
++        self.last_measured_tool_number = None
++        self.measurement_z = config.getfloat("measurement_z", 40.0, minval=0.0)
++        self.measurement_samples = config.getint(
++            "measurement_samples", 3, minval=1, maxval=10
++        )
++        self.measurement_max_spread = config.getfloat(
++            "measurement_max_spread", 0.12, minval=0.0
++        )
+         
+         # Load used objects.
+         self.config = config
+@@ -63,6 +75,11 @@ class ktamv:
+         self.gcode.register_command(
+             "KTAMV_GET_OFFSET", self.cmd_GET_OFFSET, desc=self.cmd_GET_OFFSET_help
+         )
++        self.gcode.register_command(
++            "KTAMV_MEASURE_TOOL_XY",
++            self.cmd_MEASURE_TOOL_XY,
++            desc=self.cmd_MEASURE_TOOL_XY_help,
++        )
+         self.gcode.register_command(
+             "KTAMV_SIMPLE_NOZZLE_POSITION",
+             self.cmd_SIMPLE_NOZZLE_POSITION,
+@@ -164,6 +181,109 @@ class ktamv:
+             % (self.last_calculated_offset[0], self.last_calculated_offset[1])
+         )
+ 
++    cmd_MEASURE_TOOL_XY_help = (
++        "Center the active tool repeatedly and report the mean XY residual"
++    )
++
++    def cmd_MEASURE_TOOL_XY(self, gcmd):
++        if not self.is_calibrated:
++            raise self.gcode.error("Camera is not calibrated, aborting")
++        if self.cp is None:
++            raise self.gcode.error(
++                "No center position set; center T0 and run KTAMV_SET_ORIGIN first"
++            )
++
++        samples = gcmd.get_int(
++            "SAMPLES", self.measurement_samples, minval=1, maxval=10
++        )
++        safe_z = gcmd.get_float("Z", self.measurement_z)
++        max_spread = gcmd.get_float(
++            "MAX_SPREAD", self.measurement_max_spread, minval=0.0
++        )
++
++        self.pm.ensureHomed()
++        toolchanger = self.printer.lookup_object("toolchanger", None)
++        tool_number = None
++        if toolchanger is not None:
++            tool_status = toolchanger.get_status(self.reactor.monotonic())
++            tool_number = tool_status.get("tool_number")
++            if tool_status.get("status") != "ready":
++                raise self.gcode.error("Toolchanger is not ready")
++            if tool_number is None or int(tool_number) < 0:
++                raise self.gcode.error("No active tool is selected")
++            if (
++                tool_status.get("detected_tool_number") is not None
++                and int(tool_status["detected_tool_number"]) != int(tool_number)
++            ):
++                raise self.gcode.error(
++                    "Detected tool does not match the active tool"
++                )
++
++        self.last_offset_samples = []
++        self.last_offset_average = None
++        self.last_offset_spread = None
++        self.last_measured_tool_number = tool_number
++
++        current = self.pm.get_gcode_position()
++        self.pm.moveAbsoluteToArray(
++            [current[0], current[1], safe_z], self.speed
++        )
++
++        for sample_index in range(samples):
++            # Returning to the same G-code origin makes every sample an
++            # independent correction against the offsets already loaded by KTC.
++            self.pm.moveAbsoluteToArray([self.cp[0], self.cp[1], safe_z], self.speed)
++            self.last_nozzle_center_successful = False
++            self._calibrate_nozzle(gcmd)
++            if not self.last_nozzle_center_successful:
++                raise self.gcode.error(
++                    "Nozzle centering failed during sample %d" % (sample_index + 1)
++                )
++
++            position = self.pm.get_raw_position()
++            offset = [
++                round(float(position[0]) - self.cp[0], 3),
++                round(float(position[1]) - self.cp[1], 3),
++            ]
++            self.last_offset_samples.append(offset)
++            gcmd.respond_info(
++                "kTAMV XY sample %d/%d: X:%+.3f Y:%+.3f"
++                % (sample_index + 1, samples, offset[0], offset[1])
++            )
++
++        x_values = [sample[0] for sample in self.last_offset_samples]
++        y_values = [sample[1] for sample in self.last_offset_samples]
++        self.last_offset_average = [
++            round(mean(x_values), 3),
++            round(mean(y_values), 3),
++        ]
++        self.last_offset_spread = [
++            round(max(x_values) - min(x_values), 3),
++            round(max(y_values) - min(y_values), 3),
++        ]
++
++        gcmd.respond_info(
++            "kTAMV XY result: tool=%s samples=%d mean_x=%+.3f mean_y=%+.3f "
++            "spread_x=%.3f spread_y=%.3f"
++            % (
++                str(tool_number),
++                samples,
++                self.last_offset_average[0],
++                self.last_offset_average[1],
++                self.last_offset_spread[0],
++                self.last_offset_spread[1],
++            )
++        )
++
++        if (
++            self.last_offset_spread[0] > max_spread
++            or self.last_offset_spread[1] > max_spread
++        ):
++            raise self.gcode.error(
++                "kTAMV XY spread exceeds %.3f mm; do not apply this result"
++                % max_spread
++            )
++
+     cmd_FIND_NOZZLE_CENTER_help = ("Finds the center of the nozzle and moves" 
+         + " it to the center of the camera, offset can be set from here")
+ 
+@@ -595,6 +715,10 @@ class ktamv:
+     def _get_average_mpp_from_lists(self, gcmd):
+         logging.debug("*** calling ktamv._get_average_mpp_from_lists")
+         try:
++            initial_count = len(self.mm_per_pixels)
++            # The final center reading repeats an endpoint; count only the
++            # independent movement points for the 75% minimum.
++            minimum_count = max(1, initial_count - 1) * 0.75
+             (
+                 mpp,
+                 new_mm_per_pixels,
+@@ -610,7 +734,7 @@ class ktamv:
+             # Ensure we got a result and that we have at least 75% of the calibration points
+             if mpp is None:
+                 raise self.gcode.error("Failed to get average mm per pixel")
+-            elif len(new_mm_per_pixels) < (len(self.mm_per_pixels) * 0.75):
++            elif len(new_mm_per_pixels) < minimum_count:
+                 raise self.gcode.error(
+                     "More than 25% of the calibration points failed, aborting"
+                 )
+@@ -648,6 +772,10 @@ class ktamv:
+             "camera_center_coordinates": self.cp,
+             "travel_speed": self.speed,
+             "last_nozzle_center_successful": self.last_nozzle_center_successful,
++            "last_offset_samples": self.last_offset_samples,
++            "last_offset_average": self.last_offset_average,
++            "last_offset_spread": self.last_offset_spread,
++            "last_measured_tool_number": self.last_measured_tool_number,
+         }
+         return status
+ 
+diff --git a/extension/ktamv_utl.py b/extension/ktamv_utl.py
+index e2d44d7..e46cb0c 100644
+--- a/extension/ktamv_utl.py
++++ b/extension/ktamv_utl.py
+@@ -134,8 +134,17 @@ def get_average_mpp(
+     logging.debug("*** calling ktamv_utl.get_average_mpp")
+ 
+     try:
+-        # Save initial mpps for later comparison
++        if not (
++            len(mpps) == len(space_coordinates) == len(camera_coordinates)
++        ):
++            raise ValueError("Calibration lists must have matching lengths")
++
++        # Work on copies so the caller can compare the retained count against
++        # the real unfiltered input and can safely reject a weak calibration.
+         initial_mpps = mpps.copy()
++        mpps = mpps.copy()
++        space_coordinates = space_coordinates.copy()
++        camera_coordinates = camera_coordinates.copy()
+ 
+         # Calculate the average mm per pixel and the standard deviation
+         mpps_std_dev, mpp = _get_std_dev_and_mean(mpps)
+@@ -180,6 +189,8 @@ def get_average_mpp(
+             if mpps[i] > mpp + (mpp * 0.25) or mpps[i] < mpp - (mpp * 0.25):
+                 # logging.debug("Removing value %s from list" % str(mpps[i]))
+                 mpps.remove(mpps[i])
++                space_coordinates.remove(space_coordinates[i])
++                camera_coordinates.remove(camera_coordinates[i])
+ 
+         # Calculate the average mm per pixel and the standard deviation
+         mpps_std_dev, mpp = _get_std_dev_and_mean(mpps)
+@@ -200,7 +211,7 @@ def get_average_mpp(
+             gcmd.respond_info(
+                 "Standard deviation is still too high. Calibration failed."
+             )
+-            return None
++            return None, mpps, space_coordinates, camera_coordinates
+ 
+         # send exiting to log
+         logging.debug("*** exiting ktamv_utl.get_average_mpp")

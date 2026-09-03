@@ -26,7 +26,7 @@ diff --git a/server/ktamv_server_dm.py b/server/ktamv_server_dm.py
 +                                    keypointColor = (0,255,255)
 +                                    self.__algorithm = 6
                          else:
-@@ -301,3 +314,45 @@ class Ktamv_Server_Detection_Manager:
+@@ -301,3 +314,46 @@ class Ktamv_Server_Detection_Manager:
          return(outputFrame)
 -
 +

@@ -141,3 +141,29 @@ Cập nhật thông số bộ lọc Input Shaper cho đầu in T1 (`T1.cfg`) d�
 
 ### Vấn đề còn lại
 - Chạy `FIRMWARE_RESTART` trên Mainsail.
+
+---
+
+## 5. Tải snapshot cấu hình máy thật (config-20260903-080600) và đồng bộ kho Git
+
+### Mục tiêu
+Tải toàn bộ snapshot cấu hình đang vận hành từ máy in thật `192.168.1.43` về thư mục `extras/Config download/`, kiểm tra so sánh sai lệch và đồng bộ các thay đổi thực tế vào kho Git.
+
+### File đã sửa đổi
+- `Voron 5 Tool/extras/Config download/config-20260903-080600/` — Lưu toàn bộ 40 file cấu hình tải về từ máy thật.
+- `Voron 5 Tool/extras/Config download/config-20260903-080600.zip` — Bản nén ZIP của snapshot.
+- `Voron 5 Tool/config/toolchanger/readonly-configs/homing.cfg` — Đồng bộ theo bản quản lý của KTC-Easy trên máy in thật.
+- `Voron 5 Tool/config/scripts/patches/ktamv-center-highlight-fallback.patch` — Đồng bộ patch theo máy thật.
+
+### Sao lưu
+- [homing.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-sync-machine-homing-config-20260903-080800/homing.cfg)
+- [ktamv-center-highlight-fallback.patch (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-sync-machine-homing-config-20260903-080800/ktamv-center-highlight-fallback.patch)
+
+### Kết quả đối chiếu giữa máy thật và kho Git:
+1. **`printer.cfg`:** Cấu hình trên máy thật đã khớp 100% với các thông số kinematics mới (`max_velocity: 350`, `max_accel: 7000`, `max_z_velocity: 70`, `max_z_accel: 900`) và toàn bộ khối `SAVE_CONFIG` (PID, offsets, mesh, cartographer).
+2. **`homing.cfg`:** Trên máy thật là bản sạch do KTC-Easy quản lý tự động (không còn macro tool probe Z cũ do đã dùng Cartographer). Đã đồng bộ vào kho Git.
+3. **`T0.cfg`, `T1.cfg`, `input-shaper.cfg`:** Kho Git PC đang giữ các giá trị ShakeTune mới nhất của hôm nay ($47.2\text{ Hz} / 31.0\text{ Hz}$ cho T0, $45.2\text{ Hz} / 30.6\text{ Hz}$ cho T1), trên máy in vẫn là bản cũ trước khi đo.
+4. **Các file phần cứng & macro khác:** Khớp 100%.
+
+### Kết quả
+Đã lưu snapshot và đồng bộ repo Git khớp hoàn toàn với trạng thái máy in thực tế.
