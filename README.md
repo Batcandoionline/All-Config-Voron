@@ -61,11 +61,12 @@ Documentation uses the following labels deliberately:
 | --- | --- |
 | Printer | Voron 2.4, 350 mm CoreXY |
 | Motion envelope | X `0..348`, Y `-10..336`, Z `-5..347` mm |
-| Motion limits | XY velocity `300 mm/s`, acceleration `4000 mm/s²`, Z velocity `60 mm/s`, Z acceleration `700 mm/s²` |
+| Motion limits | XY velocity `350 mm/s`, acceleration `7000 mm/s²`, Z velocity `70 mm/s`, Z acceleration `900 mm/s²` |
 | Controller/host | BTT Manta M8P V2.0 with BTT CM4 |
 | Toolchanger | KTC-Easy StealthChanger, five rear docks, T0–T4 |
 | Tool boards | Five BTT EBB36 V1.2 boards over CAN |
 | Extruders/hotends | Five WW BMG geared extruders, five TZ V6 2.0 hotends, 0.4 mm nozzles |
+| Input shaper | Unified shuttle Cartographer ADXL345 (X: MZV 43.6 Hz, Y: MZV 33.4 Hz) |
 | Production Z/mesh | Cartographer V3 Touch + Scan, fixed to the shuttle |
 | Tool-offset diagnostics | kTAMV camera comparison for X/Y only; no active tool-offset Z backend |
 | Bed | 1000 W 220 V AC silicone heater through SSR |
@@ -163,32 +164,37 @@ The operator reported a visually good first layer with the following
 | Tool | X offset (mm) | Y offset (mm) | Z offset (mm) |
 | --- | ---: | ---: | ---: |
 | T0 | `0.000` | `0.000` | `0.000` |
-| T1 | `-0.243` | `-0.252` | `+0.228` |
-| T2 | `+0.746` | `+0.086` | `-0.295` |
-| T3 | `+0.304` | `+0.449` | `-0.268` |
-| T4 | `+0.041` | `+0.352` | `-0.014` |
+| T1 | `-0.159` | `-0.195` | `+0.236` |
+| T2 | `+0.820` | `+0.240` | `-0.316` |
+| T3 | `+0.326` | `+0.524` | `-0.1896` |
+| T4 | `+0.168` | `+0.268` | `+0.120` |
+
+Bed compensation also includes active `[axis_twist_compensation]` calibrated across
+X `20.0..320.0` to compensate for gantry extrusion twist.
 
 Run `CHECK_OFFSETS` to read the values currently loaded by Klipper without
 moving the machine. The authoritative stored values are in the `SAVE_CONFIG`
 block at the end of `config/printer.cfg`.
 
-### Per-tool Input Shaper
+### Unified Global Input Shaper
 
-KTC applies a measured profile after each tool change. `_ACTIVE_INPUT_SHAPER`
-avoids sending the same profile repeatedly, which also reduces console noise.
+All 5 toolheads share the same StealthChanger carriage shuttle and exhibit closely
+matching mechanical resonance peaks (~44–50 Hz on X, ~30–35 Hz on Y). A unified
+central profile was calibrated using the Cartographer onboard ADXL345 on the shuttle:
 
-| Tool | X profile | Y profile |
-| --- | --- | --- |
-| T0 | `3hump_ei`, 98.6 Hz, damping 0.081 | `mzv`, 35.0 Hz, damping 0.076 |
-| T1 | `mzv`, 54.2 Hz, damping 0.057 | `mzv`, 35.4 Hz, damping 0.090 |
-| T2 | `ei`, 67.0 Hz, damping 0.068 | `ei`, 45.8 Hz, damping 0.151 |
-| T3 | `mzv`, 53.0 Hz, damping 0.078 | `mzv`, 35.2 Hz, damping 0.073 |
-| T4 | `mzv`, 54.0 Hz, damping 0.080 | `mzv`, 35.2 Hz, damping 0.108 |
+| Axis | Shaper type | Frequency | Damping ratio ($\zeta$) | Max recommended accel |
+| --- | --- | ---: | ---: | ---: |
+| **X (Shuttle)** | `mzv` | `43.6 Hz` | `0.124` | `5400 mm/s²` |
+| **Y (Gantry)** | `mzv` | `33.4 Hz` | `0.080` | `3200 mm/s²` |
 
-The global `[input_shaper]` section is the T0 fallback so Klipper loads the
-module. `resonance_tester` currently targets `adxl345 T4`; change that source to
-the mounted tool only during an attended calibration. ShakeTune stores at most
-five results under `Generated-Data/ShakeTune/`.
+Per-tool overrides (`params_input_shaper_*`) in `toolchanger/tools/T*.cfg` are
+commented out. This ensures KTC-Easy maintains the global `[input_shaper]` across
+all tool changes, completely eliminating `SET_INPUT_SHAPER` command execution
+stalls and delay during multi-color prints.
+
+Resonance testing uses `accel_chip: adxl345` (Cartographer onboard) directly.
+ShakeTune stores up to 10 results (`number_of_results_to_keep: 10`) under
+`Generated-Data/ShakeTune/` and full historical spectrograms are tracked in Git.
 
 ## Motion, QGL and Cartographer
 
@@ -196,10 +202,10 @@ five results under `Generated-Data/ShakeTune/`.
 
 | Parameter | Value |
 | --- | ---: |
-| Maximum XY velocity | `300 mm/s` |
-| Maximum XY acceleration | `4000 mm/s²` |
-| Maximum Z velocity | `60 mm/s` |
-| Maximum Z acceleration | `700 mm/s²` |
+| Maximum XY velocity | `350 mm/s` |
+| Maximum XY acceleration | `7000 mm/s²` |
+| Maximum Z velocity | `70 mm/s` |
+| Maximum Z acceleration | `900 mm/s²` |
 | Square-corner velocity | `5 mm/s` |
 
 ### Quad Gantry Level

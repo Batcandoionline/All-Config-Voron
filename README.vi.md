@@ -60,11 +60,12 @@ Tài liệu dùng các nhãn sau một cách có chủ ý:
 | --- | --- |
 | Máy in | Voron 2.4, CoreXY 350 mm |
 | Vùng chuyển động | X `0..348`, Y `-10..336`, Z `-5..347` mm |
-| Giới hạn chuyển động | Tốc độ XY `300 mm/s`, gia tốc `4000 mm/s²`, tốc độ Z `60 mm/s`, gia tốc Z `700 mm/s²` |
+| Giới hạn chuyển động | Tốc độ XY `350 mm/s`, gia tốc `7000 mm/s²`, tốc độ Z `70 mm/s`, gia tốc Z `900 mm/s²` |
 | Bộ điều khiển/host | BTT Manta M8P V2.0 với BTT CM4 |
 | Toolchanger | KTC-Easy StealthChanger, năm dock phía sau, T0–T4 |
 | Board tool | Năm BTT EBB36 V1.2 qua CAN |
 | Extruder/hotend | Năm WW BMG, năm TZ V6 2.0, nozzle 0.4 mm |
+| Input shaper | Unified shuttle Cartographer ADXL345 (X: MZV 43.6 Hz, Y: MZV 33.4 Hz) |
 | Z/mesh production | Cartographer V3 Touch + Scan, cố định trên shuttle |
 | Chẩn đoán offset tool | kTAMV camera chỉ đối chiếu X/Y; không có backend tool-offset Z active |
 | Bed | Heater silicone AC 1000 W 220 V qua SSR |
@@ -160,32 +161,38 @@ Người vận hành đánh giá first layer tốt về hình thức với các 
 | Tool | Offset X (mm) | Offset Y (mm) | Offset Z (mm) |
 | --- | ---: | ---: | ---: |
 | T0 | `0.000` | `0.000` | `0.000` |
-| T1 | `-0.243` | `-0.252` | `+0.228` |
-| T2 | `+0.746` | `+0.086` | `-0.295` |
-| T3 | `+0.304` | `+0.449` | `-0.268` |
-| T4 | `+0.041` | `+0.352` | `-0.014` |
+| T1 | `-0.159` | `-0.195` | `+0.236` |
+| T2 | `+0.820` | `+0.240` | `-0.316` |
+| T3 | `+0.326` | `+0.524` | `-0.1896` |
+| T4 | `+0.168` | `+0.268` | `+0.120` |
+
+Mặt phẳng in cũng được kích hoạt cơ chế bù vặn trục `[axis_twist_compensation]`
+trên dải X `20.0..320.0` để bù độ vặn cơ khí thanh ray X.
 
 Chạy `CHECK_OFFSETS` để đọc giá trị Klipper đang nạp mà không làm máy chuyển
 động. Nguồn lưu authoritative là khối `SAVE_CONFIG` cuối
 `config/printer.cfg`.
 
-### Input Shaper riêng từng tool
+### Bộ lọc Input Shaper dùng chung (Unified Global Input Shaper)
 
-KTC áp profile đã đo sau mỗi lần đổi tool. `_ACTIVE_INPUT_SHAPER` tránh gửi lại
-profile giống nhau, đồng thời giảm log console lặp.
+Cả 5 đầu in đều dùng chung một carriage shuttle StealthChanger và có phản ứng cơ
+học gần tương đương nhau (cộng hưởng X dao động quanh ~44–50 Hz, Y quanh ~30–35 Hz).
+Hệ thống đã chuyển sang sử dụng một bộ thông số Input Shaper dùng chung đo trực tiếp
+bằng cảm biến ADXL345 trên Cartographer gắn tại shuttle:
 
-| Tool | Profile X | Profile Y |
-| --- | --- | --- |
-| T0 | `3hump_ei`, 98.6 Hz, damping 0.081 | `mzv`, 35.0 Hz, damping 0.076 |
-| T1 | `mzv`, 54.2 Hz, damping 0.057 | `mzv`, 35.4 Hz, damping 0.090 |
-| T2 | `ei`, 67.0 Hz, damping 0.068 | `ei`, 45.8 Hz, damping 0.151 |
-| T3 | `mzv`, 53.0 Hz, damping 0.078 | `mzv`, 35.2 Hz, damping 0.073 |
-| T4 | `mzv`, 54.0 Hz, damping 0.080 | `mzv`, 35.2 Hz, damping 0.108 |
+| Trục | Loại shaper | Tần số | Hệ số cản ($\zeta$) | Gia tốc đề xuất tối đa |
+| --- | --- | ---: | ---: | ---: |
+| **X (Shuttle)** | `mzv` | `43.6 Hz` | `0.124` | `5400 mm/s²` |
+| **Y (Gantry)** | `mzv` | `33.4 Hz` | `0.080` | `3200 mm/s²` |
 
-Section `[input_shaper]` toàn cục là fallback T0 để Klipper nạp module.
-`resonance_tester` hiện trỏ `adxl345 T4`; chỉ đổi sang tool đang gắn trong một
-phiên calibration có người giám sát. ShakeTune giữ tối đa năm kết quả dưới
-`Generated-Data/ShakeTune/`.
+Các dòng cấu hình shaper riêng (`params_input_shaper_*`) trong `toolchanger/tools/T*.cfg`
+được comment out. Điều này giúp KTC-Easy giữ nguyên shaper toàn cục `[input_shaper]`
+sau mỗi lần đổi đầu in, loại bỏ hoàn toàn độ trễ và gián đoạn lệnh `SET_INPUT_SHAPER`
+khi in đa màu hàng trăm lần đổi tool.
+
+Thử nghiệm cộng hưởng sử dụng trực tiếp `accel_chip: adxl345` (trên Cartographer probe).
+ShakeTune lưu tối đa 10 kết quả (`number_of_results_to_keep: 10`) tại
+`Generated-Data/ShakeTune/` và toàn bộ đồ thị hiệu chuẩn được theo dõi trên Git.
 
 ## Chuyển động, QGL và Cartographer
 
@@ -193,10 +200,10 @@ phiên calibration có người giám sát. ShakeTune giữ tối đa năm kết
 
 | Tham số | Giá trị |
 | --- | ---: |
-| Tốc độ XY tối đa | `300 mm/s` |
-| Gia tốc XY tối đa | `4000 mm/s²` |
-| Tốc độ Z tối đa | `60 mm/s` |
-| Gia tốc Z tối đa | `700 mm/s²` |
+| Tốc độ XY tối đa | `350 mm/s` |
+| Gia tốc XY tối đa | `7000 mm/s²` |
+| Tốc độ Z tối đa | `70 mm/s` |
+| Gia tốc Z tối đa | `900 mm/s²` |
 | Square-corner velocity | `5 mm/s` |
 
 ### Quad Gantry Level

@@ -59,14 +59,17 @@ config/
     └── patches/
 ```
 
-## Sơ đồ phần cứng xác nhận từ source
+## Sơ đồ phần cứng và kinematics xác nhận từ source
 
 | Thành phần | Giá trị đang hoạt động |
 | --- | --- |
 | MCU chính | Manta M8P V2.0, CAN UUID `19b203d75137` |
 | Cartographer | CAN UUID `da13d909ce34`, offset X `0`, Y `35` |
+| Cảm biến Input Shaper | Cartographer onboard ADXL345 (`accel_chip: adxl345`) |
+| Giới hạn chuyển động | Tốc độ tối đa `350 mm/s`, gia tốc `7000 mm/s²`, tốc độ Z `70 mm/s`, gia tốc Z `900 mm/s²` |
 | Endstop X/Y | `PF0` / `PF1`; Y tối thiểu `-10` |
 | Pin step Z | `PG9`, `PB4`, `PG13`, `PB8` |
+| Bù vặn trục | `[axis_twist_compensation]` hoạt động trên X `20..320` |
 | Bed | heater `PA1`, sensor `PB0`, tối đa 120 °C |
 | Sensor chamber | Generic 3950 tại `PB1` |
 | Fan dưới bed | `PF8` |
@@ -82,6 +85,10 @@ và khối `SAVE_CONFIG` của `printer.cfg`.
 - Cartographer Touch dùng để home Z production.
 - Cartographer Scan tạo adaptive bed mesh. Mesh cấu hình từ X `20..320`,
   Y `45..325` với 55 × 55 mẫu.
+- Bộ lọc Input Shaper dùng chung (Unified Global Input Shaper): Đo đạc và tinh
+  chỉnh bằng cảm biến ADXL345 trên Cartographer gắn tại shuttle carriage
+  (X: `mzv` @ 43.6 Hz, Y: `mzv` @ 33.4 Hz). Các thiết lập override riêng ở
+  `T0.cfg`..`T4.cfg` được comment out để loại bỏ hoàn toàn độ trễ lệnh đổi tool khi in đa màu.
 - kTAMV được nạp từ `Printer-Setup/ktamv.cfg` để đối chiếu X/Y có giám sát. Nó
   không đo Z, không lưu offset và mất camera/origin sau Klipper restart.
 - Axiscope và `[tools_calibrate]` chỉ là nội dung rollback đã comment trong
@@ -90,7 +97,8 @@ và khối `SAVE_CONFIG` của `printer.cfg`.
   `8086`, tắt cloud upload và có các bản sửa nhiều vật thể, highlight tâm MF-500
   và stdev một sample đã review.
 
-Toàn bộ `Generated-Data/` bị loại khỏi Git deployment và `rsync --delete`.
+Toàn bộ biểu đồ phân tích cộng hưởng ShakeTune được theo dõi và lưu trữ trên Git
+trong `Generated-Data/ShakeTune/` để đối chiếu lịch sử và kiểm tra cơ khí.
 
 ## Hành vi triển khai
 

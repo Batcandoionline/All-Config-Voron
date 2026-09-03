@@ -68,9 +68,9 @@ Main motion limits:
 
 - X `0..348`, endstop `PF0`.
 - Y `-10..336`, endstop `PF1`.
-- Configured Z range `-5..347`; maximum Z velocity `60 mm/s`, Z acceleration
-  `700 mm/s²`.
-- Maximum XY velocity `300 mm/s`, acceleration `4000 mm/s²`.
+- Configured Z range `-5..347`; maximum Z velocity `70 mm/s`, Z acceleration
+  `900 mm/s²`.
+- Maximum XY velocity `350 mm/s`, acceleration `7000 mm/s²`.
 
 Cartographer offsets are X `0`, Y `35`. Bed mesh spans X `20..320`,
 Y `45..325` at 55 × 55 samples. Touch uses
@@ -139,10 +139,10 @@ Production offsets in `printer.cfg` are:
 | Tool | X | Y | Z |
 | --- | ---: | ---: | ---: |
 | T0 | 0.000 | 0.000 | 0.000 |
-| T1 | -0.243 | -0.252 | +0.228 |
-| T2 | +0.746 | +0.086 | -0.295 |
-| T3 | +0.304 | +0.449 | -0.268 |
-| T4 | +0.041 | +0.352 | -0.014 |
+| T1 | -0.159 | -0.195 | +0.236 |
+| T2 | +0.820 | +0.240 | -0.316 |
+| T3 | +0.326 | +0.524 | -0.1896 |
+| T4 | +0.168 | +0.268 | +0.120 |
 
 The operator considers the baseline first layer visually good. Two retired
 ToolVision runs on 2026-08-23 remain diagnostic evidence:
@@ -170,10 +170,11 @@ only as retired evidence.
 
 ## 9. Input shaper
 
-The T0 fallback in `input-shaper.cfg` is X `3hump_ei` 98.6 Hz/damping 0.081 and
-Y `mzv` 35 Hz/damping 0.076. Per-tool profiles are in T0–T4. The resonance
-tester currently selects `adxl345 T4`; ShakeTune writes under
-`Generated-Data/ShakeTune` and keeps five results as configured.
+The system operates on a Unified Global Input Shaper tuned from the Cartographer
+onboard ADXL345 on the carriage shuttle: X `mzv` 43.6 Hz/damping 0.124 and
+Y `mzv` 33.4 Hz/damping 0.080. Per-tool overrides in T0–T4 are commented out to eliminate
+toolchange stalls and latency. The resonance tester targets `accel_chip: adxl345`;
+ShakeTune writes under `Generated-Data/ShakeTune` and keeps 10 results, tracked in Git.
 
 ## 10. Update and verification
 

@@ -67,8 +67,8 @@ Giới hạn chuyển động chính:
 
 - X `0..348`, endstop `PF0`.
 - Y `-10..336`, endstop `PF1`.
-- Z cấu hình `-5..347`; tốc độ Z tối đa `60 mm/s`, gia tốc Z `700 mm/s²`.
-- Tốc độ XY tối đa `300 mm/s`, gia tốc `4000 mm/s²`.
+- Z cấu hình `-5..347`; tốc độ Z tối đa `70 mm/s`, gia tốc Z `900 mm/s²`.
+- Tốc độ XY tối đa `350 mm/s`, gia tốc `7000 mm/s²`.
 
 Cartographer có offset X `0`, Y `35`. Bed mesh cấu hình X `20..320`,
 Y `45..325`, 55 × 55 mẫu. Touch lấy mốc tại
@@ -164,11 +164,12 @@ và không lưu offset tool. Xem [hướng dẫn sử dụng và đối chiếu 
 đã retired.
 
 ## 9. Input shaper
-
-Fallback T0 trong `input-shaper.cfg` là X `3hump_ei` 98.6 Hz/damping 0.081 và
-Y `mzv` 35 Hz/damping 0.076. Profile riêng từng tool nằm trong T0–T4. Resonance
-tester đang trỏ `adxl345 T4`; ShakeTune lưu data dưới
-`Generated-Data/ShakeTune` và giữ tối đa năm kết quả theo cấu hình.
+ 
+Hệ thống sử dụng bộ lọc Input Shaper dùng chung (Unified Global Input Shaper) đo từ
+Cartographer onboard ADXL345 trên carriage shuttle: X `mzv` 43.6 Hz/damping 0.124 và
+Y `mzv` 33.4 Hz/damping 0.080. Cấu hình riêng trong T0–T4 được comment out để loại bỏ
+độ trễ gọi lệnh khi đổi tool. Resonance tester sử dụng trực tiếp `accel_chip: adxl345`;
+ShakeTune lưu 10 kết quả gần nhất dưới `Generated-Data/ShakeTune` và được đồng bộ lên Git.
 
 ## 10. Cập nhật và kiểm tra
 

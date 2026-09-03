@@ -59,14 +59,17 @@ config/
     └── patches/
 ```
 
-## Source-verified hardware map
+## Source-verified hardware and kinematics map
 
 | Component | Active value |
 | --- | --- |
 | Main MCU | Manta M8P V2.0, CAN UUID `19b203d75137` |
 | Cartographer | CAN UUID `da13d909ce34`, offsets X `0`, Y `35` |
+| Input Shaper Sensor | Cartographer onboard ADXL345 (`accel_chip: adxl345`) |
+| Motion limits | Max velocity `350 mm/s`, max accel `7000 mm/s²`, Z velocity `70 mm/s`, Z accel `900 mm/s²` |
 | X/Y endstops | `PF0` / `PF1`; Y minimum `-10` |
 | Z step pins | `PG9`, `PB4`, `PG13`, `PB8` |
+| Axis twist | `[axis_twist_compensation]` active on X `20..320` |
 | Bed | heater `PA1`, sensor `PB0`, maximum 120 °C |
 | Chamber sensor | Generic 3950 on `PB1` |
 | Under-bed fan | `PF8` |
@@ -82,6 +85,10 @@ The five tool CAN UUIDs, docks and production offsets are documented in the
 - Cartographer Touch provides production Z homing.
 - Cartographer Scan provides the adaptive bed mesh. The configured mesh spans
   X `20..320`, Y `45..325` at 55 × 55 samples.
+- Unified Global Input Shaper: Tuned via Cartographer onboard ADXL345 on the
+  shuttle carriage (X: `mzv` @ 43.6 Hz, Y: `mzv` @ 33.4 Hz). Per-tool overrides
+  are commented out in `T0.cfg`..`T4.cfg` to eliminate toolchange overhead and
+  stalls during multi-color prints.
 - kTAMV is loaded from `Printer-Setup/ktamv.cfg` for supervised X/Y comparison.
   It does not measure Z, save offsets or persist camera/origin state after a
   Klipper restart.
@@ -91,8 +98,8 @@ The five tool CAN UUIDs, docks and production offsets are documented in the
   port `8086`, disables cloud upload and carries reviewed multi-object,
   MF-500 center-highlight and single-sample stdev fixes.
 
-The entire `Generated-Data/` tree is excluded from Git deployment and from
-`rsync --delete`.
+Full ShakeTune resonance graphs are tracked in Git under `Generated-Data/ShakeTune/`
+for hardware verification and historical comparison.
 
 ## Deployment behavior
 

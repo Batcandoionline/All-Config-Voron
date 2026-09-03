@@ -290,3 +290,36 @@ Tải toàn bộ thư mục dữ liệu hiệu chuẩn `Generated-Data/` từ m�
 
 ### Kết quả
 - Đã kiểm tra diff hoàn toàn chính xác và commit lên Git.
+
+---
+
+## 10. Cập nhật README chính, README config và chuẩn hóa các comment lỗi thời theo đúng thực tế máy
+
+### Mục tiêu
+- Cập nhật tài liệu `README.md` (English) và `README.vi.md` (Tiếng Việt) ở giao diện chính của repo và trong thư mục `config/` cho đúng 100% với thực tế vận hành của máy in sau các đợt nâng cấp và đo kiểm ngày 2026-09-03.
+- Rà soát và chuẩn hóa các comment cấu hình đã lỗi thời trong các file `.cfg` của Klipper.
+
+### File đã sửa đổi
+- `Voron 5 Tool/README.md` & `README.vi.md`:
+  - Đồng bộ giới hạn chuyển động Kinematics: XY velocity `350 mm/s`, acceleration `7000 mm/s²`, Z velocity `70 mm/s`, Z acceleration `900 mm/s²`.
+  - Cập nhật bảng offset in thực tế theo `SAVE_CONFIG`: T1 (`-0.159, -0.195, +0.236`), T2 (`+0.820, +0.240, -0.316`), T3 (`+0.326, +0.524, -0.1896`), T4 (`+0.168, +0.268, +0.120`) và `[axis_twist_compensation]`.
+  - Chuyển mục Input Shaper từ bảng riêng lẻ cũ sang tài liệu kiến trúc **Unified Global Input Shaper (Cartographer ADXL345)**: X `mzv` 43.6 Hz ($\zeta = 0.124$), Y `mzv` 33.4 Hz ($\zeta = 0.080$); giải thích cơ chế comment out per-tool override để tối ưu hóa việc đổi đầu in khi in đa màu.
+- `Voron 5 Tool/config/README.md` & `config/README.vi.md`:
+  - Cập nhật sơ đồ phần cứng & kinematics xác nhận từ source, bổ sung thông tin Cartographer onboard ADXL345 và `axis_twist_compensation`.
+  - Làm rõ quyền sở hữu calibration: Cartographer ADXL345 làm mốc chuẩn cho Unified Input Shaper toàn cục, và ShakeTune lưu 10 kết quả gần nhất được đồng bộ trên Git.
+- `Voron 5 Tool/extras/docs/huong-dan-he-thong-stealthchanger.md` & `.en.md`:
+  - Đồng bộ thông số kinematics 350 mm/s, 7000 mm/s², Z 70 mm/s, 900 mm/s², bảng offset và Unified Input Shaper.
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg`:
+  - Chuẩn hóa header comment mô tả kiến trúc Unified Shuttle Shaper và hướng dẫn đo đạc trực tiếp qua Cartographer ADXL345 onboard (`accel_chip: adxl345`).
+- `Voron 5 Tool/config/toolchanger/tools/T0.cfg`:
+  - Chuẩn hóa comment Z-offset: ghi nhận việc quản lý qua `SAVE_CONFIG` trong `printer.cfg` thay vì tham chiếu lệnh legacy `CALIBRATE_ALL_OFFSETS`.
+- `Voron 5 Tool/config/Printer-Setup/hardware.cfg`:
+  - Làm rõ comment extruder: các định nghĩa extruder và TMC2209 được cấu hình chi tiết tại `T0.cfg` đến `T4.cfg`.
+
+### Sao lưu
+- Thư mục sao lưu: [pre-update-stale-comments-and-readmes-20260903-211500](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-stale-comments-and-readmes-20260903-211500/)
+- Đã sao lưu đầy đủ `input-shaper.cfg`, `T0.cfg`, `hardware.cfg` kèm `README.md` ghi nhận.
+
+### Kết quả
+Tất cả tài liệu kỹ thuật song ngữ (Anh - Việt) và các file cấu hình Klipper đã hoàn toàn nhất quán 100% với thực tế máy in đang vận hành.
+
