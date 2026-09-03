@@ -167,3 +167,40 @@ Tải toàn bộ snapshot cấu hình đang vận hành từ máy in thật `192
 
 ### Kết quả
 Đã lưu snapshot và đồng bộ repo Git khớp hoàn toàn với trạng thái máy in thực tế.
+
+---
+
+## 6. Chuyển đổi Input Shaper sang cấu hình đồng nhất đo từ Cartographer ADXL345
+
+### Mục tiêu
+Áp dụng thông số Input Shaper đo trực tiếp bằng cảm biến ADXL345 trên Cartographer (gắn tại Shuttle carriage) làm bộ lọc toàn cục duy nhất, comment out các tham số override riêng lẻ tại cả 5 đầu in (`T0`–`T4`) để KTC-Easy không phát lệnh đổi shaper khi in đa màu.
+
+### File đã sửa đổi
+- `Voron 5 Tool/config/Printer-Setup/input-shaper.cfg` — Cập nhật `[input_shaper]` với thông số Cartographer: X MZV 41.2Hz ($\zeta=0.091$), Y MZV 31.8Hz ($\zeta=0.073$); trỏ `[resonance_tester]` về `accel_chip: adxl345`.
+- `Voron 5 Tool/config/toolchanger/tools/T0.cfg` — Comment out `params_input_shaper_*`.
+- `Voron 5 Tool/config/toolchanger/tools/T1.cfg` — Comment out `params_input_shaper_*`.
+- `Voron 5 Tool/config/toolchanger/tools/T2.cfg` — Comment out `params_input_shaper_*`.
+- `Voron 5 Tool/config/toolchanger/tools/T3.cfg` — Comment out `params_input_shaper_*`.
+- `Voron 5 Tool/config/toolchanger/tools/T4.cfg` — Comment out `params_input_shaper_*`.
+
+### Sao lưu
+- Thư mục sao lưu: [pre-unified-cartographer-shaper-20260903-082000](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-unified-cartographer-shaper-20260903-082000)
+
+### Chi tiết thông số Cartographer đo được
+- **Trục X (Shuttle):**
+  - Đỉnh cộng hưởng chính $\omega_0 = 47.3\text{ Hz}$, $\zeta = 0.091$.
+  - Shaper tối ưu (Performance): `mzv` @ `41.2 Hz` (Smoothing: 0.120, rung động 3.9%, Max Accel 4990 mm/s²).
+- **Trục Y (Gantry):**
+  - Đỉnh cộng hưởng chính $\omega_0 = 30.0\text{ Hz}$, $\zeta = 0.073$.
+  - Shaper tối ưu: `mzv` @ `31.8 Hz` (Smoothing: 0.202, rung động 3.2%, Max Accel 2960 mm/s²).
+
+### Lý do & Lợi ích
+1. Cả 5 toolhead đều dùng chung Shuttle và cùng khối lượng tương đương.
+2. Việc comment out các tham số override ở từng toolhead giúp macro `after_change_gcode` của KTC-Easy luôn xác định `changed = False`, loại bỏ hoàn toàn việc gọi `SET_INPUT_SHAPER` mỗi lần đổi tool khi in nhiều màu.
+3. Chuyển động in mượt mà, đồng nhất, không phát sinh gián đoạn lệnh.
+
+### Kết quả
+Đã cấu hình đồng nhất toàn bộ 5 tool và đồng bộ lên Git.
+
+### Vấn đề còn lại
+- Chạy `FIRMWARE_RESTART` trên Mainsail.
