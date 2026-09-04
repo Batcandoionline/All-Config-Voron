@@ -95,3 +95,31 @@ Thay đổi logic hiển thị của macro sấy nhựa `START_DRYER`: thay vì 
 ### Vấn đề còn lại
 - Nạp cấu hình lên máy in và khởi động lại Klipper để Mainsail tải lại danh sách macro và các tham số mới.
 
+---
+
+## 3. Cập nhật vật liệu sấy mặc định của START_DRYER thành PETG
+
+### Mục tiêu
+Đổi giá trị mặc định của tham số `MATERIAL` trong macro `START_DRYER` từ `PLA` sang `PETG` theo yêu cầu người dùng, giúp khi bấm mở macro form trên Mainsail thì vật liệu được chọn sẵn là PETG (Bed 70°C, Chamber 55°C, Time 240m, Fan 50%).
+
+### File đã sửa đổi
+- `config/Printer-Setup/print-macros.cfg` — Đổi `params.MATERIAL|default("PLA")` thành `params.MATERIAL|default("PETG")`.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-dryer-default-petg-20260904-070555/print-macros.cfg)
+- [README.md (Backup Record)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-dryer-default-petg-20260904-070555/README.md)
+
+### Chi tiết thay đổi
+- Trong `[gcode_macro START_DRYER]`:
+  - `params.MATERIAL|default("PLA")` → `params.MATERIAL|default("PETG")`
+
+### Lý do
+- Người dùng thường xuyên sấy nhựa PETG hơn, việc đặt mặc định là PETG giúp người dùng có thể mở macro trên Mainsail và bấm Run ngay lập tức mà không cần phải nhập/sửa lại tên vật liệu.
+
+### Kiểm tra
+- Kiểm tra cú pháp Jinja2: Đạt 100%.
+
+### Kết quả
+- Khi bấm vào macro `START_DRYER` trên Mainsail, ô `MATERIAL` sẽ tự động hiển thị giá trị mặc định là `"PETG"`.
+
+
