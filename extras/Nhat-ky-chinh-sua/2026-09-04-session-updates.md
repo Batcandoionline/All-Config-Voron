@@ -209,6 +209,68 @@ Bổ sung công cụ kiểm tra tốc độ (`SPEED`) và gia tốc (`ACCEL`) t�
 ### Kết quả
 - Macro `TEST_SPEED` sẵn sàng sử dụng trực tiếp trên Mainsail hoặc console gcode.
 
+---
 
+## 6. Đo kiểm thực nghiệm TEST_SPEED, tải snapshot máy thật và lưu trữ dữ liệu ShakeTune tham chiếu
 
+### Mục tiêu
+- Thực nghiệm đo kiểm giới hạn vận tốc/gia tốc cơ học bằng macro `TEST_SPEED` từ 300 mm/s @ 5.000 mm/s² lên 500 mm/s @ 15.000 mm/s² trên cả 2 trạng thái: Shuttle rỗng và có gài Tool T0.
+- Đo đạc đáp ứng tần số cộng hưởng thực tế qua ShakeTune (`AXES_SHAPER_CALIBRATION`) bằng cảm biến Cartographer ADXL345.
+- Tải toàn bộ snapshot cấu hình từ máy in thật `192.168.1.43` (`config-20260904-183200`), đóng gói file `.zip`, sao chép 4 đồ thị ShakeTune mới nhất vào `config/Generated-Data/ShakeTune/input_shaper/`.
+- Biên soạn tài liệu tổng hợp đối chiếu kỹ thuật chuyên sâu tại `extras/docs/danh-gia-input-shaper-va-test-speed-2026-09-04.md`.
 
+### File đã sửa đổi & bổ sung
+- `Voron 5 Tool/extras/Config download/config-20260904-183200/` — Lưu trữ toàn bộ 49 file cấu hình và dữ liệu từ máy in thật.
+- `Voron 5 Tool/extras/Config download/config-20260904-183200.zip` — Bản nén archive toàn bộ cấu hình máy thật.
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260904_173948_axis_X.png` — Đồ thị ShakeTune trục X (Shuttle rỗng).
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260904_173948_axis_Y.png` — Đồ thị ShakeTune trục Y (Shuttle rỗng).
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260904_180139_axis_X.png` — Đồ thị ShakeTune trục X (Có Tool T0).
+- `Voron 5 Tool/config/Generated-Data/ShakeTune/input_shaper/inputshaper_20260904_180139_axis_Y.png` — Đồ thị ShakeTune trục Y (Có Tool T0).
+- `Voron 5 Tool/extras/docs/danh-gia-input-shaper-va-test-speed-2026-09-04.md` — Tài liệu tổng hợp phân tích tham chiếu.
+
+### Tóm tắt kết quả đo đạc:
+1. **Động học (`TEST_SPEED`):**
+   - Đạt 100% không mất bước từ 300 mm/s đến 500 mm/s, gia tốc lên tới 15.000 mm/s² ở cả 2 trạng thái không tải và có tải T0. Sai số lặp lại cơ khí microstep tại endstop tối đa $\le 40$ steps ($\approx 0.08\text{ mm}$).
+2. **Cộng hưởng (`ShakeTune`):**
+   - **Shuttle rỗng (Không tool):** X MZV @ 90.4 Hz ($\zeta = 0.047$), Y 3HUMP_EI @ 75.4 Hz ($\zeta = 0.078$, đỉnh thấp 37.9 Hz).
+   - **Có gài Tool T0:** X 41.1 Hz ($\zeta = 0.200$, khớp với cấu hình 43.6 Hz), Y 30.0 Hz ($\zeta = 0.094$, khớp với cấu hình 33.4 Hz, đề xuất 2HUMP_EI @ 47.6 Hz).
+   - Cơ cấu ngàm StealthChanger kẹp rất chặt giúp tăng hệ số dập tắt rung động $\zeta$ trục X từ 0.047 lên 0.200.
+
+### Kết quả
+- Đã lưu trữ toàn bộ dữ liệu, tải snapshot máy thật và tạo tài liệu tham chiếu kỹ thuật đầy đủ vào kho Git.
+
+## 7. Automatic OrcaSlicer profile synchronization
+
+### Goal
+Copy the active OrcaSlicer user presets directly from AppData into the repository and synchronize requested G-code/log diagnostics without manual export.
+
+### Source
+- `C:\Users\batca\AppData\Roaming\OrcaSlicer\user\838ce884-12ee-416b-9e1b-1c7503cf6b5f`
+- Selected profile ID: `838ce884-12ee-416b-9e1b-1c7503cf6b5f`
+
+### Updated files
+- `extras/Orcasilcer setting/MulticolorPETG.json`
+- `extras/Orcasilcer setting/Printersetting.json`
+- `Orca Config/0.20mm ABS.json`
+- `Orca Config/0.20mm PETG Multimaterial.json`
+- `Orca Config/0.20mm PETG.json`
+- `Orca Config/ABS Tpoimns Pink.json`
+- `Orca Config/PETG Bambu Basic Black.json`
+- `Orca Config/PETG Kabber Blue.json`
+- `Orca Config/PETG TPoimns Orange.json`
+- `Orca Config/PETG TPoimns Red.json`
+- `Orca Config/PETG TPoimns White.json`
+- `Orca Config/PETG TPoimns Yellow.json`
+- `Orca Config/Voron Stealthchanger.json`
+
+### Backup
+- `extras/backups/pre-orcaslicer-profile-sync-20260904-200413`
+
+### Validation
+- All source and destination JSON files passed `ConvertFrom-Json` validation.
+- Exact source bytes were copied without reformatting.
+
+### Result
+- 13 repository JSON file(s) synchronized.
+- 0 G-code/log diagnostic file(s) added or updated.
+- Use `Orca Config\Sync-OrcaProfiles.cmd` for one-click sync, commit and push.

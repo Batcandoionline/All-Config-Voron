@@ -46,6 +46,7 @@
 	"top_surface_pattern": "monotonic",
 	"travel_jerk": "7",
 	"version": "2.4.0.1",
+	"wall_loops": "4",
 	"wipe_tower_extra_flow": "110%",
 	"wipe_tower_max_purge_speed": "60",
 	"xy_contour_compensation": "0.085",

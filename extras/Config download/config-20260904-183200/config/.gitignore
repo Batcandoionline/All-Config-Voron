@@ -1,0 +1,24 @@
+# Local backups and generated archives
+_backups/
+Generated-Data/
+*.zip
+*backup*
+*.bak
+*.bkp
+
+# Logs, prints, and temporary files
+*.log
+*.gcode
+*.tmp
+*.swp
+*.swo
+
+# OS/editor metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Bảo mật thông tin nhạy cảm
+*.secrets
+moonraker.secrets
+wpa_supplicant.conf
