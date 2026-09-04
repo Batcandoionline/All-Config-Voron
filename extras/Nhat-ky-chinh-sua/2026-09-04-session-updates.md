@@ -274,3 +274,50 @@ Copy the active OrcaSlicer user presets directly from AppData into the repositor
 - 13 repository JSON file(s) synchronized.
 - 0 G-code/log diagnostic file(s) added or updated.
 - Use `Orca Config\Sync-OrcaProfiles.cmd` for one-click sync, commit and push.
+
+---
+
+## 8. Tách module filament-dryer.cfg, test-speed.cfg và tích hợp macro TEST_Z_SPEED
+
+### Mục tiêu
+- Tách nhỏ file `config/Printer-Setup/print-macros.cfg` (gần 1.000 dòng) để tăng tính module hóa, dễ bảo trì.
+- Chuyển toàn bộ hệ sinh thái macro sấy nhựa (`START_DRYER`, `STOP_DRYER`, `DRYER_STATUS`, `_DRYER_STATUS`, `_DRYER_HANDOFF_TO_PRINT`, `delayed_gcode DRYER_TIMER`) sang file chuyên biệt `config/Printer-Setup/filament-dryer.cfg`.
+- Chuyển macro `TEST_SPEED` (kiểm tra X/Y) và bổ sung macro chuyên dụng **`TEST_Z_SPEED`** (kiểm tra nâng hạ trục Z đa chu kỳ) sang file chuyên biệt `config/Printer-Setup/test-speed.cfg`.
+- Rút gọn `print-macros.cfg` còn ~490 dòng tập trung cho quy trình in cốt lõi.
+- Cập nhật `printer.cfg` để include các module mới, deploy trực tiếp lên máy in thật `192.168.1.43` và kiểm chứng khởi động thành công.
+
+### File đã sửa đổi & bổ sung
+- `config/Printer-Setup/filament-dryer.cfg` — [MỚI] Chứa toàn bộ hệ thống sấy filament (393 dòng).
+- `config/Printer-Setup/test-speed.cfg` — [MỚI] Chứa macro `TEST_SPEED` và `TEST_Z_SPEED` (179 dòng).
+- `config/Printer-Setup/print-macros.cfg` — Tinh gọn loại bỏ 504 dòng của dryer và test speed.
+- `config/printer.cfg` — Bổ sung 2 dòng `[include Printer-Setup/filament-dryer.cfg]` và `[include Printer-Setup/test-speed.cfg]`.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-split-dryer-and-test-speed-20260904-203500/print-macros.cfg)
+- [printer.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-split-dryer-and-test-speed-20260904-203500/printer.cfg)
+- [README.md (Backup Record)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-split-dryer-and-test-speed-20260904-203500/README.md)
+
+### Chi tiết macro `TEST_Z_SPEED`
+- **Mục đích:** Thử nghiệm giới hạn vận tốc ($v_z$) và gia tốc ($a_z$) của 4 động cơ trục Z trên khung Voron 2.4 gantry bay.
+- **Tham số cấu hình:**
+  - `SPEED`: mặc định theo `max_z_velocity` (70 mm/s).
+  - `ACCEL`: mặc định theo `max_z_accel` (900 mm/s²).
+  - `ITERATIONS`: mặc định 5 chu kỳ.
+  - `Z_MIN`: mặc định 10 mm.
+  - `Z_MAX`: mặc định 320 mm (tự động khống chế dưới `axis_maximum.z - 25mm` để không chạm dock tool $Z = 343\text{ mm}$).
+- **Quy trình thực thi:**
+  - Kiểm tra Homing và `QUAD_GANTRY_LEVEL` nếu máy chưa cân.
+  - Di chuyển toolhead về tâm bàn in ($X: 175, Y: 168, Z: 10$) an toàn tuyệt đối.
+  - Ghi nhận vi bước ban đầu bằng `GET_POSITION`.
+  - Áp dụng `SET_VELOCITY_LIMIT Z_VELOCITY={speed} Z_ACCEL={accel}`.
+  - Chạy chu kỳ lên/xuống giữa $Z_{\min}$ và $Z_{\max}$ ở tốc độ `{speed * 60}`.
+  - Khôi phục giới hạn mặc định và gọi lại `GET_POSITION` để người dùng đối chiếu.
+
+### Kiểm tra & Xác minh
+- Upload trực tiếp 4 file qua Moonraker API tới máy in thật `192.168.1.43`.
+- Gửi lệnh `FIRMWARE_RESTART`: Klipper khởi động lại thành công, trạng thái `ready` ("Printer is ready").
+- Kiểm tra đăng ký macro: Cả `TEST_Z_SPEED` và `START_DRYER` đều được Klipper đăng ký hoạt động bình thường.
+
+### Kết quả
+- Hoàn thành module hóa 100% sạch sẽ, an toàn, đã kiểm chứng trực tiếp trên máy in đang vận hành.
+
