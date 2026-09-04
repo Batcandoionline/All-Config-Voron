@@ -395,5 +395,26 @@ Copy the active OrcaSlicer user presets directly from AppData into the repositor
    - Thư mục `~/printer_data/config/` trên máy in hiện tại chỉ còn đúng 8 file gốc sạch sẽ.
    - Đã upload `install.sh` và `cleanup-voron.sh` mới lên máy in thành công.
 
+---
+
+## 11. Tinh gọn & Cập nhật README Dự án và Thư mục Config dựa trên Code thực tế
+
+### Mục tiêu
+- Viết lại toàn bộ 4 file tài liệu: `README.md`, `README.vi.md` (Gốc dự án) và `config/README.md`, `config/README.vi.md` (Thư mục cấu hình).
+- Đọc trực tiếp từ mã nguồn cấu hình (`printer.cfg`, `hardware.cfg`, `fans-leds.cfg`, `calibration-probe.cfg`, `toolchanger-config.cfg`, `tools/T*.cfg`) để đảm bảo chính xác 100% từng chân pin, tọa độ dock, offset cơ khí, CAN UUID và macro.
+- Tối ưu hóa cấu trúc: Loại bỏ hàng trăm dòng văn bản rườm rà, lỗi thời; chuyển hóa thành các bảng thông số trực quan, ngắn gọn, súc tích và đầy đủ nội dung.
+
+### File đã sửa đổi
+- `README.md` — Rút gọn từ 785 dòng xuống ~140 dòng tinh hoa, cập nhật bảng 5 tool, macro mới (`TEST_SPEED`, `TEST_Z_SPEED`, `START_DRYER`) và hướng dẫn Update Manager 1-Click.
+- `README.vi.md` — Phiên bản tiếng Việt tương ứng, đồng bộ hoàn hảo 1:1.
+- `config/README.md` — Cập nhật đầy đủ chuỗi include 13 module, bản đồ phần cứng chân pin, và phân cấp sở hữu module.
+- `config/README.vi.md` — Phiên bản tiếng Việt tương ứng cho thư mục `config/`.
+
+### Điểm nhấn nội dung
+1. **Bảng 5 Tool & Offset thực tế:** Ghi nhận chính xác tọa độ dock X/Y/Z từ `T0..T4.cfg` và giá trị offset cơ khí chính thức từ khối `SAVE_CONFIG` (T0 chuẩn zero, T1 đến T4 calibrated).
+2. **Chuỗi Include module mới:** Bổ sung đầy đủ `filament-dryer.cfg` và `test-speed.cfg` vừa tách.
+3. **Cập nhật 1-Click & Sparse Checkout:** Hướng dẫn rõ ràng quy trình clone siêu nhẹ tiết kiệm 97.7% dung lượng ổ cứng cho máy in.
+
+
 
 

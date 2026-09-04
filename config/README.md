@@ -1,156 +1,76 @@
-# Active Klipper configuration payload
+# Production Klipper Configuration Payload
 
 [English](README.md) | [Tiếng Việt](README.vi.md)
 
-This directory is deployed to `~/printer_data/config` by `scripts/install.sh`
-and `scripts/update.sh`. Markdown files are documentation only and are excluded
-from deployment.
+This directory contains the operational Klipper configuration deployed to `~/printer_data/config` on the printer. Documentation (`*.md`) files are excluded from active deployment.
 
-## Ownership and include contract
+---
 
-`printer.cfg` currently loads:
+## 1. Include Chain (`printer.cfg`)
+
+The root `printer.cfg` acts as the master coordinator and loads modules in the following order:
 
 ```ini
-[include mainsail.cfg]
-[include toolchanger/readonly-configs/toolchanger-include.cfg]
-[include Printer-Setup/calibration-probe.cfg]
-[include Printer-Setup/ktamv.cfg]
-[include Printer-Setup/hardware.cfg]
-[include Printer-Setup/fans-leds.cfg]
-[include Printer-Setup/input-shaper.cfg]
-[include Printer-Setup/nozzle-clean.cfg]
-[include Printer-Setup/prime-lines.cfg]
-[include Printer-Setup/print-macros.cfg]
-[include Printer-Setup/tool-crash.cfg]
+[include mainsail.cfg]                                          # Web UI macros
+[include toolchanger/readonly-configs/toolchanger-include.cfg]  # KTC-Easy core (symlink)
+[include Printer-Setup/calibration-probe.cfg]                   # Cartographer probe & mesh
+[include Printer-Setup/ktamv.cfg]                               # kTAMV camera backend (XY-only)
+[include Printer-Setup/hardware.cfg]                            # Steppers, TMC drivers, heaters
+[include Printer-Setup/fans-leds.cfg]                           # CPAP, chamber fans & LEDs
+[include Printer-Setup/input-shaper.cfg]                        # Unified resonance filters
+[include Printer-Setup/nozzle-clean.cfg]                        # Silicone brush nozzle wipe
+[include Printer-Setup/prime-lines.cfg]                         # Tool-specific prime lines
+[include Printer-Setup/print-macros.cfg]                        # Core print start/end macros
+[include Printer-Setup/filament-dryer.cfg]                      # Bed-based filament drying
+[include Printer-Setup/test-speed.cfg]                          # TEST_SPEED & TEST_Z_SPEED
+[include Printer-Setup/tool-crash.cfg]                          # Tool drop/crash detection
 ```
 
-KTC-Easy owns every file under `toolchanger/readonly-configs/`. Do not edit,
-replace or copy regular files into that directory. All-Config owns
-`toolchanger/toolchanger-config.cfg`, `toolchanger/tools/T*.cfg` and the
-`Printer-Setup/` overrides.
+---
 
-## Directory map
+## 2. Directory & Component Ownership
 
-```text
-config/
-├── printer.cfg
-├── mainsail.cfg
-├── moonraker.conf
-├── crowsnest.conf
-├── KlipperScreen.conf
-├── Printer-Setup/
-│   ├── calibration-probe.cfg
-│   ├── ktamv.cfg
-│   ├── hardware.cfg
-│   ├── fans-leds.cfg
-│   ├── input-shaper.cfg
-│   ├── nozzle-clean.cfg
-│   ├── prime-lines.cfg
-│   ├── print-macros.cfg
-│   └── tool-crash.cfg
-├── toolchanger/
-│   ├── toolchanger-config.cfg
-│   ├── tools/T0.cfg ... T4.cfg
-│   └── readonly-configs/       # KTC-Easy-owned symlinks
-└── scripts/
-    ├── install.sh
-    ├── update.sh
-    ├── cleanup-voron.sh
-    └── patches/
-```
+| Path | Owner | Description & Rules |
+| :--- | :--- | :--- |
+| `printer.cfg` | User / Git | Kinematics, limits, MCU UUID, includes. Contains live `#*# <SAVE_CONFIG>` block. |
+| `Printer-Setup/*.cfg` | User / Git | Modular printer subsystems, safety macros, and hardware mappings. |
+| `toolchanger/toolchanger-config.cfg` | User / Git | StealthChanger dock coordinates, pickup/dropoff speeds, LED hooks. |
+| `toolchanger/tools/T0.cfg` ... `T4.cfg` | User / Git | Extruder motor profiles, nozzle offsets, and standby temperatures. |
+| `toolchanger/readonly-configs/` | **KTC-Easy** | **DO NOT EDIT.** Installer-managed symlinks to `~/klipper-toolchanger-easy/`. |
+| `scripts/*.sh` | User / Git | Deployment (`install.sh`), updater (`update.sh`), maintenance (`cleanup-voron.sh`). |
+| `moonraker.conf` | Moonraker / Git | API server settings, security, and Update Manager components. |
+| `crowsnest.conf`, `KlipperScreen.conf` | System / Git | WebRTC webcam streaming and touchscreen display configs. |
 
-## Source-verified hardware and kinematics map
+---
 
-| Component | Active value |
-| --- | --- |
-| Main MCU | Manta M8P V2.0, CAN UUID `19b203d75137` |
-| Cartographer | CAN UUID `da13d909ce34`, offsets X `0`, Y `35` |
-| Input Shaper Sensor | Cartographer onboard ADXL345 (`accel_chip: adxl345`) |
-| Motion limits | Max velocity `350 mm/s`, max accel `7000 mm/s²`, Z velocity `70 mm/s`, Z accel `900 mm/s²` |
-| X/Y endstops | `PF0` / `PF1`; Y minimum `-10` |
-| Z step pins | `PG9`, `PB4`, `PG13`, `PB8` |
-| Axis twist | `[axis_twist_compensation]` active on X `20..320` |
-| Bed | heater `PA1`, sensor `PB0`, maximum 120 °C |
-| Chamber sensor | Generic 3950 on `PB1` |
-| Under-bed fan | `PF8` |
-| Chamber LEDs | WS2812 on `PD15` |
-| Inactive tool-offset switch | Manta `^PF2` with GND; kTAMV does not use it |
+## 3. Hardware & Kinematics Mapping
 
-The five tool CAN UUIDs, docks and production offsets are documented in the
-[root README](../README.md) and defined in `toolchanger/tools/` plus the
-`SAVE_CONFIG` block in `printer.cfg`.
+| Function | Hardware / Pin Assignment | Operating Limits |
+| :--- | :--- | :--- |
+| **Main MCU** | BTT Manta M8P V2.0 (`19b203d75137`) | CANbus 1 Mbps |
+| **Probe / Z Homing** | Cartographer V3 (`da13d909ce34`) | Touch homing + 55×55 Scan adaptive bed mesh |
+| **Input Shaper Sensor** | Onboard ADXL345 on Cartographer | Shuttle-mounted; X: MZV 43.6 Hz, Y: MZV 33.4 Hz |
+| **CoreXY Kinematics** | Stepper X: `PE6` / PF0 endstop; Stepper Y: `PE2` / PF1 endstop | Max Vel: 350 mm/s (tested 500), Accel: 7000 mm/s² (tested 15k) |
+| **Quad Z Gantry** | Z0: `PG9`, Z1: `PB4`, Z2: `PG13`, Z3: `PB8` | Max Z Vel: 70 mm/s (tested 80), Z Accel: 900 mm/s² (tested 1k) |
+| **Heated Bed** | Heater `PA1`, Sensor `PB0` (NTC 100K) | 220V 1000W AC, max 120 °C |
+| **Chamber Sensor / Fan** | Chamber Thermistor: `PB1` (Generic 3950); Bed Fan: `PF8` | Auto chamber temperature control |
+| **Enclosure / CM4 Fans** | CM4 Fan: `PF7`, Enclosure Fan: `PF9`, Chamber LEDs: `PD15` | Temperature-regulated chassis cooling |
+| **Tool Extruders & Fans** | 5x EBB36 V1.2 CAN boards; Hotend fan `PA0`, Part fan `PA1` | Extruder: TMC2209 at 0.6A; Part fans dynamically managed by `M106` |
 
-## Calibration ownership
+---
 
-- Cartographer Touch provides production Z homing.
-- Cartographer Scan provides the adaptive bed mesh. The configured mesh spans
-  X `20..320`, Y `45..325` at 55 × 55 samples.
-- Unified Global Input Shaper: Tuned via Cartographer onboard ADXL345 on the
-  shuttle carriage (X: `mzv` @ 43.6 Hz, Y: `mzv` @ 33.4 Hz). Per-tool overrides
-  are commented out in `T0.cfg`..`T4.cfg` to eliminate toolchange overhead and
-  stalls during multi-color prints.
-- kTAMV is loaded from `Printer-Setup/ktamv.cfg` for supervised X/Y comparison.
-  It does not measure Z, save offsets or persist camera/origin state after a
-  Klipper restart.
-- Axiscope and `[tools_calibrate]` are commented rollback material in
-  `calibration-probe.cfg`, not active backends.
-- The kTAMV runtime is pinned to upstream commit `72421f2`, runs on user-service
-  port `8086`, disables cloud upload and carries reviewed multi-object,
-  MF-500 center-highlight and single-sample stdev fixes.
+## 4. 1-Click Mainsail Update & Lean Deployment
 
-Full ShakeTune resonance graphs are tracked in Git under `Generated-Data/ShakeTune/`
-for hardware verification and historical comparison.
-
-## Deployment behavior
-
-First install without a persistent All-Config checkout:
-
+### 4.1. One-Time Setup on Printer (Sparse Checkout - Saves 97.7% Disk Space)
+To avoid downloading 600MB+ of PC backups and git history, run via SSH once:
 ```bash
-tmp_dir="$(mktemp -d /tmp/all-config-voron.XXXXXX)"
-curl -fsSL https://github.com/IDcrazy123/All-Config-Voron/archive/refs/heads/main.tar.gz \
-  | tar -xz -C "${tmp_dir}" --strip-components=1
-bash "${tmp_dir}/config/scripts/install.sh"
-rm -rf -- "${tmp_dir}"
-sudo systemctl restart moonraker klipper
+git clone --depth=1 --filter=blob:none --sparse https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+cd ~/All-Config-Voron
+git sparse-checkout set config
+sudo systemctl restart moonraker
 ```
 
-Update an existing deployment:
-
-```bash
-cd ~/printer_data/config
-bash scripts/update.sh
-sudo systemctl restart moonraker klipper
-```
-
-`install.sh` performs these checks before deployment:
-
-1. All six KTC-Easy readonly entries are valid symlinks with existing targets.
-2. If the kTAMV include is active, the pinned checkout, isolated Python, user
-   service, two exact Klipper symlinks and reviewed runtime patches exist.
-3. The installed `tool_crash.py` is already patched or exactly matches the
-   reviewed patch preimage.
-4. A timestamped snapshot is created under
-   `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
-
-Deployment excludes Markdown, `Generated-Data/`, downloaded snapshots, local
-diagnostics and `toolchanger/readonly-configs/`. The
-scripts do not restart services.
-
-`cleanup-voron.sh` lists legacy cleanup candidates by default. `--apply` only
-removes the displayed `config.update-backup-*`, `config.backup-*` and
-`~/axiscope.bak` targets after strict path checks. It does not prune normal
-`config_backups/` snapshots.
-
-## Safe validation
-
-After a documentation-only change, no printer action is required. After a
-configuration deployment while the printer is idle:
-
-```text
-CALIBRATION_STATUS
-QUERY_ENDSTOPS
-KTAMV_STATUS
-```
-
-These commands do not intentionally home, probe or select a tool. Do not use
-`KTAMV_CALIB_CAMERA` or `KTAMV_FIND_NOZZLE_CENTER` for this check: both move X/Y.
+### 4.2. Daily Operations
+- Push commits from PC (`git push origin main`).
+- In **Mainsail > Settings > Update Manager**, click **Update** on `All-Config-Voron`.
+- Moonraker pulls changes, executes `install.sh` (which verifies KTC symlinks, retains only the 5 most recent backups, purges markdown files, and deploys configs), then restarts Klipper.

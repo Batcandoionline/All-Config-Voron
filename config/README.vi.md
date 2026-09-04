@@ -1,154 +1,76 @@
-# Payload cấu hình Klipper đang hoạt động
+# Cấu hình Vận hành Klipper (Production Payload)
 
 [English](README.md) | [Tiếng Việt](README.vi.md)
 
-Thư mục này được triển khai vào `~/printer_data/config` bằng
-`scripts/install.sh` và `scripts/update.sh`. Markdown chỉ là tài liệu và bị loại
-khỏi payload triển khai.
+Thư mục này chứa toàn bộ cấu hình Klipper đang hoạt động, được đồng bộ sang `~/printer_data/config` trên máy in. Các file tài liệu (`*.md`) tự động được loại trừ khi triển khai.
 
-## Quyền sở hữu và hợp đồng include
+---
 
-`printer.cfg` hiện nạp:
+## 1. Chuỗi nạp module (`printer.cfg`)
+
+File gốc `printer.cfg` đóng vai trò điều phối trung tâm và nạp các module theo thứ tự:
 
 ```ini
-[include mainsail.cfg]
-[include toolchanger/readonly-configs/toolchanger-include.cfg]
-[include Printer-Setup/calibration-probe.cfg]
-[include Printer-Setup/ktamv.cfg]
-[include Printer-Setup/hardware.cfg]
-[include Printer-Setup/fans-leds.cfg]
-[include Printer-Setup/input-shaper.cfg]
-[include Printer-Setup/nozzle-clean.cfg]
-[include Printer-Setup/prime-lines.cfg]
-[include Printer-Setup/print-macros.cfg]
-[include Printer-Setup/tool-crash.cfg]
+[include mainsail.cfg]                                          # Macro giao diện Mainsail Web
+[include toolchanger/readonly-configs/toolchanger-include.cfg]  # KTC-Easy core (symlink)
+[include Printer-Setup/calibration-probe.cfg]                   # Đầu dò Cartographer & Bed mesh
+[include Printer-Setup/ktamv.cfg]                               # Camera kTAMV đối chiếu XY
+[include Printer-Setup/hardware.cfg]                            # Khai báo stepper, TMC, heater
+[include Printer-Setup/fans-leds.cfg]                           # Quạt thùng, quạt bed, LED
+[include Printer-Setup/input-shaper.cfg]                        # Bộ lọc chống rung Shaper hợp nhất
+[include Printer-Setup/nozzle-clean.cfg]                        # Vệ sinh đầu phun cọ silicon
+[include Printer-Setup/prime-lines.cfg]                         # Đường đùn mồi nhựa từng tool
+[include Printer-Setup/print-macros.cfg]                        # Macro bắt đầu/kết thúc bản in
+[include Printer-Setup/filament-dryer.cfg]                      # Sấy cuộn nhựa trên bàn nhiệt
+[include Printer-Setup/test-speed.cfg]                          # Macro TEST_SPEED & TEST_Z_SPEED
+[include Printer-Setup/tool-crash.cfg]                          # Cảm biến phát hiện rơi/kẹt tool
 ```
 
-KTC-Easy sở hữu toàn bộ file trong `toolchanger/readonly-configs/`. Không sửa,
-thay hoặc chép file thường vào thư mục này. All-Config sở hữu
-`toolchanger/toolchanger-config.cfg`, `toolchanger/tools/T*.cfg` và các override
-trong `Printer-Setup/`.
+---
 
-## Sơ đồ thư mục
+## 2. Phân cấp & Chủ thể quản lý thư mục
 
-```text
-config/
-├── printer.cfg
-├── mainsail.cfg
-├── moonraker.conf
-├── crowsnest.conf
-├── KlipperScreen.conf
-├── Printer-Setup/
-│   ├── calibration-probe.cfg
-│   ├── ktamv.cfg
-│   ├── hardware.cfg
-│   ├── fans-leds.cfg
-│   ├── input-shaper.cfg
-│   ├── nozzle-clean.cfg
-│   ├── prime-lines.cfg
-│   ├── print-macros.cfg
-│   └── tool-crash.cfg
-├── toolchanger/
-│   ├── toolchanger-config.cfg
-│   ├── tools/T0.cfg ... T4.cfg
-│   └── readonly-configs/       # symlink do KTC-Easy sở hữu
-└── scripts/
-    ├── install.sh
-    ├── update.sh
-    ├── cleanup-voron.sh
-    └── patches/
-```
+| Đường dẫn | Chủ thể quản lý | Mô tả & Quy tắc |
+| :--- | :--- | :--- |
+| `printer.cfg` | Người dùng / Git | Cấu hình động học, giới hạn, MCU UUID, include. Chứa khối `#*# <SAVE_CONFIG>`. |
+| `Printer-Setup/*.cfg` | Người dùng / Git | Các module tính năng, macro bảo vệ và định nghĩa chân phần cứng. |
+| `toolchanger/toolchanger-config.cfg` | Người dùng / Git | Tọa độ dock StealthChanger, tốc độ gắp/thả tool, hook đèn LED. |
+| `toolchanger/tools/T0.cfg` ... `T4.cfg` | Người dùng / Git | Thông số động cơ extruder, offset đầu in và nhiệt độ chờ từng tool. |
+| `toolchanger/readonly-configs/` | **KTC-Easy** | **KHÔNG SỬA.** Symlink do installer của `klipper-toolchanger-easy` quản lý. |
+| `scripts/*.sh` | Người dùng / Git | Script triển khai (`install.sh`), cập nhật (`update.sh`), bảo trì (`cleanup-voron.sh`). |
+| `moonraker.conf` | Moonraker / Git | Thiết lập API server, quyền bảo mật và Update Manager. |
+| `crowsnest.conf`, `KlipperScreen.conf` | Hệ thống / Git | Cấu hình stream camera WebRTC và màn hình cảm ứng KlipperScreen. |
 
-## Sơ đồ phần cứng và kinematics xác nhận từ source
+---
 
-| Thành phần | Giá trị đang hoạt động |
-| --- | --- |
-| MCU chính | Manta M8P V2.0, CAN UUID `19b203d75137` |
-| Cartographer | CAN UUID `da13d909ce34`, offset X `0`, Y `35` |
-| Cảm biến Input Shaper | Cartographer onboard ADXL345 (`accel_chip: adxl345`) |
-| Giới hạn chuyển động | Tốc độ tối đa `350 mm/s`, gia tốc `7000 mm/s²`, tốc độ Z `70 mm/s`, gia tốc Z `900 mm/s²` |
-| Endstop X/Y | `PF0` / `PF1`; Y tối thiểu `-10` |
-| Pin step Z | `PG9`, `PB4`, `PG13`, `PB8` |
-| Bù vặn trục | `[axis_twist_compensation]` hoạt động trên X `20..320` |
-| Bed | heater `PA1`, sensor `PB0`, tối đa 120 °C |
-| Sensor chamber | Generic 3950 tại `PB1` |
-| Fan dưới bed | `PF8` |
-| LED chamber | WS2812 tại `PD15` |
-| Switch tool-offset không active | Manta `^PF2` với GND; kTAMV không dùng |
+## 3. Bản đồ Phần cứng & Động học thực tế
 
-CAN UUID, dock và offset production của năm tool được ghi trong
-[README gốc](../README.vi.md), còn giá trị thực nằm trong `toolchanger/tools/`
-và khối `SAVE_CONFIG` của `printer.cfg`.
+| Chức năng | Khai báo Phần cứng / Chân Pin | Giới hạn vận hành |
+| :--- | :--- | :--- |
+| **MCU Chính** | BTT Manta M8P V2.0 (`19b203d75137`) | CANbus 1 Mbps |
+| **Đầu dò / Homing Z** | Cartographer V3 (`da13d909ce34`) | Touch homing + Bed Mesh quét adaptive 55×55 |
+| **Cảm biến Input Shaper**| Onboard ADXL345 trên Cartographer | Gắn trên shuttle; X: MZV 43.6 Hz, Y: MZV 33.4 Hz |
+| **Động cơ CoreXY** | Stepper X: `PE6` / PF0 endstop; Stepper Y: `PE2` / PF1 endstop | Vận tốc max: 350 mm/s (test 500), Gia tốc: 7000 mm/s² (test 15k) |
+| **Khung Z 4 góc (QGL)** | Z0: `PG9`, Z1: `PB4`, Z2: `PG13`, Z3: `PB8` | Vận tốc Z: 70 mm/s (test 80), Gia tốc Z: 900 mm/s² (test 1k) |
+| **Bàn nhiệt AC** | Heater `PA1`, Sensor `PB0` (NTC 100K) | 220V 1000W AC qua SSR, max 120 °C |
+| **Nhiệt độ vỏ / Quạt bed**| Cảm biến vỏ: `PB1` (Generic 3950); Quạt bed: `PF8` | Điều khiển nhiệt độ buồng in tự động |
+| **Quạt CM4 / Vỏ máy** | Quạt CM4: `PF7`, Quạt vỏ máy: `PF9`, LED buồng in: `PD15` | Làm mát tự động theo ngưỡng nhiệt driver & MCU |
+| **Extruder & Quạt Tool** | 5 bo mạch CAN BTT EBB36 V1.2; Quạt tản nhiệt `PA0`, Quạt part `PA1` | Extruder: TMC2209 dòng 0.6A; Quạt part điều hướng tự động qua `M106` |
 
-## Quyền sở hữu calibration
+---
 
-- Cartographer Touch dùng để home Z production.
-- Cartographer Scan tạo adaptive bed mesh. Mesh cấu hình từ X `20..320`,
-  Y `45..325` với 55 × 55 mẫu.
-- Bộ lọc Input Shaper dùng chung (Unified Global Input Shaper): Đo đạc và tinh
-  chỉnh bằng cảm biến ADXL345 trên Cartographer gắn tại shuttle carriage
-  (X: `mzv` @ 43.6 Hz, Y: `mzv` @ 33.4 Hz). Các thiết lập override riêng ở
-  `T0.cfg`..`T4.cfg` được comment out để loại bỏ hoàn toàn độ trễ lệnh đổi tool khi in đa màu.
-- kTAMV được nạp từ `Printer-Setup/ktamv.cfg` để đối chiếu X/Y có giám sát. Nó
-  không đo Z, không lưu offset và mất camera/origin sau Klipper restart.
-- Axiscope và `[tools_calibrate]` chỉ là nội dung rollback đã comment trong
-  `calibration-probe.cfg`, không phải backend hoạt động.
-- Runtime kTAMV được pin tại commit upstream `72421f2`, chạy user service cổng
-  `8086`, tắt cloud upload và có các bản sửa nhiều vật thể, highlight tâm MF-500
-  và stdev một sample đã review.
+## 4. Cập nhật 1-Click trên Mainsail & Tối ưu Bộ nhớ
 
-Toàn bộ biểu đồ phân tích cộng hưởng ShakeTune được theo dõi và lưu trữ trên Git
-trong `Generated-Data/ShakeTune/` để đối chiếu lịch sử và kiểm tra cơ khí.
-
-## Hành vi triển khai
-
-Cài lần đầu mà không giữ All-Config checkout trên CM4:
-
+### 4.1. Khởi tạo 1 lần trên máy in (Sparse Checkout — Tiết kiệm 97.7% dung lượng)
+Để tránh tải hơn 600 MB backup máy tính và lịch sử git cũ, chạy lệnh SSH một lần duy nhất:
 ```bash
-tmp_dir="$(mktemp -d /tmp/all-config-voron.XXXXXX)"
-curl -fsSL https://github.com/IDcrazy123/All-Config-Voron/archive/refs/heads/main.tar.gz \
-  | tar -xz -C "${tmp_dir}" --strip-components=1
-bash "${tmp_dir}/config/scripts/install.sh"
-rm -rf -- "${tmp_dir}"
-sudo systemctl restart moonraker klipper
+git clone --depth=1 --filter=blob:none --sparse https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+cd ~/All-Config-Voron
+git sparse-checkout set config
+sudo systemctl restart moonraker
 ```
 
-Cập nhật lần sau:
-
-```bash
-cd ~/printer_data/config
-bash scripts/update.sh
-sudo systemctl restart moonraker klipper
-```
-
-`install.sh` kiểm tra trước khi deploy:
-
-1. Sáu entry readonly KTC-Easy là symlink hợp lệ và target tồn tại.
-2. Nếu include kTAMV đang bật, checkout được pin, Python riêng, user service, hai
-   symlink Klipper chính xác và các patch runtime đã review phải tồn tại.
-3. `tool_crash.py` đã được patch hoặc khớp đúng preimage đã review.
-4. Tạo snapshot có timestamp tại
-   `~/printer_data/config_backups/config-install-YYYYMMDD-HHMMSS/`.
-
-Deployment loại Markdown, `Generated-Data/`, snapshot tải về, chẩn đoán local
-và `toolchanger/readonly-configs/`. Script không tự
-restart service.
-
-`cleanup-voron.sh` mặc định chỉ liệt kê candidate legacy. `--apply` chỉ xóa các
-target đã hiện gồm `config.update-backup-*`, `config.backup-*` và
-`~/axiscope.bak` sau khi kiểm tra chặt đường dẫn. Script không tự dọn snapshot
-bình thường trong `config_backups/`.
-
-## Kiểm tra an toàn
-
-Thay đổi chỉ tài liệu không cần thao tác máy in. Sau khi deploy cấu hình lúc máy
-idle có thể chạy:
-
-```text
-CALIBRATION_STATUS
-QUERY_ENDSTOPS
-KTAMV_STATUS
-```
-
-Các lệnh này không chủ động home, probe hoặc chọn tool. Không dùng
-`KTAMV_CALIB_CAMERA` hoặc `KTAMV_FIND_NOZZLE_CENTER` để kiểm tra vì cả hai jog X/Y.
+### 4.2. Vận hành hàng ngày
+- Đẩy code mới từ máy tính lên GitHub: `git push origin main`.
+- Trên web **Mainsail > Cài đặt > Trình quản lý cập nhật**, bấm nút **Update** tại mục `All-Config-Voron`.
+- Moonraker tự động kéo code, chạy `install.sh` (kiểm tra an toàn symlink, dọn sạch file `.md`, tự động giữ tối đa 5 bản backup gần nhất, rsync sang `~/printer_data/config`) và khởi động lại Klipper.
