@@ -321,3 +321,44 @@ Copy the active OrcaSlicer user presets directly from AppData into the repositor
 ### Kết quả
 - Hoàn thành module hóa 100% sạch sẽ, an toàn, đã kiểm chứng trực tiếp trên máy in đang vận hành.
 
+---
+
+## 9. Tải clone toàn bộ cấu hình máy in, lập danh sách đối chiếu 51 file và tích hợp Moonraker Update Manager 1-Click
+
+### Mục tiêu
+- Tải về (clone) toàn bộ cây thư mục cấu hình `/home/voron/printer_data/config` từ máy in thật `192.168.1.43` về máy tính (`extras/Config download/config-20260904-205500/`).
+- Thực hiện kiểm tra băm SHA-256 đối chiếu 1:1 giữa kho Git (`config/`) và máy in thật, phân loại rõ ràng 51 file theo nguồn gốc và phần mềm quản lý (Git, KTC-Easy, kTAMV, ShakeTune, Crowsnest, KlipperScreen, Cartographer SAVE_CONFIG).
+- Nghiên cứu cơ chế hoạt động của Moonraker `[update_manager]` và cấu hình giải pháp cập nhật 1-click trực tiếp trên giao diện Mainsail UI thay vì phải SSH thủ công như trước.
+- Biên soạn tài liệu chi tiết tại `extras/docs/danh-sach-doi-chieu-va-huong-dan-update-mainsail.md`.
+
+### File đã sửa đổi & bổ sung
+- `config/moonraker.conf` — Bổ sung section `[update_manager All-Config-Voron]`.
+- `extras/docs/danh-sach-doi-chieu-va-huong-dan-update-mainsail.md` — [MỚI] Tài liệu đối chiếu 51 file và hướng dẫn cập nhật Mainsail chi tiết.
+- `extras/Config download/config-20260904-205500/` — Lưu trữ toàn bộ 51 file clone từ máy in thật.
+- `extras/backups/pre-add-moonraker-update-manager-20260904-205500/` — Bản sao lưu `moonraker.conf` trước khi sửa.
+
+### Kết quả đối chiếu 51 file trên máy in thật
+1. **Trùng khớp 100% (Identical byte-for-byte / normalized line endings):** 44 file gồm toàn bộ macro, phần cứng, quạt, LED, tool T0–T4, readonly symlinks, patch kTAMV, scripts.
+2. **Khối `SAVE_CONFIG`:** 179 dòng dữ liệu hiệu chuẩn Cartographer touch/scan và PID trên repo khớp 100% với máy in thật.
+3. **Phân nhóm quản lý:**
+   - *Nhóm Git/Người dùng:* `printer.cfg`, `Printer-Setup/*.cfg`, `toolchanger/toolchanger-config.cfg`, `toolchanger/tools/T*.cfg`, `scripts/*.sh`.
+   - *Nhóm Plugin KTC-Easy (Readonly):* `toolchanger/readonly-configs/*.cfg` (symlink, không sửa tay).
+   - *Nhóm Dịch vụ bên ngoài:* `crowsnest.conf`, `KlipperScreen.conf`, `mainsail.cfg`.
+   - *Nhóm Runtime/Dynamic (không đưa lên Git):* `Generated-Data/ShakeTune/`, `.moonraker.conf.bkp`.
+
+### Tích hợp Moonraker Update Manager
+- **Cấu hình bổ sung trong `moonraker.conf`:**
+  ```ini
+  [update_manager All-Config-Voron]
+  type: git_repo
+  path: ~/All-Config-Voron
+  origin: https://github.com/IDcrazy123/All-Config-Voron.git
+  primary_branch: main
+  managed_services: klipper
+  install_script: config/scripts/install.sh
+  ```
+- **Lý do áp dụng mô hình này:** Giúp tránh hoàn toàn lỗi `DIRTY` repo vốn xảy ra nếu biến trực tiếp `~/printer_data/config` thành git repo (do Klipper liên tục cập nhật `SAVE_CONFIG`).
+- **Bước kích hoạt 1 lần duy nhất:** Chạy lệnh SSH clone ban đầu `git clone https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron` và restart Moonraker. Sau đó mọi lần cập nhật chỉ cần bấm nút Update trên Mainsail.
+- Đã upload `moonraker.conf` mới lên máy in và restart Moonraker thành công.
+
+
