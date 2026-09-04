@@ -52,3 +52,46 @@ Khắc phục hiện tượng khi bấm cancel bản in máy không cất tool v
 
 ### Vấn đề còn lại
 - Nạp cấu hình lên máy in thực tế và khởi động lại Klipper (`FIRMWARE_RESTART` hoặc restart dịch vụ) để áp dụng macro mới.
+
+---
+
+## 2. Cấu hình START_DRYER hiển thị tham số trực tiếp trên Mainsail giống CLEAN_NOZZLE
+
+### Mục tiêu
+Thay đổi logic hiển thị của macro sấy nhựa `START_DRYER`: thay vì bật cửa sổ popup modal (`action:prompt_begin`) che toàn bộ màn hình Mainsail khi click, chuyển sang hiển thị bảng/khung nhập tham số trực tiếp (inline drawer/form) tương tự như macro `CLEAN_NOZZLE`.
+
+### File đã sửa đổi
+- `config/Printer-Setup/print-macros.cfg` — Tái cấu trúc macro `START_DRYER`, tích hợp trực tiếp các tham số `MATERIAL`, `BED`, `CHAMBER`, `TIME`, `TIME_HOURS`, `FAN`, `TARGET_HUMIDITY`, `PARK` với giá trị mặc định rõ ràng; loại bỏ các macro phụ `_DRYER_SELECT`, `_DRYER_PROMPT_CLOSE`, `_START_DRYER` và các lệnh `action:prompt_*`.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-dryer-param-ui-20260904-070258/print-macros.cfg)
+- [README.md (Backup Record)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-dryer-param-ui-20260904-070258/README.md)
+
+### Chi tiết thay đổi
+- Chuyển toàn bộ logic điều khiển sấy vào trực tiếp macro `START_DRYER`:
+  - Khai báo các tham số đầu vào với `default(...)`:
+    - `MATERIAL`: mặc định `"PLA"`. Tự động nhận diện chuỗi vật liệu linh hoạt (`"PLA" in material`, `"TPU" in material`, `"PETG" in material`, `"ABS" in material`, `"ASA" in material`, `"NYLON" in material`, `"PC" in material`).
+    - `BED`: mặc định `0.0`. Nếu người dùng để `0.0`, macro tự lấy nhiệt độ theo preset của vật liệu (PLA: 50°C, TPU: 60°C, PETG: 70°C, ABS/ASA: 90°C, NYLON: 100°C, PC: 105°C). Nếu người dùng nhập giá trị `> 0`, giá trị này sẽ ghi đè preset.
+    - `CHAMBER`: mặc định `0.0`. Tự động theo preset nếu để `0.0`.
+    - `TIME`: mặc định `0` (phút). Tự động theo preset nếu để `0`.
+    - `TIME_HOURS`: mặc định `0.0` (giờ).
+    - `FAN`: mặc định `0.0`. Tự động theo preset nếu để `0.0`.
+    - `TARGET_HUMIDITY`: mặc định `0.0`.
+    - `PARK`: mặc định `1` (tự động nâng Z an toàn và cất tool về dock).
+  - Loại bỏ hoàn toàn khối `action:prompt_begin`, `action:prompt_button`, `action:prompt_show` gây mở cửa sổ popup modal mới.
+  - Xóa các macro thừa `_START_DRYER`, `_DRYER_SELECT`, `_DRYER_PROMPT_CLOSE`.
+
+### Lý do
+- Khắc phục sự bất tiện khi người dùng nhấn vào nút macro `START_DRYER` trên giao diện Mainsail: trước đây lệnh `action:prompt_begin` làm bung một popup modal che màn hình.
+- Chuẩn hóa trải nghiệm người dùng trên Mainsail theo đúng phong cách của `CLEAN_NOZZLE`: khi click vào macro, Mainsail tự động hiển thị form tham số trực tiếp, cho phép người dùng bấm chạy ngay với các giá trị mặc định của PLA hoặc nhanh chóng đổi tên vật liệu / nhiệt độ / thời gian trước khi thực thi.
+
+### Kiểm tra
+- Kiểm tra cú pháp Jinja2: Đạt (toàn bộ các macro trong `print-macros.cfg` parse thành công không có lỗi cú pháp).
+- Kiểm tra logic preset: Bảo toàn 100% các preset nhiệt độ bàn, nhiệt độ buồng, quạt đối lưu, nâng Z tối thiểu 200 mm, `UNSELECT_TOOL`, adaptive regulation, và an toàn handoff với `PRINT_START`.
+
+### Kết quả
+- Macro `START_DRYER` trên Mainsail giờ đây mở form tham số inline tiện lợi giống `CLEAN_NOZZLE`, không còn mở cửa sổ popup prompt mới.
+
+### Vấn đề còn lại
+- Nạp cấu hình lên máy in và khởi động lại Klipper để Mainsail tải lại danh sách macro và các tham số mới.
+
