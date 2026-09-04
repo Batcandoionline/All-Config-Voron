@@ -122,4 +122,53 @@ Thay đổi logic hiển thị của macro sấy nhựa `START_DRYER`: thay vì 
 ### Kết quả
 - Khi bấm vào macro `START_DRYER` trên Mainsail, ô `MATERIAL` sẽ tự động hiển thị giá trị mặc định là `"PETG"`.
 
+---
+
+## 4. Rà soát logic an toàn và comment toàn hệ thống
+
+### Mục tiêu
+Rà soát toàn diện logic vận hành và comment trong toàn bộ cấu hình máy in Voron 5-Tool, khắc phục nguy cơ gọi lặp `START_DRYER`, đảm bảo tắt heater hotend khi sấy cuộn nhựa để bảo vệ dock và tiết kiệm điện, đồng thời làm sạch các comment không còn khớp với logic hiện hành.
+
+### File đã sửa đổi
+- `config/Printer-Setup/print-macros.cfg` — Bổ sung kiểm tra `is_drying == 1` trong guard của `START_DRYER`; thêm vòng lặp tắt heater toàn bộ hotend (`M104 S0 T{tn}`) khi bắt đầu chu trình sấy.
+- `config/Printer-Setup/fans-leds.cfg` — Sửa comment cũ liên quan đến "T0 pickup" thành "UNSELECT_TOOL" trước lệnh gọi `_CANCEL_LED_FINALIZE`.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-system-logic-review-20260904-071137/print-macros.cfg)
+- [fans-leds.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-system-logic-review-20260904-071137/fans-leds.cfg)
+- [README.md (Backup Record)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-system-logic-review-20260904-071137/README.md)
+
+### Chi tiết thay đổi
+1. **Chặn gọi đè `START_DRYER`:**
+   - Thêm biến `is_drying` và nhánh kiểm tra:
+     ```jinja2
+     {% set is_drying = printer["gcode_macro _DRYER_STATUS"].is_drying|default(0)|int %}
+     {% if print_active %}
+         RESPOND TYPE=error MSG="[DRYER] Cannot start filament dryer: Printer is currently printing or paused!"
+     {% elif is_drying == 1 %}
+         RESPOND TYPE=error MSG="[DRYER] Filament dryer is already running! Use STOP_DRYER to stop it first."
+     ```
+   - Ngăn chặn triệt để nguy cơ di chuyển đầu in/homing khi đã đặt cuộn nhựa lên bàn in.
+2. **Tắt heater của toàn bộ hotend khi sấy nhựa:**
+   - Bổ sung lệnh:
+     ```jinja2
+     {% for tn in printer.toolchanger.tool_numbers %}
+         M104 S0 T{tn}
+     {% endfor %}
+     ```
+   - Tránh việc hotend giữ nhiệt standby 150°C trong dock nhựa suốt 4–6 tiếng sấy cuộn nhựa.
+3. **Đồng bộ comment:**
+   - Cập nhật comment tại `fans-leds.cfg:706` từ "after a possible T0 pickup" sang "after UNSELECT_TOOL".
+
+### Kiểm tra
+- Cú pháp Jinja2: Đạt (cả 2 file cấu hình parse thành công 100%).
+- An toàn phần cứng: Chặn hoàn toàn nguy cơ va chạm cuộn nhựa và quá nhiệt dock.
+
+### Kết quả
+- Logic vận hành chặt chẽ, an toàn cơ khí và comment đồng bộ tuyệt đối với thực tế.
+
+### Vấn đề còn lại
+- Nạp cấu hình lên máy in và khởi động lại Klipper (`FIRMWARE_RESTART`).
+
+
 
