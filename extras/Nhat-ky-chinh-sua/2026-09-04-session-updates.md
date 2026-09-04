@@ -170,5 +170,45 @@ Rà soát toàn diện logic vận hành và comment trong toàn bộ cấu hìn
 ### Vấn đề còn lại
 - Nạp cấu hình lên máy in và khởi động lại Klipper (`FIRMWARE_RESTART`).
 
+---
+
+## 5. Tích hợp macro TEST_SPEED (Ellis Print Tuning Guide) cho Voron StealthChanger
+
+### Mục tiêu
+Bổ sung công cụ kiểm tra tốc độ (`SPEED`) và gia tốc (`ACCEL`) tối đa cho bộ chuyển động CoreXY, giúp người vận hành xác định ngưỡng mất bước (step skip/loss) thông qua đối chiếu microstep thực tế từ MCU driver (`GET_POSITION`) tại endstop vật lý trước và sau chuỗi chuyển động.
+
+### File đã sửa đổi
+- `config/Printer-Setup/print-macros.cfg` — Bổ sung macro `[gcode_macro TEST_SPEED]`.
+
+### Sao lưu
+- [print-macros.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-add-test-speed-macro-20260904-072226/print-macros.cfg)
+- [README.md (Backup Record)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-add-test-speed-macro-20260904-072226/README.md)
+
+### Chi tiết thay đổi
+- Định nghĩa macro `[gcode_macro TEST_SPEED]`:
+  - **Tham số cấu hình:**
+    - `SPEED`: mặc định theo `max_velocity` (350 mm/s).
+    - `ACCEL`: mặc định theo `max_accel` (7000 mm/s²).
+    - `ITERATIONS`: mặc định 5 chu kỳ.
+    - `MIN_CRUISE_RATIO`: mặc định 0.5.
+    - `BOUND`: mặc định 20 mm (vùng kiểm tra $X: 20 \rightarrow 328$, $Y: 20 \rightarrow 316$).
+    - `SMALLPATTERNSIZE`: mặc định 20 mm.
+  - **Bảo vệ an toàn cơ khí:**
+    - Di chuyển kiểm tra ở cao độ thấp an toàn $Z = 30\text{ mm}$ (`bound + 10`), nằm hoàn toàn phía dưới các dock đầu in ($Z \ge 200\text{ mm}$).
+    - Tạm ngắt `STOP_CRASH_DETECTION` để lực quán tính giật ở gia tốc cao không kích hoạt báo động va chạm giả.
+    - Homing và cân bàn `QUAD_GANTRY_LEVEL` nếu máy chưa được cân trước đó.
+    - Chạy về sát endstop góc sau bên phải (`X: max - 1, Y: max - 1`), gọi `GET_POSITION` để lưu tọa độ vi bước MCU tham chiếu.
+    - Chạy chuỗi chuyển động chéo lớn, viền hộp lớn và hộp dao động tâm bàn.
+    - Khôi phục giới hạn tốc độ/gia tốc mặc định của máy in.
+    - Homing lại `G28 X Y`, chạy về vị trí endstop và gọi `GET_POSITION` lần hai để đối chiếu bước.
+
+### Kiểm tra
+- Cú pháp Jinja2: Đạt 100%.
+- Tương thích: Hoàn toàn phù hợp với cấu hình CoreXY 350 mm và Cartographer probe.
+
+### Kết quả
+- Macro `TEST_SPEED` sẵn sàng sử dụng trực tiếp trên Mainsail hoặc console gcode.
+
+
 
 
