@@ -137,21 +137,6 @@ rsync -a --delete --itemize-changes \
   --exclude "*.md" \
   "${SOURCE_CONFIG_DIR}/" "${CONFIG_DIR}/"
 
-# Purge any leftover markdown documentation from config directory to keep printer lean
-find "${CONFIG_DIR}" -maxdepth 1 -type f \( -name "*.md" -o -name "*.markdown" \) -delete 2>/dev/null || true
-
-# Prune old config backups on the printer, keeping only the 5 most recent
-if [[ -d "${BACKUP_ROOT}" ]]; then
-  mapfile -t OLD_BACKUPS < <(
-    find "${BACKUP_ROOT}" -maxdepth 1 -mindepth 1 -type d -name "config-install-*" | sort -r | tail -n +6
-  )
-  for old_backup in "${OLD_BACKUPS[@]:-}"; do
-    if [[ -n "${old_backup}" && -d "${old_backup}" ]]; then
-      rm -rf -- "${old_backup}"
-    fi
-  done
-fi
-
 if (( TOOL_CRASH_PATCH_NEEDED )); then
   mkdir -p "${BACKUP_DIR}/runtime"
   cp -a "${TOOL_CRASH_SOURCE}" "${BACKUP_DIR}/runtime/tool_crash.py"
@@ -160,7 +145,6 @@ if (( TOOL_CRASH_PATCH_NEEDED )); then
     < "${TOOL_CRASH_PATCH}" >/dev/null
   echo "Installed tool_crash active-tool validation patch."
 fi
-
 
 echo "Installed configuration from ${SOURCE_CONFIG_DIR}"
 echo "Backup: ${BACKUP_DIR}"

@@ -50,17 +50,29 @@ managed_services: klipper
 install_script: config/scripts/install.sh
 ```
 
-#### Bước kích hoạt (Chỉ làm 1 lần duy nhất qua SSH):
-Mở terminal SSH vào máy in và chạy lệnh:
+#### Bước kích hoạt Tối ưu Bộ nhớ (Chỉ làm 1 lần duy nhất qua SSH):
+Mở terminal SSH vào máy in và chạy chuỗi lệnh **Sparse Clone (Tiết kiệm 97.7% dung lượng bộ nhớ)**:
 ```bash
-git clone https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+# 1. Clone siêu nhẹ chỉ tải thư mục config, bỏ qua toàn bộ 400MB+ extras và lịch sử cũ
+git clone --depth=1 --filter=blob:none --sparse https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+cd ~/All-Config-Voron
+git sparse-checkout set config
+
+# 2. Khởi động lại Moonraker để nhận diện Update Manager
 sudo systemctl restart moonraker
 ```
+
+> [!TIP]
+> **Hiệu quả tối ưu dung lượng ổ cứng trên máy in:**
+> - Nếu `git clone` bình thường: Máy in phải tải **>610 MB** (do kho chứa 427MB backups/zips trong `extras/` và 169MB `.git`).
+> - Với `sparse-checkout`: Máy in **CHỈ TẢI ĐÚNG 14 MB** (thư mục `config/`), tiết kiệm tới **595 MB (97.7%)** bộ nhớ thẻ nhớ / eMMC của Raspberry Pi!
+> - Trạng thái Git vẫn sạch tuyệt đối (`pristine: true`), Moonraker nhận diện và cho phép cập nhật 1-Click bình thường.
 
 **Kể từ sau bước này:**
 - Trong Mainsail (mục **Settings > Machine / Update Manager**), bạn sẽ thấy mục **All-Config-Voron**.
 - Khi đẩy code mới lên GitHub từ PC (`git push`), Mainsail sẽ hiện thông báo cập nhật kèm nút **Update**.
-- Bấm **Update** trên web Mainsail: máy in sẽ tự tải code, tự backup, kiểm tra an toàn, đồng bộ file và khởi động lại Klipper. Hoàn toàn không cần gõ lệnh SSH.
+- Bấm **Update** trên web Mainsail: máy in sẽ tự tải code, tự backup (chỉ giữ tối đa 5 bản gần nhất), tự động dọn dẹp các file `.md`, kiểm tra an toàn, đồng bộ file và khởi động lại Klipper. Hoàn toàn không cần gõ lệnh SSH.
+
 
 ---
 

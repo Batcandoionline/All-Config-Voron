@@ -361,4 +361,39 @@ Copy the active OrcaSlicer user presets directly from AppData into the repositor
 - **Bước kích hoạt 1 lần duy nhất:** Chạy lệnh SSH clone ban đầu `git clone https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron` và restart Moonraker. Sau đó mọi lần cập nhật chỉ cần bấm nút Update trên Mainsail.
 - Đã upload `moonraker.conf` mới lên máy in và restart Moonraker thành công.
 
+---
+
+## 10. Tối ưu bộ nhớ máy in, loại bỏ file README thừa và nâng cấp kịch bản bảo trì
+
+### Mục tiêu
+- Xóa bỏ hoàn toàn 2 file tài liệu thừa `README.md` và `README.vi.md` khỏi thư mục cấu hình vận hành `/home/voron/printer_data/config/` trên máy in thật.
+- Nghiên cứu quy trình cập nhật siêu nhẹ (Lean Update) giúp máy in Raspberry Pi / CM4 không bị phình to dung lượng ổ cứng (eMMC/SD card) bởi các file lịch sử Git, bản sao lưu cũ và tài liệu dư thừa.
+- Nâng cấp `config/scripts/install.sh` và `config/scripts/cleanup-voron.sh` với cơ chế tự động dọn dẹp file markdown và giới hạn lưu trữ tối đa 5 bản sao lưu gần nhất.
+
+### File đã sửa đổi & bổ sung
+- `config/scripts/install.sh` — Bổ sung logic tự động xóa `*.md` trong `CONFIG_DIR` và tự động prune các bản sao lưu cũ trong `config_backups/` (chỉ giữ 5 bản gần nhất).
+- `config/scripts/cleanup-voron.sh` — Nâng cấp tính năng tìm và xóa các bản sao lưu thừa cũng như tài liệu markdown.
+- `extras/docs/danh-sach-doi-chieu-va-huong-dan-update-mainsail.md` — Cập nhật hướng dẫn Git sparse-checkout tối ưu 97.7% dung lượng.
+- `extras/backups/pre-optimize-install-and-cleanup-20260904-210500/` — Bản sao lưu script trước khi sửa.
+
+### Kết quả đo đạc & Giải pháp tối ưu
+1. **Phát hiện dung lượng dư thừa:**
+   - Thư mục `extras/` trên máy tính nặng tới **427 MB** (do chứa các bản backup, zip archive, tài liệu PDF 5.2MB).
+   - Thư mục `.git/` nặng **169 MB**.
+   - Tổng kho Git lên tới **610 MB**, trong khi thư mục `config/` mà máy in cần chỉ nặng **14 MB**.
+2. **Giải pháp Sparse-Checkout siêu nhẹ cho máy in:**
+   - Thay vì clone cả 610 MB, áp dụng lệnh:
+     ```bash
+     git clone --depth=1 --filter=blob:none --sparse https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+     cd ~/All-Config-Voron
+     git sparse-checkout set config
+     ```
+   - Giúp máy in **chỉ tải đúng 14 MB** (tiết kiệm 595 MB ~ 97.7% dung lượng).
+   - Moonraker Update Manager vẫn kiểm tra và cập nhật hoàn toàn bình thường vì Git status báo trạng thái sạch (`clean`).
+3. **Thanh trừng tài liệu thừa:**
+   - Đã gửi yêu cầu DELETE qua Moonraker API, xóa sạch `README.md` và `README.vi.md` trên máy in thật.
+   - Thư mục `~/printer_data/config/` trên máy in hiện tại chỉ còn đúng 8 file gốc sạch sẽ.
+   - Đã upload `install.sh` và `cleanup-voron.sh` mới lên máy in thành công.
+
+
 
