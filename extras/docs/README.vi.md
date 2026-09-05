@@ -10,7 +10,7 @@ lại sẽ làm mất ý nghĩa rollback/audit.
 Baseline của lần cập nhật này là config production hiện tại, toàn bộ Markdown
 trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
 
-## Tài liệu song ngữ hiện hành
+## Tài liệu hiện hành
 
 | Chủ đề | English | Tiếng Việt |
 | --- | --- | --- |
@@ -19,7 +19,8 @@ trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
 | Đồng bộ/profile OrcaSlicer | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | Vận hành StealthChanger | [Hướng dẫn](huong-dan-he-thong-stealthchanger.en.md) | [Hướng dẫn](huong-dan-he-thong-stealthchanger.md) |
 | Sử dụng kTAMV và đối chiếu phương pháp | [Hướng dẫn](ktamv-usage-comparison.en.md) | [Hướng dẫn](ktamv-usage-comparison.vi.md) |
-| Đề xuất ToolVision đo XY lặp | [Đề xuất](toolvision-xy-repeat-average-proposal.en.md) | [Đề xuất](toolvision-xy-repeat-average-proposal.vi.md) |
+| Đo kiểm TEST_SPEED & Input Shaper (04/09/2026) | — | [Báo cáo](danh-gia-input-shaper-va-test-speed-2026-09-04.md) |
+| Cập nhật 1-Click Mainsail & Đối chiếu 51 file (04/09/2026) | — | [Hướng dẫn](danh-sach-doi-chieu-va-huong-dan-update-mainsail.md) |
 
 ## Nội dung lịch sử và retired
 
@@ -33,9 +34,9 @@ trong repository và commit upstream kTAMV `72421f2`, review ngày 2026-08-31.
   file không còn được `printer.cfg` include; README có cả hai ngôn ngữ.
 - [`retired-configs/2026-08-31-toolvision-removal/`](../retired-configs/2026-08-31-toolvision-removal/README.md):
   CFG ToolVision cuối cùng của máy, giữ nguyên byte sau khi chuyển sang kTAMV.
-- [Hướng dẫn tích hợp ToolVision](toolvision-integration-guide.vi.md) và
-  [evidence/trạng thái UX Z](toolvision-z-calibration-ux-proposal.vi.md): bằng
-  chứng implementation đã retired, không mô tả backend active.
+- **ToolVision docs & proposals:** Toàn bộ các hướng dẫn cài đặt và đề xuất cũ liên quan tới ToolVision
+  đã được loại bỏ khỏi `docs/` để tránh sai lệch cấu hình; dữ liệu lịch sử được bảo toàn trong Git và bản
+  sao lưu [`pre-replace-toolvision-with-ktamv-20260831-113047`](../backups/pre-replace-toolvision-with-ktamv-20260831-113047/README.md).
 - `extras/Config download/`: snapshot tải từ máy, không phải tài liệu repository
   hiện hành và không được sửa.
 

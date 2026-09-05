@@ -11,7 +11,7 @@ Source-review baseline for this documentation pass: current production config,
 the full repository Markdown corpus and kTAMV upstream commit `72421f2`, reviewed
 on 2026-08-31.
 
-## Current bilingual documentation
+## Current documentation
 
 | Topic | English | Vietnamese |
 | --- | --- | --- |
@@ -20,7 +20,8 @@ on 2026-08-31.
 | OrcaSlicer sync/profiles | [README](../../Orca%20Config/README.md) | [README](../../Orca%20Config/README.vi.md) |
 | StealthChanger operation | [Guide](huong-dan-he-thong-stealthchanger.en.md) | [Guide](huong-dan-he-thong-stealthchanger.md) |
 | kTAMV usage and method comparison | [Guide](ktamv-usage-comparison.en.md) | [Guide](ktamv-usage-comparison.vi.md) |
-| ToolVision repeated-XY proposal | [Proposal](toolvision-xy-repeat-average-proposal.en.md) | [Proposal](toolvision-xy-repeat-average-proposal.vi.md) |
+| TEST_SPEED & Input Shaper Evaluation (2026-09-04) | — | [Report (vi)](danh-gia-input-shaper-va-test-speed-2026-09-04.md) |
+| Mainsail 1-Click Update & 51-file cross-check (2026-09-04) | — | [Guide (vi)](danh-sach-doi-chieu-va-huong-dan-update-mainsail.md) |
 
 ## Historical and retired material
 
@@ -34,9 +35,9 @@ on 2026-08-31.
   files no longer included by `printer.cfg`; README contains both languages.
 - [`retired-configs/2026-08-31-toolvision-removal/`](../retired-configs/2026-08-31-toolvision-removal/README.md):
   the final machine ToolVision CFG retained byte-for-byte after kTAMV cutover.
-- [ToolVision integration guide](toolvision-integration-guide.en.md) and
-  [Z UX evidence/status](toolvision-z-calibration-ux-proposal.md): retired
-  implementation evidence; neither describes the active backend.
+- **ToolVision docs & proposals:** All retired ToolVision integration guides and proposal drafts
+  were removed from `docs/` to eliminate stale or conflicting configuration instructions; historical
+  snapshots are preserved in Git and backup [`pre-replace-toolvision-with-ktamv-20260831-113047`](../backups/pre-replace-toolvision-with-ktamv-20260831-113047/README.md).
 - `extras/Config download/`: downloaded printer snapshots. They are not current
   repository documentation and are not edited.
 

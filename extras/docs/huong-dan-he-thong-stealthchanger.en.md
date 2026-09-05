@@ -33,6 +33,8 @@ input-shaper.cfg
 nozzle-clean.cfg
 prime-lines.cfg
 print-macros.cfg
+filament-dryer.cfg
+test-speed.cfg
 tool-crash.cfg
 ```
 
@@ -164,9 +166,7 @@ and validate independently.
 
 The active kTAMV backend does not measure Z. It reports X/Y only, keeps camera
 calibration/origin in RAM and does not save tool offsets. See the
-[kTAMV usage and method comparison](ktamv-usage-comparison.en.md). The old
-[ToolVision integration guide](toolvision-integration-guide.en.md) is retained
-only as retired evidence.
+[kTAMV usage and method comparison](ktamv-usage-comparison.en.md).
 
 ## 9. Input shaper
 
@@ -175,11 +175,19 @@ onboard ADXL345 on the carriage shuttle: X `mzv` 43.6 Hz/damping 0.124 and
 Y `mzv` 33.4 Hz/damping 0.080. Per-tool overrides in T0–T4 are commented out to eliminate
 toolchange stalls and latency. The resonance tester targets `accel_chip: adxl345`;
 ShakeTune writes under `Generated-Data/ShakeTune` and keeps 10 results, tracked in Git.
+For benchmark details, see [TEST_SPEED & Input Shaper Evaluation](danh-gia-input-shaper-va-test-speed-2026-09-04.md).
 
 ## 10. Update and verification
 
 Update only while idle:
 
+### Method 1: 1-Click Update directly in Mainsail UI (Recommended)
+After pushing code to GitHub:
+- Navigate to **Settings > Machine / Update Manager** in Mainsail web UI.
+- Locate **All-Config-Voron** and click **Update**: Moonraker will pull the repository, run safety preflights, create a backup, rsync configs, and restart Klipper automatically.
+- See [Mainsail 1-Click Update Guide & Cross-Check](danh-sach-doi-chieu-va-huong-dan-update-mainsail.md).
+
+### Method 2: Manual Update via SSH
 ```bash
 cd ~/printer_data/config
 bash scripts/update.sh

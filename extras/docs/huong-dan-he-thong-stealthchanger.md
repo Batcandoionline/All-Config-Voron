@@ -32,6 +32,8 @@ input-shaper.cfg
 nozzle-clean.cfg
 prime-lines.cfg
 print-macros.cfg
+filament-dryer.cfg
+test-speed.cfg
 tool-crash.cfg
 ```
 
@@ -160,8 +162,6 @@ thay baseline đang in tốt; cần lặp cùng method/nhiệt độ và kiểm 
 
 kTAMV active không đo Z. Nó chỉ báo X/Y, giữ camera calibration/origin trong RAM
 và không lưu offset tool. Xem [hướng dẫn sử dụng và đối chiếu kTAMV](ktamv-usage-comparison.vi.md).
-[Hướng dẫn ToolVision cũ](toolvision-integration-guide.vi.md) chỉ còn là evidence
-đã retired.
 
 ## 9. Input shaper
  
@@ -170,11 +170,19 @@ Cartographer onboard ADXL345 trên carriage shuttle: X `mzv` 43.6 Hz/damping 0.1
 Y `mzv` 33.4 Hz/damping 0.080. Cấu hình riêng trong T0–T4 được comment out để loại bỏ
 độ trễ gọi lệnh khi đổi tool. Resonance tester sử dụng trực tiếp `accel_chip: adxl345`;
 ShakeTune lưu 10 kết quả gần nhất dưới `Generated-Data/ShakeTune` và được đồng bộ lên Git.
+Chi tiết xem [Tổng hợp kết quả đo kiểm TEST_SPEED & Input Shaper](danh-gia-input-shaper-va-test-speed-2026-09-04.md).
 
 ## 10. Cập nhật và kiểm tra
 
-Chỉ cập nhật khi máy idle:
+Chỉ cập nhật khi máy ở trạng thái rảnh rỗi (idle):
 
+### Cách 1: Cập nhật 1-Click trực tiếp qua Mainsail (Khuyến nghị)
+Sau khi đẩy code mới lên GitHub, trong giao diện web Mainsail:
+- Vào **Settings > Machine / Update Manager**, tìm mục **All-Config-Voron**.
+- Bấm nút **Update**: Moonraker sẽ tự động kéo code mới, tạo bản sao lưu an toàn, đồng bộ cấu hình và khởi động lại Klipper.
+- Chi tiết xem [Hướng dẫn cập nhật Mainsail 1-Click](danh-sach-doi-chieu-va-huong-dan-update-mainsail.md).
+
+### Cách 2: Cập nhật thủ công qua SSH
 ```bash
 cd ~/printer_data/config
 bash scripts/update.sh
