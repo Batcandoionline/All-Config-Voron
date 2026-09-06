@@ -104,4 +104,58 @@ Tăng tốc độ di chuyển trục Z khi chuyển đổi đầu in (tool chang
 ### Kết quả
 Đã cập nhật thành công giới hạn Z và đồng bộ chính xác dữ liệu PID T0 vào Git repo.
 
+---
 
+## 4. Tích hợp và thử nghiệm hệ thống Tool-Klipper-Calibration (TKC)
+
+### Mục tiêu
+- Nghiên cứu kiến trúc dự án mã nguồn mở tự phát triển `IDcrazy123/Tool-Klipper-Calibration` (TKC).
+- Tích hợp module cấu hình TKC vào dự án `Voron 5 Tool`, thiết lập toạ độ an toàn $Z=40\text{mm}$, kết nối camera macro MF-500 và trạm Cartographer Touch V4.
+- Triển khai daemon thị giác máy tính trên máy in (`192.168.1.43`), điều khiển thử nghiệm lấy dữ liệu log thực tế để phân tích cơ chế hoạt động, đánh giá độ ổn định và chỉ ra các điểm lưu ý kỹ thuật/rủi ro.
+
+### File đã sửa đổi
+- `config/Printer-Setup/tool-calibrator.cfg` — Tạo mới module cấu hình TKC: khai báo section `[tool_calibrator]`, tham số trạm camera ($X:170, Y:20, Z:40$), safe_z 40mm, hook điều khiển đèn LED chống lóa và các macro vận hành (`CALIBRATION_TEST_VISION`, `CENTER_NOZZLE`, `CALIBRATE_ALL_TOOLS`).
+- `config/printer.cfg` — Include module `Printer-Setup/tool-calibrator.cfg`.
+- `config/Printer-Setup/calibration-probe.cfg` — Đổi tên macro cũ `[gcode_macro CALIBRATION_STATUS]` thành `[gcode_macro KTAMV_CALIBRATION_STATUS]` để tránh xung đột với lệnh C/Python cùng tên của TKC.
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-integrate-tkc-testing-20260906-173500/printer.cfg)
+- [calibration-probe.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-integrate-tkc-testing-20260906-173500/calibration-probe.cfg)
+
+### Chi tiết thay đổi & Thiết lập môi trường thực tế
+1. **Thiết lập Daemon Thị giác nền trên Host (`192.168.1.43`):**
+   - Clone repo `Tool-Klipper-Calibration` vào `/home/voron/Tool-Klipper-Calibration`.
+   - Cấu hình user systemd service `~/.config/systemd/user/tool_calibrator.service` chạy trên cổng `8090` với môi trường Python `~/ktamv-env`.
+   - Tạo các liên kết tượng trưng (symlinks) từ `klippy/extras/` của TKC vào `/home/voron/klipper/klippy/extras/` (`tool_calibrator.py`, `tool_calibrator_station.py`, `safe_navigator.py`, `config_manager.py`, `z_backends/`).
+2. **Cấu hình an toàn trong Klipper:**
+   - Đặt `safe_z: 40.0` và toạ độ mục tiêu camera `camera_target_x: 170.0`, `camera_target_y: 20.0`, `camera_target_z: 40.0`.
+   - Cấu hình hook tắt LED đầu in (`_CALIBRATION_NOZZLE_LED_OFF`) tự động dập tắt `T{tool}_LED` khi vào trạm để chống lóa chói sensor camera.
+   - Định tuyến file lưu trữ offset cách ly vào `Generated-Data/tool_offsets.cfg` để bảo vệ cấu hình gốc.
+
+### Kết quả kiểm tra & Đo đạc thực tế
+- **Khởi động Klipper:** Thành công nạp module `tool_calibrator`, trạng thái Klipper chuyển sang `ready`.
+- **Thử nghiệm quang học trực tiếp (`CALIBRATION_TEST_VISION`):**
+  - Số mẫu: 3/3 frame nhận diện thành công $100\%$.
+  - Toạ độ tâm lỗ vòi phun T0: $U = 679.35\text{ px}, V = 311.65\text{ px}$ (độ phân giải 1280×720).
+  - Bán kính nhận diện: $R = 22.70\text{ px}$.
+  - Độ tin cậy (Confidence): $98.0\%$.
+  - Độ phân tán (Dispersion): $0.20\text{ px}$ (đạt độ ổn định dưới nửa pixel).
+  - Thuật toán khớp: **Tier 0 Curvature (Symmetric)** — trích xuất độ cong và tính nhất quán gradient $360^\circ$ hoàn hảo, hoàn toàn không bị đánh lừa bởi 2 vệt lóa sáng hình tam giác trên nón nozzle TZ V6 2.0.
+- **Tải hệ thống:** Thời gian xử lý frame $\approx 0.4\text{s}$, không gây trễ reactor Klipper, không gây quá tải CPU hay drop packet CAN bus.
+
+### Các điểm lưu ý & Khuyến nghị khắc phục (Dự án tự phát triển TKC)
+1. **Xung đột tên lệnh Gcode/Macro (`CALIBRATION_STATUS`):**
+   - Klipper không cho phép một module Python đăng ký lệnh trùng tên với một `[gcode_macro]` đã tồn tại trong cấu hình.
+   - *Khắc phục đã thực hiện:* Đổi tên macro kTAMV cũ thành `KTAMV_CALIBRATION_STATUS`.
+   - *Khuyến nghị cho TKC:* Trong `tool_calibrator.py`, nên thêm tiền tố rõ ràng như `TKC_STATUS` hoặc kiểm tra `self.gcode.commands` trước khi đăng ký để tránh xung đột trên các máy in có macro cộng đồng.
+2. **Nguy cơ lỗi trùng Section `[tool T*]` khi lưu file cấu hình:**
+   - Trong Klipper, parser không cho phép trùng lặp section header (ngoại trừ khối SAVE_CONFIG do `save_config.py` quản lý).
+   - Nếu TKC lưu file `tool_offsets.cfg` chứa `[tool T1]` mà file đó được `[include]` vào `printer.cfg`, Klipper sẽ báo lỗi dừng máy `Section 'tool T1' already exists`.
+   - *Khuyến nghị cho TKC:* Với các hệ thống chạy KTC-Easy, nên hỗ trợ backend lưu offset qua macro KTC (`SAVE_TOOL_PARAMETER T={t} PARAMETER=gcode_x_offset`) hoặc chỉ lưu tọa độ trạm mà không tự động tạo lại header `[tool T*]`.
+3. **Đường dẫn Snapshot trên Crowsnest Camera-Streamer:**
+   - Camera-streamer WebRTC phục vụ endpoint ảnh tĩnh tại `/snapshot.jpg`. Cấu hình cũ `/?action=snapshot` của mjpg-streamer trả về mã lỗi 404.
+4. **Import tương đối trong Server Daemon:**
+   - File `server/tool_calibrator_server.py` chứa các lệnh import dạng `from .stream_grabber ...`. Cần bắt buộc chạy dưới dạng package module (`python3 -m server.tool_calibrator_server`).
+
+### Vấn đề còn lại
+Hệ thống TKC đã được tích hợp ổn định ở chế độ thử nghiệm an toàn, daemon thị giác đang hoạt động bình thường trên cổng 8090, sẵn sàng cho các bước cân chỉnh tự động tiếp theo khi người vận hành yêu cầu.
