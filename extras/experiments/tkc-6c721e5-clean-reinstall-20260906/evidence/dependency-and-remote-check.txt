@@ -1,0 +1,10 @@
+No broken requirements found.
+flask=3.0.3
+waitress=3.0.2
+opencv-python-headless=5.0.0.93
+numpy=2.4.6
+requests=2.34.2
+urllib3=2.7.0
+remote_main=6c721e5798184da1bf92445dbf345141b326ecc2
+head=6c721e5798184da1bf92445dbf345141b326ecc2
+## main...origin/main

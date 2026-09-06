@@ -1,0 +1,16 @@
+● tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service
+     Loaded: loaded (/home/voron/.config/systemd/user/tool_calibrator.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2026-09-06 20:07:17 +07; 26min ago
+   Main PID: 9705 (python3)
+      Tasks: 12 (limit: 3708)
+        CPU: 3.261s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/tool_calibrator.service
+             └─9705 /home/voron/Tool-Klipper-Calibration/env/bin/python3 -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg --mpp 0.023
+
+Sep 06 20:07:17 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Initialized Camera URL: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.affine_transform]: Updated MPP scale to: 0.023000 mm/pixel
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Initialized Scale MPP: 0.02300 mm/px
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Starting Tool-Klipper-Calibration Vision Daemon on 127.0.0.1:8090
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [waitress]: Serving on http://127.0.0.1:8090

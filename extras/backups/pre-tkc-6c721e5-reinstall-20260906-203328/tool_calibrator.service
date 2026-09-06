@@ -1,0 +1,16 @@
+[Unit]
+Description=Tool-Klipper-Calibration Machine Vision Background Service
+After=network-online.target crowsnest.service klipper.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/voron/Tool-Klipper-Calibration
+ExecStart=/home/voron/Tool-Klipper-Calibration/env/bin/python3 -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg --mpp 0.023
+Restart=always
+RestartSec=3s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

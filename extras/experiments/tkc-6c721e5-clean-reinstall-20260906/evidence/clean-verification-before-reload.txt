@@ -1,0 +1,18 @@
+SOURCE
+source_absent=True
+PREFLIGHT
+preflight_absent=True
+SERVICE
+Failed to get unit file state for tool_calibrator.service: No such file or directory
+inactive
+unit_absent=True
+PORTS
+LISTEN 0      1024                       0.0.0.0:8086       0.0.0.0:*    users:(("python",pid=7141,fd=7))
+LINKS
+CONFIG
+ACTIVE_CFG
+machine_cfg_absent=True
+offsets_absent=True
+ASVC
+PROCESSES
+11711 bash -c set +e; echo SOURCE; test ! -e /home/voron/Tool-Klipper-Calibration; echo source_absent=\True; echo PREFLIGHT; test ! -e /home/voron/tkc-preflight-6c721e5; echo preflight_absent=\True; echo SERVICE; systemctl --user is-enabled tool_calibrator.service 2>&1; systemctl --user is-active tool_calibrator.service 2>&1; test ! -e /home/voron/.config/systemd/user/tool_calibrator.service; echo unit_absent=\True; echo PORTS; ss -ltnp | grep -E ':(8090|8086) ' || true; echo LINKS; find /home/voron/klipper/klippy/extras -maxdepth 2 -type l -lname '/home/voron/Tool-Klipper-Calibration/*' -print; find /home/voron/printer_data/config/tool_calibrator -maxdepth 1 -type l -print 2>/dev/null; echo CONFIG; grep -n -E 'tool_calibrator|tool_offsets|Tool-Klipper|TKC' /home/voron/printer_data/config/printer.cfg /home/voron/printer_data/config/moonraker.conf || true; echo ACTIVE_CFG; test ! -e /home/voron/printer_data/config/Printer-Setup/tool-calibrator.cfg; echo machine_cfg_absent=\True; test ! -e /home/voron/printer_data/config/tool_offsets.cfg; echo offsets_absent=\True; echo ASVC; grep -n tool_calibrator /home/voron/printer_data/moonraker.asvc || true; echo PROCESSES; pgrep -af 'tool_calibrator|Tool-Klipper-Calibration' || true

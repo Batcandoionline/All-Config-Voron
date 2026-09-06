@@ -375,3 +375,44 @@ Gỡ toàn bộ bản TKC thử nghiệm khỏi các đường dẫn đang hoạ
 
 ### Kết quả
 TKC 0.8.19 đã được cài thật, source sạch và hoạt động ở phạm vi đọc camera/command registration; không chỉ là môi trường test Python. Cài đặt hiện dùng user-service adaptation có giới hạn update đã ghi rõ. Chưa chạy hiệu chuẩn XY mới, chưa chạy Z, chưa áp offset và chưa thử in. Báo cáo đầy đủ: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-clean-reinstall-20260906/REPORT.md>).
+
+## 10. Gỡ sạch và cài lại TKC `6c721e5`, kiểm tra installer mới trên máy thật
+
+### Mục tiêu và sao lưu
+- Gỡ bản `04431df`, xác minh các đường dẫn hoạt động sạch, cài `main` mới nhất `6c721e5798184da1bf92445dbf345141b326ecc2` bằng installer upstream mới và không sửa source TKC.
+- Sao lưu local: [pre-tkc-6c721e5-reinstall-20260906-203328](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-tkc-6c721e5-reinstall-20260906-203328/>).
+- Sao lưu trên máy: `/home/voron/printer_data/config_backups/tkc-6c721e5-reinstall-20260906-203328/`, gồm config, ASVC, unit, source state, symlink, health, machine state và source cũ không kèm venv.
+
+### Gỡ và xác minh sạch
+- Dừng/disable user service; gỡ đúng include, updater và symlink thuộc TKC. Mọi file/symlink `.cfg` được chuyển vào backup, không xóa. Source, env và worktree thử được gỡ sau khi lưu bằng chứng.
+- Checkpoint sạch xác nhận source/unit/config active/macro/extras vắng mặt, port 8090 đóng, kTAMV vẫn active port 8086; Klipper nạp config không có object/lệnh TKC và vẫn ready.
+- `RESTART` chỉ reload config, không kết thúc Python process. Full restart `klipper.service` ở cuối chuỗi cài đã buộc loại module cũ khỏi cache và nạp mã mới.
+
+### Kết quả installer mới
+- `install.sh`/`uninstall.sh` đã có mode 100755. Preflight không còn bắt buộc `python3-pip`; `./scripts/install.sh --user-service` chạy trực tiếp, tạo venv, extras, macro, placeholder offsets, updater và user unit.
+- Installer vẫn gọi `sudo systemctl restart moonraker/klipper` trong user mode; cả hai thất bại vì không có sudo không mật khẩu nhưng bị `|| true` che và installer vẫn in thành công. Klipper chưa nạp module mới, Moonraker chưa nạp updater ở thời điểm đó.
+- Health trong lúc cài báo `6c721e5-dirty` do `.install_manifest.txt` tạm thời còn trong repo; sau thành công manifest bị xóa và worktree sạch.
+- 101/101 tests đạt trong 7,79 giây ở test venv tách biệt. Production venv không cài pytest. `pip check` đạt; phiên bản resolve: Flask 3.0.3, Waitress 3.0.2, OpenCV 5.0.0.93, NumPy 2.4.6, Requests 2.34.2, urllib3 2.7.0.
+
+### Bố trí riêng của máy trong `Printer-Setup`
+- Theo yêu cầu người dùng, tất cả đường dẫn `.cfg` TKC riêng của máy được gom vào `config/Printer-Setup/`: `tool-calibrator.cfg`, `tool_offsets.cfg` và `tool_calibrator/` chứa hai macro symlink tới source upstream.
+- Sửa include trong `printer.cfg` và `offsets_config_path` cho đúng vị trí mới. Upstream checkout không đổi, branch main sạch và đúng remote SHA.
+- Installer vẫn hard-code `config/tool_calibrator/` và root `tool_offsets.cfg`; chạy lại installer sẽ tạo thêm layout root. Đề xuất thêm `--config-subdir`/`--offsets-path`.
+
+### Lỗi runtime mới xác nhận
+1. Sync camera ở `klippy:ready` thất bại với `Internal error - reactor pause disabled`; health còn camera mặc định, MPP/matrix rỗng. Cùng hàm sync gọi từ `CALIBRATION_TEST_VISION` sau khi ready thì thành công. Cần lên lịch callback/timer sau ready và integration test với reactor thật.
+2. Health chỉ chứng minh process sống, không chứng minh camera/scale/matrix ready. Cần trạng thái readiness riêng và installer kiểm tra object/command/snapshot.
+3. Update Manager user mode không quản lý restart user daemon; sau update thật có thể source mới nhưng server process cũ. Cần hook restart hoặc so sánh running commit/source commit.
+4. Uninstaller vẫn `rm -rf` thư mục macro, archive offsets trước khi người dùng gỡ include, để machine block/include cho thao tác tay và không nhận layout tùy chỉnh.
+5. Rollback manifest chưa ghi đủ venv, service, ASVC, directory, link bị ghi đè/legacy link; manifest lại bị xóa sau success nên uninstall không dùng được.
+6. Một phép thử ngoài camera với 1 frame nhận false positive radius 8,60 px, confidence 40%. Burst 5 frame tại cùng scene loại đúng. Cần minimum confidence/radius/ROI và cấm 1 frame cho luồng có thể lưu offset hoặc gây chuyển động.
+7. Sau negative vision error, toolchanger quan sát thấy `uninitialized` dù sensor vẫn detected T0; chạy `INITIALIZE_TOOLCHANGER` khôi phục ready mà không chuyển động. Cần test cleanup/error path.
+
+### Đo camera và trạng thái cuối
+- G28 thường thành công; T0 active=detected, đi ở Z40 qua approach X171,456 Y43,920 tới target X170,910 Y18,917.
+- Năm lượt `CALIBRATION_TEST_VISION SAMPLES=5` đều đạt 5/5 frame. Bốn lượt ổn định confidence 99%, dispersion 0,10–0,20 px; lượt đầu confidence 90,4%, dispersion 2,75 px = 0,0633 mm, vẫn dưới gate 0,08 mm.
+- Quay về giữa bàn, burst ngoài camera 5 frame bị từ chối đúng. Không chạy XY calibration, Z calibration, toolchange, gia nhiệt, SAVE_CONFIG hay áp offset.
+- No-op Update Manager trả ok; source vẫn sạch, current=remote, behind=0. Cuối phiên: standby, XYZ homed, T0 active/detected, X175,8 Y168,0 Z40; tất cả heater target bằng 0. TKC active loopback 8090 với camera thật, MPP 0,023 và matrix loaded; kTAMV active 8086.
+
+### Kết quả
+Đã hoàn tất gỡ/cài lại bản mới trên máy thật, giữ upstream nguyên trạng và tổ chức cấu hình máy trong `Printer-Setup`. Installer mới giải quyết đáng kể lỗi permission/preflight/user-service/placeholder, nhưng chưa thể coi là unattended clean install do restart bị che lỗi, ready-sync sai ngữ cảnh reactor, health chưa kiểm readiness và uninstall/rollback chưa sở hữu đủ trạng thái. Báo cáo và bằng chứng: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-6c721e5-clean-reinstall-20260906/REPORT.md>).

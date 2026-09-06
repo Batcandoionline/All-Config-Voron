@@ -1,0 +1,3 @@
+timestamp=20260906-203328
+upstream=6c721e5798184da1bf92445dbf345141b326ecc2
+remote_backup=/home/voron/printer_data/config_backups/tkc-6c721e5-reinstall-20260906-203328

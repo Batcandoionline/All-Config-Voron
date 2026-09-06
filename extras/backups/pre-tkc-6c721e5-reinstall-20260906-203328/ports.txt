@@ -1,0 +1,10 @@
+State  Recv-Q Send-Q               Local Address:Port  Peer Address:PortProcess                                   
+LISTEN 0      511                        0.0.0.0:80         0.0.0.0:*                                             
+LISTEN 0      128                        0.0.0.0:22         0.0.0.0:*                                             
+LISTEN 0      128                        0.0.0.0:7125       0.0.0.0:*    users:(("python",pid=9468,fd=17))        
+LISTEN 0      1024                     127.0.0.1:8090       0.0.0.0:*    users:(("python3",pid=9705,fd=6))        
+LISTEN 0      10                       127.0.0.1:8080       0.0.0.0:*    users:(("camera-streamer",pid=1341,fd=3))
+LISTEN 0      4096                  100.122.74.3:49825      0.0.0.0:*                                             
+LISTEN 0      1024                       0.0.0.0:8086       0.0.0.0:*    users:(("python",pid=7141,fd=7))         
+LISTEN 0      128                           [::]:22            [::]:*                                             
+LISTEN 0      4096   [fd7a:115c:a1e0::bf38:4a03]:39695         [::]:*                                             
