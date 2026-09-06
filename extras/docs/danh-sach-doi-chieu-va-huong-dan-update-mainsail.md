@@ -50,26 +50,33 @@ managed_services: klipper
 install_script: config/scripts/install.sh
 ```
 
-#### Bước kích hoạt Tối ưu Bộ nhớ (Chỉ làm 1 lần duy nhất qua SSH):
-Mở terminal SSH vào máy in và chạy chuỗi lệnh **Sparse Clone (Tiết kiệm 97.7% dung lượng bộ nhớ)**:
-```bash
-# 1. Clone siêu nhẹ chỉ tải thư mục config, bỏ qua toàn bộ 400MB+ extras và lịch sử cũ
-git clone --depth=1 --filter=blob:none --sparse https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
-cd ~/All-Config-Voron
-git sparse-checkout set config
+#### Bước thiết lập trên máy in (Chỉ làm 1 lần duy nhất qua SSH):
+Mở terminal SSH vào máy in (`ssh voron@192.168.1.43`) và chạy chuỗi lệnh thiết lập chuẩn để đảm bảo Moonraker nhận diện đầy đủ lịch sử commit và quyền thực thi script:
 
-# 2. Khởi động lại Moonraker để nhận diện Update Manager
+```bash
+# 1. Nếu chưa clone hoặc clone cũ bị lỗi, xóa thư mục cũ và clone lại chuẩn
+rm -rf ~/All-Config-Voron
+git clone https://github.com/IDcrazy123/All-Config-Voron.git ~/All-Config-Voron
+cd ~/All-Config-Voron
+
+# 2. Đảm bảo cấp quyền thực thi cho các script cài đặt & triển khai
+chmod +x config/scripts/*.sh
+
+# 3. Chạy thử nghiệm script cài đặt lần đầu để kiểm tra an toàn và đồng bộ
+bash config/scripts/install.sh
+
+# 4. Khởi động lại Moonraker để nhận diện Update Manager trong Mainsail
 sudo systemctl restart moonraker
 ```
 
-> [!TIP]
-> **Hiệu quả tối ưu dung lượng ổ cứng trên máy in:**
-> - Nếu `git clone` bình thường: Máy in phải tải **>610 MB** (do kho chứa 427MB backups/zips trong `extras/` và 169MB `.git`).
-> - Với `sparse-checkout`: Máy in **CHỈ TẢI ĐÚNG 14 MB** (thư mục `config/`), tiết kiệm tới **595 MB (97.7%)** bộ nhớ thẻ nhớ / eMMC của Raspberry Pi!
-> - Trạng thái Git vẫn sạch tuyệt đối (`pristine: true`), Moonraker nhận diện và cho phép cập nhật 1-Click bình thường.
+> [!IMPORTANT]
+> **Lưu ý kỹ thuật quan trọng về Moonraker Update Manager:**
+> - **Quyền thực thi Script (`chmod +x`):** Moonraker yêu cầu file `install_script` phải có cờ thực thi (`100755`). Toàn bộ script trong `config/scripts/` đã được cấp quyền trực tiếp trong Git.
+> - **Tránh dùng `--depth=1` (Shallow clone):** Moonraker Update Manager liên tục thực hiện lệnh `git rev-list --count HEAD..origin/main` để tính số commit đứng sau. Nếu dùng shallow clone (`--depth=1`), Moonraker sẽ báo lỗi `error in object: unshallow clone needed` hoặc đánh dấu repo là `INVALID`.
+> - **Quy trình hoạt động an toàn:** Khi bấm **Update** trên Mainsail, Moonraker sẽ tải commit mới về `~/All-Config-Voron`, tự động gọi `config/scripts/install.sh` để kiểm tra an toàn (KTC-Easy symlinks, kTAMV patches), tạo bản sao lưu trong `printer_data/config_backups/`, đồng bộ sạch vào `printer_data/config/`, và khởi động lại Klipper.
 
 **Kể từ sau bước này:**
-- Trong Mainsail (mục **Settings > Machine / Update Manager**), bạn sẽ thấy mục **All-Config-Voron**.
+- Trong Mainsail (mục **Settings > Machine / Update Manager**), bạn sẽ thấy mục **All-Config-Voron** hiển thị trạng thái sạch sẽ.
 - Khi đẩy code mới lên GitHub từ PC (`git push`), Mainsail sẽ hiện thông báo cập nhật kèm nút **Update**.
 - Bấm **Update** trên web Mainsail: máy in sẽ tự tải code, tự backup (chỉ giữ tối đa 5 bản gần nhất), tự động dọn dẹp các file `.md`, kiểm tra an toàn, đồng bộ file và khởi động lại Klipper. Hoàn toàn không cần gõ lệnh SSH.
 

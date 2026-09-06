@@ -41,3 +41,32 @@ Giúp người vận hành kiểm tra công suất thanh nhiệt, đánh giá s�
 
 ### Vấn đề còn lại
 Không có.
+
+---
+
+## 2. Khắc phục lỗi quyền thực thi deployment scripts và tối ưu Moonraker Update Manager
+
+### Mục tiêu
+Khắc phục sự cố không thể cập nhật cấu hình qua Moonraker Update Manager trên giao diện Mainsail khi thêm macro `tool-temp-bench.cfg`.
+
+### Nguyên nhân gốc
+1. **Thiếu quyền thực thi (`chmod +x`)**: Các script triển khai (`config/scripts/install.sh`, `config/scripts/update.sh`, `config/scripts/cleanup-voron.sh`) được lưu trữ trong Git index với mode `100644`. Moonraker Update Manager yêu cầu `install_script` phải có quyền thực thi. Khi Moonraker chạy script trên Linux, hệ thống trả về lỗi `Permission denied (code 126)`, làm quá trình update bị dừng khẩn cấp.
+2. **Xung đột Shallow Clone (`--depth=1`) & Sparse Checkout**: Trước đó tài liệu hướng dẫn dùng shallow clone kết hợp sparse checkout. Khi commit `418086b` thay đổi cả các file ngoài phạm vi sparse checkout, Git trên máy in không thể phân giải commit behind dẫn đến trạng thái `INVALID` hoặc `DIRTY`.
+
+### File đã sửa đổi
+- `config/scripts/install.sh` — Cấp quyền thực thi `100755` trong Git index.
+- `config/scripts/update.sh` — Cấp quyền thực thi `100755` trong Git index.
+- `config/scripts/cleanup-voron.sh` — Cấp quyền thực thi `100755` trong Git index.
+- `extras/docs/danh-sach-doi-chieu-va-huong-dan-update-mainsail.md` — Cập nhật quy trình thiết lập repo chuẩn trên máy in, loại bỏ shallow clone để tương thích hoàn toàn với Moonraker Update Manager.
+
+### Lý do
+Đảm bảo Moonraker Update Manager trên Mainsail có thể tự động thực thi script cài đặt an toàn sau mỗi lần `git pull` mà không bị chặn quyền hoặc xung đột Git.
+
+### Kiểm tra
+- Đã chạy `git update-index --chmod=+x` cho cả 3 script shell.
+- Kiểm tra `git ls-files --stage`: Mode đã chuyển sang `100755` chính xác.
+- Kiểm tra tài liệu: Hướng dẫn đồng bộ và rõ ràng.
+
+### Kết quả
+Đã giải quyết triệt để lỗi phân quyền thực thi trên Git repo, sẵn sàng để đồng bộ trơn tru lên máy in qua Update Manager.
+
