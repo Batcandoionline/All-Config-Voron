@@ -1,0 +1,417 @@
+{
+  "result": {
+    "eventtime": 8665.809330112,
+    "status": {
+      "tool T0": {
+        "params_safe_y": 120,
+        "params_close_y": 30,
+        "params_fast_speed": 15000,
+        "params_path_speed": 900,
+        "params_dropoff_path": [
+          {
+            "y": 9.5,
+            "z": 3
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": -12,
+            "y": 16
+          }
+        ],
+        "params_pickup_path": [
+          {
+            "z": -12,
+            "y": 16
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5,
+            "verify": 1
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 9.5,
+            "z": 3
+          }
+        ],
+        "params_input_shaper_freq_x": 0,
+        "params_input_shaper_type_x": "mzv",
+        "params_input_shaper_damping_ratio_x": 0.1,
+        "params_input_shaper_freq_y": 0,
+        "params_input_shaper_type_y": "mzv",
+        "params_input_shaper_damping_ratio_y": 0.1,
+        "params_park_x": 30.2,
+        "params_park_y": 1.3,
+        "params_park_z": 343,
+        "params_standby_temp": 150,
+        "params_heater_standby_delay": 0.1,
+        "name": "tool T0",
+        "toolchanger": "toolchanger",
+        "tool_number": 0,
+        "extruder": "extruder",
+        "extruder_stepper": null,
+        "fan": "T0_part_fan",
+        "active": true,
+        "gcode_x_offset": 0.0,
+        "gcode_y_offset": 0.0,
+        "gcode_z_offset": 0.0
+      },
+      "tool T1": {
+        "params_safe_y": 120,
+        "params_close_y": 30,
+        "params_fast_speed": 15000,
+        "params_path_speed": 900,
+        "params_dropoff_path": [
+          {
+            "y": 9.5,
+            "z": 3
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": -12,
+            "y": 16
+          }
+        ],
+        "params_pickup_path": [
+          {
+            "z": -12,
+            "y": 16
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5,
+            "verify": 1
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 9.5,
+            "z": 3
+          }
+        ],
+        "params_input_shaper_freq_x": 0,
+        "params_input_shaper_type_x": "mzv",
+        "params_input_shaper_damping_ratio_x": 0.1,
+        "params_input_shaper_freq_y": 0,
+        "params_input_shaper_type_y": "mzv",
+        "params_input_shaper_damping_ratio_y": 0.1,
+        "params_park_x": 104,
+        "params_park_y": 1.1,
+        "params_park_z": 343,
+        "params_standby_temp": 150,
+        "params_heater_standby_delay": 0.1,
+        "name": "tool T1",
+        "toolchanger": "toolchanger",
+        "tool_number": 1,
+        "extruder": "extruder1",
+        "extruder_stepper": null,
+        "fan": "T1_part_fan",
+        "active": false,
+        "gcode_x_offset": -0.159,
+        "gcode_y_offset": -0.195,
+        "gcode_z_offset": 0.236
+      },
+      "tool T2": {
+        "params_safe_y": 120,
+        "params_close_y": 30,
+        "params_fast_speed": 15000,
+        "params_path_speed": 900,
+        "params_dropoff_path": [
+          {
+            "y": 9.5,
+            "z": 3
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": -12,
+            "y": 16
+          }
+        ],
+        "params_pickup_path": [
+          {
+            "z": -12,
+            "y": 16
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5,
+            "verify": 1
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 9.5,
+            "z": 3
+          }
+        ],
+        "params_input_shaper_freq_x": 0,
+        "params_input_shaper_type_x": "mzv",
+        "params_input_shaper_damping_ratio_x": 0.1,
+        "params_input_shaper_freq_y": 0,
+        "params_input_shaper_type_y": "mzv",
+        "params_input_shaper_damping_ratio_y": 0.1,
+        "params_park_x": 176,
+        "params_park_y": 1.6,
+        "params_park_z": 343,
+        "params_standby_temp": 150,
+        "params_heater_standby_delay": 0.1,
+        "name": "tool T2",
+        "toolchanger": "toolchanger",
+        "tool_number": 2,
+        "extruder": "extruder2",
+        "extruder_stepper": null,
+        "fan": "T2_part_fan",
+        "active": false,
+        "gcode_x_offset": 0.82,
+        "gcode_y_offset": 0.24,
+        "gcode_z_offset": -0.316
+      },
+      "tool T3": {
+        "params_safe_y": 120,
+        "params_close_y": 30,
+        "params_fast_speed": 15000,
+        "params_path_speed": 900,
+        "params_dropoff_path": [
+          {
+            "y": 9.5,
+            "z": 3
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": -12,
+            "y": 16
+          }
+        ],
+        "params_pickup_path": [
+          {
+            "z": -12,
+            "y": 16
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5,
+            "verify": 1
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 9.5,
+            "z": 3
+          }
+        ],
+        "params_input_shaper_freq_x": 0,
+        "params_input_shaper_type_x": "mzv",
+        "params_input_shaper_damping_ratio_x": 0.1,
+        "params_input_shaper_freq_y": 0,
+        "params_input_shaper_type_y": "mzv",
+        "params_input_shaper_damping_ratio_y": 0.1,
+        "params_park_x": 249.5,
+        "params_park_y": 2.5,
+        "params_park_z": 343,
+        "params_standby_temp": 150,
+        "params_heater_standby_delay": 0.1,
+        "name": "tool T3",
+        "toolchanger": "toolchanger",
+        "tool_number": 3,
+        "extruder": "extruder3",
+        "extruder_stepper": null,
+        "fan": "T3_part_fan",
+        "active": false,
+        "gcode_x_offset": 0.326,
+        "gcode_y_offset": 0.524,
+        "gcode_z_offset": -0.1896
+      },
+      "tool T4": {
+        "params_safe_y": 120,
+        "params_close_y": 30,
+        "params_fast_speed": 15000,
+        "params_path_speed": 900,
+        "params_dropoff_path": [
+          {
+            "y": 9.5,
+            "z": 3
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": -12,
+            "y": 16
+          }
+        ],
+        "params_pickup_path": [
+          {
+            "z": -12,
+            "y": 16
+          },
+          {
+            "z": -12,
+            "y": 0
+          },
+          {
+            "z": 0,
+            "y": 0,
+            "f": 0.5,
+            "verify": 1
+          },
+          {
+            "y": 5.5,
+            "z": 0
+          },
+          {
+            "y": 9.5,
+            "z": 1.5
+          },
+          {
+            "y": 9.5,
+            "z": 3
+          }
+        ],
+        "params_input_shaper_freq_x": 0,
+        "params_input_shaper_type_x": "mzv",
+        "params_input_shaper_damping_ratio_x": 0.1,
+        "params_input_shaper_freq_y": 0,
+        "params_input_shaper_type_y": "mzv",
+        "params_input_shaper_damping_ratio_y": 0.1,
+        "params_park_x": 321.5,
+        "params_park_y": 2.6,
+        "params_park_z": 343,
+        "params_standby_temp": 150,
+        "params_heater_standby_delay": 0.1,
+        "name": "tool T4",
+        "toolchanger": "toolchanger",
+        "tool_number": 4,
+        "extruder": "extruder4",
+        "extruder_stepper": null,
+        "fan": "T4_part_fan",
+        "active": false,
+        "gcode_x_offset": 0.168,
+        "gcode_y_offset": 0.268,
+        "gcode_z_offset": 0.12
+      }
+    }
+  }
+}

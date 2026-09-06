@@ -1,0 +1,28 @@
+{
+  "time": 1788697071.2685115,
+  "source_head": "b6c332862a87043238b068dd55b5f5ee433efdb6",
+  "source_diff": "diff --git a/server/tool_calibrator_server.py b/server/tool_calibrator_server.py\nindex 6b8ef58..a4932a2 100644\n--- a/server/tool_calibrator_server.py\n+++ b/server/tool_calibrator_server.py\n@@ -12,7 +12,7 @@ import os\n import sys\n import threading\n import time\n-from typing import Dict, Any\n+from typing import Dict, Any, Tuple, Optional\n import numpy as np\n \n from flask import Flask, jsonify, request, Response, render_template\n",
+  "files": {
+    "printer_data/config/printer.cfg": "a8833a8fc7036c819dc3895ae3c6ee58730088132a39f420b5e961e6b90964e3",
+    "printer_data/config/Printer-Setup/ktamv.cfg": "22d79db35b397a1f3009c96a667f2a427958c094d15ffd185f0a3f42dcde610a",
+    "printer_data/config/Printer-Setup/calibration-probe.cfg": "3188cc4deb75305621f55a776ca3edaf189ee6c2e433a53035af24cfe50f06db",
+    "printer_data/config/toolchanger/tools/T0.cfg": "c9a39e20fa6a704644b734c0e83fd64e6e90d121bf94072f950919493221c639",
+    "printer_data/config/toolchanger/tools/T1.cfg": "6f6f46cf7ef60799ea6e787d219c9440b361c051cbc89b3dc90ef7fb8a8656ea",
+    "printer_data/config/toolchanger/tools/T2.cfg": "c7e741d4a846c6f285c9e53c124a50a35c49203105b70e4438e315e8a5e07034",
+    "printer_data/config/toolchanger/tools/T3.cfg": "8f7524c0f882223a13a4e16dd847b9fcc99cf676dca12cb738e114932dc1f690",
+    "printer_data/config/toolchanger/tools/T4.cfg": "dfce29ba7ac3a5c2625d2e5f4e6949688e0559aeebcaf241a2aed6ab77302ca6"
+  },
+  "backed_up_files_unchanged": {
+    "printer_data/config/printer.cfg": true,
+    "printer_data/config/Printer-Setup/ktamv.cfg": true
+  },
+  "services": "NRestarts=0\nId=tool-calibrator-experiment.service\nActiveState=active\nSubState=running\n\nNRestarts=0\nId=ktamv-server.service\nActiveState=active\nSubState=running\n",
+  "previous_production_hashes_match": {
+    "Printer-Setup/calibration-probe.cfg": true,
+    "toolchanger/tools/T0.cfg": true,
+    "toolchanger/tools/T1.cfg": true,
+    "toolchanger/tools/T2.cfg": true,
+    "toolchanger/tools/T3.cfg": true,
+    "toolchanger/tools/T4.cfg": true
+  }
+}

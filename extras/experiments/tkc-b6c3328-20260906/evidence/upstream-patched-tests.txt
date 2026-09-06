@@ -1,0 +1,200 @@
+test_adaptive_wiggle_recovery_failure_resets_position (test_calibration_cycle.TestCalibrationCycle.test_adaptive_wiggle_recovery_failure_resets_position)
+If all wiggle recovery attempts fail, toolhead must return to anchor position and raise ERR_CV_201. ... ok
+test_adaptive_wiggle_recovery_success (test_calibration_cycle.TestCalibrationCycle.test_adaptive_wiggle_recovery_success)
+When initial detection fails, adaptive wiggle moves toolhead and recovers optical lock. ... ok
+test_auto_teach_camera_persists_to_disk (test_calibration_cycle.TestCalibrationCycle.test_auto_teach_camera_persists_to_disk)
+CALIBRATION_TEACH_STATION STATION=CAMERA must auto-derive approach vector and persist. ... ok
+test_batch_saving_creates_single_backup (test_calibration_cycle.TestCalibrationCycle.test_batch_saving_creates_single_backup)
+Multi-tool calibration must execute atomic batch save with a single backup per session. ... ok
+test_burst_filter_strict_majority_rejection (test_calibration_cycle.TestCalibrationCycle.test_burst_filter_strict_majority_rejection)
+Burst filter with 2-2 tie across 15px spread must reject and not return phantom median. ... [tool_calibrator] Inconsistent burst rejected: spread=201.0px (limit=6.0px) across 4 frames with no strict majority consensus (2/4).
+ok
+test_burst_sampling_median_filtering (test_calibration_cycle.TestCalibrationCycle.test_burst_sampling_median_filtering)
+Burst sampling must discard single-frame outliers and compute accurate median UV and spread. ... ok
+test_burst_sampling_partial_drop (test_calibration_cycle.TestCalibrationCycle.test_burst_sampling_partial_drop)
+Burst sampling handles dropped/unfound frames gracefully if at least 1 valid frame is captured. ... ok
+test_calibrate_camera_scale_star_pattern (test_calibration_cycle.TestCalibrationCycle.test_calibrate_camera_scale_star_pattern)
+CALIBRATE_CAMERA_SCALE must run star-pattern moves and save MPP. ... ok
+test_calibrate_xy_only_preserves_existing_z (test_calibration_cycle.TestCalibrationCycle.test_calibrate_xy_only_preserves_existing_z)
+When CALIBRATE_Z=0, optical XY calibration updates X and Y offsets while strictly preserving existing Z offsets. ... ok
+test_calibrate_z_only_preserves_existing_xy (test_calibration_cycle.TestCalibrationCycle.test_calibrate_z_only_preserves_existing_xy)
+When CALIBRATE_XY=0, Z probing updates Z offsets while strictly preserving existing X and Y offsets. ... ok
+test_calibration_center_nozzle_cmd (test_calibration_cycle.TestCalibrationCycle.test_calibration_center_nozzle_cmd)
+CALIBRATION_CENTER_NOZZLE executes visual servoing centering on active tool. ... ok
+test_calibration_navigate_camera_and_depart (test_calibration_cycle.TestCalibrationCycle.test_calibration_navigate_camera_and_depart)
+CALIBRATION_NAVIGATE navigates safely to camera and departs to safe altitude. ... ok
+test_calibration_order_z_first (test_calibration_cycle.TestCalibrationCycle.test_calibration_order_z_first)
+ORDER=Z_FIRST must execute Z probing before XY camera inspection. ... ok
+test_calibration_test_vision_cmd (test_calibration_cycle.TestCalibrationCycle.test_calibration_test_vision_cmd)
+CALIBRATION_TEST_VISION outputs full inspection report with center UV and confidence. ... ok
+test_camera_thermal_check_err_pre_002 (test_calibration_cycle.TestCalibrationCycle.test_camera_thermal_check_err_pre_002)
+Nozzle temperature > 100°C must trigger ERR_PRE_002 before camera entry. ... ok
+test_camera_thermal_check_on_active_tool (test_calibration_cycle.TestCalibrationCycle.test_camera_thermal_check_on_active_tool)
+Active tool T1 at 180°C must block CENTER_NOZZLE and CALIBRATION_NAVIGATE even if T0 is 25°C. ... ok
+test_centering_with_wiggle_disabled (test_calibration_cycle.TestCalibrationCycle.test_centering_with_wiggle_disabled)
+When enable_wiggle=False, centering aborts immediately on first unfound burst without wiggling. ... ok
+test_cmd_calibration_abort_and_run_record (test_calibration_cycle.TestCalibrationCycle.test_cmd_calibration_abort_and_run_record)
+CALIBRATION_ABORT sets cancel_requested flag when RUNNING and aborts cleanly. ... ok
+test_discover_tools_handles_tuple_list (test_calibration_cycle.TestCalibrationCycle.test_discover_tools_handles_tuple_list)
+Klipper lookup_objects() returns list of (name, obj) tuples; _discover_tools must parse correctly. ... ok
+test_dry_run_does_not_modify_disk (test_calibration_cycle.TestCalibrationCycle.test_dry_run_does_not_modify_disk)
+Dry run must compute offsets without saving to disk. ... ok
+test_dynamic_centering_iteration_budget_converges_large_offset (test_calibration_cycle.TestCalibrationCycle.test_dynamic_centering_iteration_budget_converges_large_offset)
+Simulate T2 initial error of 0.865mm: dynamic budget expands beyond 5 steps and converges at step 7. ... ok
+test_full_calibration_cycle (test_calibration_cycle.TestCalibrationCycle.test_full_calibration_cycle)
+Simulate a complete 2-tool calibration cycle and assert offsets are saved. ... ok
+test_generic_tool_discovery (test_calibration_cycle.TestCalibrationCycle.test_generic_tool_discovery)
+Verifies toolhead discovery across diverse Klipper toolchanger architectures. ... ok
+test_inspection_lighting_lifecycle (test_calibration_cycle.TestCalibrationCycle.test_inspection_lighting_lifecycle)
+Optical inspection lighting lifecycle: Camera light ON/OFF & Nozzle light OFF/ON. ... ok
+test_no_duplicate_macros_with_python_commands (test_calibration_cycle.TestCalibrationCycle.test_no_duplicate_macros_with_python_commands)
+Verify macros/safe_staging_macros.cfg does not define commands colliding with Python module. ... ok
+test_non_convergence_raises_safe_navigator_exception (test_calibration_cycle.TestCalibrationCycle.test_non_convergence_raises_safe_navigator_exception)
+If centering corrections remain above tolerance after max iterations, an exception must be raised. ... ok
+test_pre_calibration_failure_releases_lock (test_calibration_cycle.TestCalibrationCycle.test_pre_calibration_failure_releases_lock)
+If start_gcode or move_to_safe_z fails after acquire_lock, lock must be released. ... ok
+test_run_record_invalidation_on_aborted_run (test_calibration_cycle.TestCalibrationCycle.test_run_record_invalidation_on_aborted_run)
+When a cycle aborts midway, run_record marks valid=False and cached_offsets are not overwritten with partial data. ... ok
+test_safe_z_lifted_before_first_toolchange (test_calibration_cycle.TestCalibrationCycle.test_safe_z_lifted_before_first_toolchange)
+Toolhead must be lifted to Safe_Z before the first toolchange command is executed. ... ok
+test_safe_z_roundtrip_persistence (test_calibration_cycle.TestCalibrationCycle.test_safe_z_roundtrip_persistence)
+Safe Z taught via command must persist to disk and restore upon reinitialization. ... ok
+test_switch_teaching_records_contact_z (test_calibration_cycle.TestCalibrationCycle.test_switch_teaching_records_contact_z)
+cmd_CALIBRATION_TEACH_STATION on SWITCH must read contact_z from probe result. ... ok
+test_teaching_step_by_step_no_none_strings (test_calibration_cycle.TestCalibrationCycle.test_teaching_step_by_step_no_none_strings)
+Teaching SAFE_Z before TARGET must never write the literal string 'None' to config. ... ok
+test_tool_discovery_no_phantom_extruder_tools (test_calibration_cycle.TestCalibrationCycle.test_tool_discovery_no_phantom_extruder_tools)
+Toolchanger with tools [0, 5] must not discover phantom T1 from extruder1. ... ok
+test_z_probing_secondary_tool_xy_compensation (test_calibration_cycle.TestCalibrationCycle.test_z_probing_secondary_tool_xy_compensation)
+Verify secondary tool Z probing compensates carriage position by XY offsets. ... ok
+test_backup_and_rollback (test_klipper_logic.TestConfigManager.test_backup_and_rollback) ... ok
+test_rollback_specific_backup (test_klipper_logic.TestConfigManager.test_rollback_specific_backup) ... ok
+test_save_affine_matrix_translation_precision (test_klipper_logic.TestConfigManager.test_save_affine_matrix_translation_precision)
+Affine matrix translations matrix_tx and matrix_ty must be saved with 6-digit precision. ... ok
+test_save_and_load_station_section (test_klipper_logic.TestConfigManager.test_save_and_load_station_section)
+Verify saving and loading custom sections like [tool_calibrator_station camera]. ... ok
+test_save_and_update_offsets (test_klipper_logic.TestConfigManager.test_save_and_update_offsets) ... ok
+test_tool_t_prefix_matching (test_klipper_logic.TestConfigManager.test_tool_t_prefix_matching)
+Toolchanger allows [tool T1] or [tool 1]. ConfigManager must update [tool T1] in-place without creating duplicate [tool 1]. ... ok
+test_station_loads_all_matrix_parameters (test_klipper_logic.TestToolCalibratorStation.test_station_loads_all_matrix_parameters)
+Verify ToolCalibratorStation loads matrix_tx, matrix_ty and exposes in get_status. ... ok
+test_save_all_tool_offsets_creates_unified_section (test_klipper_logic.TestToolOffsetsAndCommands.test_save_all_tool_offsets_creates_unified_section)
+Verify save_all_tool_offsets saves into [tool_offsets] without duplicate [tool T*] headers. ... ok
+test_tool_offsets_applied_to_tool_objects (test_klipper_logic.TestToolOffsetsAndCommands.test_tool_offsets_applied_to_tool_objects)
+Verify ToolOffsets applies offsets to printer [tool 1] object and runs SET_TOOL_OFFSET command. ... ok
+test_tool_offsets_module (test_klipper_logic.TestToolOffsetsAndCommands.test_tool_offsets_module)
+Verify ToolOffsets loads options and returns in get_status. ... ok
+test_approach_camera_sequence (test_safe_navigator.TestSafeNavigator.test_approach_camera_sequence)
+Verify camera 3-tier sequence: ... ok
+test_approach_switch_sequence (test_safe_navigator.TestSafeNavigator.test_approach_switch_sequence)
+Verify Z switch 3-tier approach sequence. ... ok
+test_config_aliases_and_speed_normalization (test_safe_navigator.TestSafeNavigator.test_config_aliases_and_speed_normalization)
+Verify camera_target_x/y/z aliases and mm/min to mm/s speed auto-conversion. ... ok
+test_depart_station (test_safe_navigator.TestSafeNavigator.test_depart_station)
+Verify departing lifts to Safe_Z. ... ok
+test_different_frame_sizes_voron_350 (test_safe_navigator.TestSafeNavigator.test_different_frame_sizes_voron_350)
+Verify dynamic adaptation on a Voron 350 (0-350mm). ... ok
+test_different_frame_sizes_voron_v0 (test_safe_navigator.TestSafeNavigator.test_different_frame_sizes_voron_v0)
+Verify dynamic adaptation on a compact Voron V0 (0-120mm). ... ok
+test_move_to_safe_z (test_safe_navigator.TestSafeNavigator.test_move_to_safe_z)
+Test vertical elevation to safe_z. ... ok
+test_out_of_bounds_target_rejection (test_safe_navigator.TestSafeNavigator.test_out_of_bounds_target_rejection)
+Target positions exceeding hardware limits must raise SafeNavigatorException. ... ok
+test_unhomed_failsafe (test_safe_navigator.TestSafeNavigator.test_unhomed_failsafe)
+Verify navigation aborts if printer is not homed. ... ok
+test_calculate_average_mpp (test_vision.TestAffineTransform.test_calculate_average_mpp) ... ok
+test_calculate_tool_delta (test_vision.TestAffineTransform.test_calculate_tool_delta)
+Verify physical delta XY computation between two tools (T0 ref vs T1 target). ... ok
+test_frame_boundary_clamping_err_cv_204 (test_vision.TestAffineTransform.test_frame_boundary_clamping_err_cv_204)
+Coordinates outside camera boundaries must raise ValueError with ERR_CV_204. ... ok
+test_matrix_serialization_and_restore (test_vision.TestAffineTransform.test_matrix_serialization_and_restore)
+Verify get_matrix and set_matrix can roundtrip solved affine coefficients. ... ok
+test_set_mpp (test_vision.TestAffineTransform.test_set_mpp)
+Verify set_mpp updates scale. ... ok
+test_solve_matrix_affine_star_pattern (test_vision.TestAffineTransform.test_solve_matrix_affine_star_pattern)
+Verify 5-point star pattern displacement solves 1st-order affine matrix accurately. ... ok
+test_solve_matrix_and_offset (test_vision.TestAffineTransform.test_solve_matrix_and_offset) ... ok
+test_solve_matrix_rejects_degenerate_points (test_vision.TestAffineTransform.test_solve_matrix_rejects_degenerate_points)
+Verify solve_matrix raises ValueError when points are collinear or identical. ... ok
+test_uncalibrated_offset_raises_err_cv_203 (test_vision.TestAffineTransform.test_uncalibrated_offset_raises_err_cv_203)
+Verify calculate_offset_detail and calculate_tool_delta raise ERR_CV_203 when uncalibrated, preventing blind motion. ... ok
+test_candidate_circle_ranking_discrimination (test_vision.TestNozzleDetector.test_candidate_circle_ranking_discrimination)
+Verify _rank_candidate_circles selects the true circular boundary over internal glare. ... ok
+test_subpixel_refinement_precision (test_vision.TestNozzleDetector.test_subpixel_refinement_precision)
+Verify _refine_upper_arc_symmetry achieves sub-pixel convergence (< 0.15px). ... ok
+test_synthetic_detection (test_vision.TestNozzleDetector.test_synthetic_detection) ... ok
+test_calculate_tool_delta_endpoint (test_vision.TestServerEndpoints.test_calculate_tool_delta_endpoint)
+Verify POST /calculate_tool_delta endpoint produces accurate delta and G-code. ... [2026-09-06 19:02:09] [INFO] [tool_calibrator.affine_transform]: Solved 1st-order affine transform matrix (rank=3). Shape: (2, 3)
+[2026-09-06 19:02:09] [INFO] [tool_calibrator.affine_transform]: Updated MPP scale to: 0.012500 mm/pixel
+ok
+test_dashboard_route (test_vision.TestServerEndpoints.test_dashboard_route)
+Dashboard GET / must return 200 OK and render HTML. ... ok
+test_negative_image_rejection (test_vision.TestServerEndpoints.test_negative_image_rejection)
+Random noise and blank images must be rejected with found=False and confidence=0.0. ... ok
+test_picture_screenshot_shuffled_order_invariance (test_vision.TestServerEndpoints.test_picture_screenshot_shuffled_order_invariance)
+Verify that randomly shuffling test images produces identical sub-pixel detections (zero order bias). ... ok
+test_picture_screenshot_sweep_dataset (test_vision.TestServerEndpoints.test_picture_screenshot_sweep_dataset)
+Verify robust detection and sub-pixel repeatability across all 5 tools and 5 brightness levels. ... ok
+test_sample_api_endpoints (test_vision.TestServerEndpoints.test_sample_api_endpoints)
+Verify /api/samples and /api/test_sample endpoint functionality. ... ok
+test_sample_dataset_detection (test_vision.TestServerEndpoints.test_sample_dataset_detection)
+Verify 3-tier cascade detects nozzle across diverse sample images. ... ok
+test_server_session_lock_ownership_enforcement (test_vision.TestServerEndpoints.test_server_session_lock_ownership_enforcement)
+Server mutating endpoints must reject calls when locked by another client, and release_lock requires owner token. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.affine_transform]: Updated MPP scale to: 0.005000 mm/pixel
+ok
+test_set_camera_url_endpoint (test_vision.TestServerEndpoints.test_set_camera_url_endpoint)
+Verify POST /set_camera_url accepts {"url": ...} payload forwarded from Klipper. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://192.168.1.100:8080/?action=snapshot
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://192.168.1.100:8080/?action=snapshot
+ok
+test_stream_grabber_cache_cleared_on_error (test_vision.TestServerEndpoints.test_stream_grabber_cache_cleared_on_error)
+StreamGrabber must invalidate _cached_frame when grab fails. ... [2026-09-06 19:02:14] [WARNING] [tool_calibrator.stream_grabber]: HTTP 503 while fetching snapshot from http://127.0.0.1:8090/snapshot
+ok
+test_frame_cache (test_vision.TestStreamGrabber.test_frame_cache) ... ok
+test_url_normalization (test_vision.TestStreamGrabber.test_url_normalization) ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://192.168.1.50:8080/?action=snapshot
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://192.168.1.50:8080/?action=snapshot
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://192.168.1.50:8080/?action=snapshot
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://localhost:8080/snapshot
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://localhost/webcam2/?action=snapshot
+ok
+test_url_normalization_preserves_jpg (test_vision.TestStreamGrabberWebRTC.test_url_normalization_preserves_jpg) ... ok
+test_webrtc_404_fallback (test_vision.TestStreamGrabberWebRTC.test_webrtc_404_fallback) ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: Received 404 from http://localhost/webcam2/?action=snapshot, trying WebRTC fallback: http://localhost/webcam2/snapshot.jpg
+[2026-09-06 19:02:14] [INFO] [tool_calibrator.stream_grabber]: Successfully auto-switched camera endpoint to: http://localhost/webcam2/snapshot.jpg
+ok
+test_frame_generation (test_vision.TestVisualDebugger.test_frame_generation) ... ok
+test_auto_bed_center_probing_coordinates (test_z_backends.TestCartographerBackend.test_auto_bed_center_probing_coordinates)
+When probe_x and probe_y are omitted, default to the exact bed center. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_build_command_str_with_parameters (test_z_backends.TestCartographerBackend.test_build_command_str_with_parameters)
+Official Cartographer SPEED, TOLERANCE, and RETRIES parameters should be appended. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_explicit_probing_coordinates (test_z_backends.TestCartographerBackend.test_explicit_probing_coordinates)
+When probe_x and probe_y are set, use explicit values. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_get_probe_xy_with_bed_mesh_zero_ref_pos (test_z_backends.TestCartographerBackend.test_get_probe_xy_with_bed_mesh_zero_ref_pos)
+When bed_mesh provides zero_ref_pos, get_probe_xy should prioritize it. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_load_touch_model_offset (test_z_backends.TestCartographerBackend.test_load_touch_model_offset)
+Cartographer touch_model offset should be parsed from save_config section. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_relative_delta_z_longer_nozzle (test_z_backends.TestCartographerBackend.test_relative_delta_z_longer_nozzle)
+Reference Tool T0 executes CARTOGRAPHER_TOUCH_HOME, redefining Z=0 at physical touch. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_relative_delta_z_non_homing_probe (test_z_backends.TestCartographerBackend.test_relative_delta_z_non_homing_probe)
+When touch_home_gcode does not reset origin (e.g. TOUCH_PROBE), ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_relative_delta_z_shorter_nozzle (test_z_backends.TestCartographerBackend.test_relative_delta_z_shorter_nozzle)
+Reference Tool T0 touches at Z=0.050 (non-homing baseline). ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_resolve_touch_cmd_scanner (test_z_backends.TestCartographerBackend.test_resolve_touch_cmd_scanner)
+When SCANNER_TOUCH is registered in Klipper gcode commands, resolve dynamically. ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_thermal_safety_guard_blocks_hot_nozzle (test_z_backends.TestCartographerBackend.test_thermal_safety_guard_blocks_hot_nozzle)
+Cartographer touch must abort if nozzle temperature exceeds safety limit (> 150°C). ... [2026-09-06 19:02:14] [INFO] [tool_calibrator.cartographer_backend]: Loaded Cartographer touch_model z_offset: 0.04250
+ok
+test_switch_probe_relative_offset (test_z_backends.TestSwitchBackend.test_switch_probe_relative_offset)
+Switch probe measures contact height and computes difference to baseline. ... ok
+
+----------------------------------------------------------------------
+Ran 91 tests in 6.938s
+
+OK

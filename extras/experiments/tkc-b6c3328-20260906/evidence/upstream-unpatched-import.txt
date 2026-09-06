@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/voron/tkc-review-b6c3328/server/tool_calibrator_server.py", line 73, in <module>
+    def _check_session_ownership(req) -> Tuple[bool, Optional[str]]:
+                                         ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?

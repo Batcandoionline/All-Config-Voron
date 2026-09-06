@@ -1,0 +1,11 @@
+{
+  "time": "2026-09-06T19:15:13.823812+07:00",
+  "path": "/printer/gcode/script",
+  "request": {
+    "script": "CALIBRATION_ABORT"
+  },
+  "duration_s": 156.027,
+  "response": {
+    "result": "ok"
+  }
+}

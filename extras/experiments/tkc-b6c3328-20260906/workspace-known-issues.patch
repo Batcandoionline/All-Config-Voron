@@ -1,0 +1,26 @@
+--- a/.agents/KNOWN_ISSUES.md
++++ b/.agents/KNOWN_ISSUES.md
+@@ -141,10 +141,22 @@
+ 
+ ## TKC 780a492 — Fallback sai hướng camera và XY chưa ổn định
+ 
+-**Trạng thái:** Thử nghiệm có giám sát; chưa được áp offset production
++**Trạng thái:** Lịch sử; đã thử lại bằng b6c3328 bên dưới, chưa áp offset production
+ **Phát hiện lần đầu:** 2026-09-06
+ **Triệu chứng:** Fallback MPP giả định trả correction sai chiều trên MF-500; hai vòng XY hoàn chỉnh, vòng thứ ba lỗi ERR_CV_202 tại T2 với burst spread 5 px. API vẫn có thể báo SUCCESS cũ khi đang chạy; KTC mất active tool khi G-code báo lỗi.
+ **Nguyên nhân:** Hướng trục giả định sai đã xác nhận bằng ±0,5 mm đo thật. Lỗi hội tụ còn cần phân biệt thời gian ổn định sau chuyển động, detector và giới hạn 5 bước; không kết luận lỗi cơ khí từ dữ liệu hiện có.
+ **Giải pháp tạm:** Dùng ma trận đã đo, TKC_TEST_XY (SAVE_CONFIG=0, CALIBRATE_Z=0, WIGGLE=0), Z40 trước đổi tool. Không dùng fallback để chuyển động hoặc DRY_RUN như phép thử đứng yên. Khi HTTP 504, kiểm tra chuỗi đang chạy trước khi gửi thêm lệnh.
+ **Sửa vĩnh viễn:** Đang chờ cải thiện bootstrap, frame-quality gates và run-state trong TKC.
+ **Nhật ký liên quan:** `Voron 5 Tool/extras/Nhat-ky-chinh-sua/2026-09-06-session-updates.md`, mục 6; báo cáo `extras/experiments/tkc-20260906/REPORT.md`.
++
++---
++
++## TKC b6c3328 — XY đạt 3 vòng nhưng abort và bù XY khi dò Z còn lỗi
++
++**Trạng thái:** Thử nghiệm có giám sát; source trên máy có startup-imports.patch, không dùng XYZ tự động
++**Phát hiện lần đầu:** 2026-09-06
++**Triệu chứng:** Source gốc thiếu import Tuple/Optional, 10/91 tests lỗi; sau bản vá import, 91 tests đạt và ba vòng XY T0–T4 hoàn chỉnh. CALIBRATION_ABORT gửi qua Moonraker tại T1 bị xếp hàng tới hết vòng (156,027 s), sau đó báo không còn lượt chạy. Raw log có một BlockingIOError khi ghi phản hồi G-code; print_stall tăng tới 3.
++**Nguyên nhân đã xác nhận:** Abort đi chung G-code mutex với lệnh calibration đồng bộ. Bù trạm Z dùng dấu trừ trong khi offset camera là chênh raw carriage cần cộng; mô phỏng X68 với offset +0,865 cho lệnh X67,135 thay vì X68,865. Scale bỏ qua lỗi acquire_lock; health lỗi sau khi lấy lock không đi qua finally; centering sau scale thất bại vẫn báo SUCCESS. Gate sàn 6 px cho phép dispersion 0,138 mm ở MPP 0,023.
++**Giải pháp tạm:** Giữ overlay XY lạnh, SAVE_CONFIG=0, CALIBRATE_Z=0, WIGGLE=0, Z40 trước đổi tool. Không dùng CALIBRATION_ABORT làm nút dừng vận hành; không tự gửi lại calibration sau HTTP timeout. kTAMV không cần gỡ, đã dừng khi đo và bật lại sau đó.
++**Cần cải tiến:** Abort ngoài hàng đợi, thống nhất dấu tọa độ, cleanup/lease phiên, trạng thái fit/center riêng, gate theo mm, telemetry tool thực và điều tra buffering/scheduling. Không quy lỗi CAN hoặc cơ khí khi chưa có bằng chứng. Độ lặp ba vòng lớn nhất 0,026 mm X / 0,033 mm Y, chưa chứng minh độ chính xác tuyệt đối.
++**Nhật ký liên quan:** `Voron 5 Tool/extras/Nhat-ky-chinh-sua/2026-09-06-session-updates.md`, mục 7; `extras/experiments/tkc-b6c3328-20260906/REPORT.md` và các reproduction offline.

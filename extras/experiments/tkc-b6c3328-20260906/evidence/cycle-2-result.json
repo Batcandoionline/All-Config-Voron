@@ -1,0 +1,79 @@
+{
+  "label": "cycle-2",
+  "start_time": 1788696548.3381338,
+  "end_time": 1788696722.6953099,
+  "result": {
+    "result": "ok"
+  },
+  "run": {
+    "status": "SUCCESS",
+    "last_run_status": "SUCCESS",
+    "run_id": "run_1788696539",
+    "active_tool": 4,
+    "run_valid": true,
+    "run_record": {
+      "run_id": "run_1788696539",
+      "state": "SUCCESS",
+      "active_tool": 4,
+      "start_time": 1788696539.8606372,
+      "end_time": 1788696712.08127,
+      "duration_sec": 172.22,
+      "error": null,
+      "completed_tools": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "offsets": {
+        "0": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "1": {
+          "x": -0.159,
+          "y": -0.287
+        },
+        "2": {
+          "x": 0.886,
+          "y": 0.266
+        },
+        "3": {
+          "x": 0.369,
+          "y": 0.527
+        },
+        "4": {
+          "x": 0.173,
+          "y": 0.225
+        }
+      },
+      "valid": true
+    },
+    "reference_tool": 0,
+    "z_backend": "cartographer",
+    "safe_z": 40.0,
+    "cached_offsets": {
+      "0": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "1": {
+        "x": -0.159,
+        "y": -0.287
+      },
+      "2": {
+        "x": 0.886,
+        "y": 0.266
+      },
+      "3": {
+        "x": 0.369,
+        "y": 0.527
+      },
+      "4": {
+        "x": 0.173,
+        "y": 0.225
+      }
+    }
+  }
+}

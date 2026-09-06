@@ -1,0 +1,1407 @@
+[
+  {
+    "message": "G28\nG90\nG0 Z40 F600\nM400\n_TKC_NOZZLE_LED_OFF\nCALIBRATION_NAVIGATE STATION=CAMERA\nCALIBRATION_TEST_VISION SAMPLES=7",
+    "time": 1788696216.9556506,
+    "type": "command"
+  },
+  {
+    "message": "// shaper_type_x:mzv shaper_freq_x:43.600 damping_ratio_x:0.100000",
+    "time": 1788696216.9952793,
+    "type": "response"
+  },
+  {
+    "message": "// shaper_type_y:mzv shaper_freq_y:33.400 damping_ratio_y:0.100000",
+    "time": 1788696216.996346,
+    "type": "response"
+  },
+  {
+    "message": "// toolchanger initialized, active tool T0",
+    "time": 1788696216.9981434,
+    "type": "response"
+  },
+  {
+    "message": "probe at 171.800,169.600 is z=471.580805\n",
+    "time": 1788696236.9295614,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Approaching Camera Station via safe 3-tier waypoints...",
+    "time": 1788696241.0675092,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ Reached Camera Station: X170.923 Y18.905 Z40.000",
+    "time": 1788696248.7131639,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Sampling 7 vision frames at current position...",
+    "time": 1788696248.7144423,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ [Vision Inspection Report]\n// Found:       YES (7/7 frames)\n// Center UV:   U638.75 px, V359.65 px\n// Radius:      22.60 px\n// Confidence:  99.0%\n// Dispersion:  0.30 px\n// Algorithm:   Tier 0 Curvature (Symmetric)",
+    "time": 1788696252.7352834,
+    "type": "response"
+  },
+  {
+    "message": "CALIBRATE_CAMERA_SCALE DISTANCE=0.5",
+    "time": 1788696296.662147,
+    "type": "command"
+  },
+  {
+    "message": "// [tool_calibrator] Starting Star-Pattern Camera Calibration (Displacement: ±0.50mm)...",
+    "time": 1788696296.819027,
+    "type": "response"
+  },
+  {
+    "message": "// -> Baseline established: Pos (170.923, 18.905), UV (638.95, 359.05)",
+    "time": 1788696302.7517338,
+    "type": "response"
+  },
+  {
+    "message": "// -> +X displacement: Shift 21.90px (UV: 617.05, 359.05)",
+    "time": 1788696304.6138217,
+    "type": "response"
+  },
+  {
+    "message": "// -> -X displacement: Shift 22.00px (UV: 660.95, 359.05)",
+    "time": 1788696306.77888,
+    "type": "response"
+  },
+  {
+    "message": "// -> +Y displacement: Shift 20.55px (UV: 639.15, 338.50)",
+    "time": 1788696308.6890876,
+    "type": "response"
+  },
+  {
+    "message": "// -> -Y displacement: Shift 22.60px (UV: 639.35, 381.65)",
+    "time": 1788696310.5946136,
+    "type": "response"
+  },
+  {
+    "message": "// -> Performing post-calibration optical centering with solved matrix...",
+    "time": 1788696311.0066204,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.023mm Y+0.022mm (Damped Delta: X-0.013mm Y+0.012mm, UV: [639.0, 360.95], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696312.7702408,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X-0.011mm Y+0.012mm (Damped Delta: X-0.006mm Y+0.006mm, UV: [639.5, 360.5], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696314.628873,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 2: True Error X-0.0114mm Y+0.0116mm (within 0.015mm tolerance).",
+    "time": 1788696314.6317885,
+    "type": "response"
+  },
+  {
+    "message": "// -> Station target position updated to centered coordinates: X170.910 Y18.917",
+    "time": 1788696314.635503,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ ================= CAMERA CALIBRATION SUCCESS ================\n// Calculated Scale (MPP): 0.023000 mm/pixel\n// Affine Matrix Solved:   True\n// Saved to Configuration: /home/voron/printer_data/tkc-experiment/station-data.cfg\n// ================================================================",
+    "time": 1788696314.636793,
+    "type": "response"
+  },
+  {
+    "message": "TKC_TEST_XY",
+    "time": 1788696349.294865,
+    "type": "command"
+  },
+  {
+    "message": "// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.18 (commit: b6c3328)",
+    "time": 1788696349.5034616,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)",
+    "time": 1788696349.5068717,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T0 ---",
+    "time": 1788696349.5076337,
+    "type": "response"
+  },
+  {
+    "message": "// Tool tool T0 already selected",
+    "time": 1788696349.5099182,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Entering Camera Station...",
+    "time": 1788696349.510375,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.011mm Y-0.012mm (Damped Delta: X-0.006mm Y-0.006mm, UV: [639.5, 359.5], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696355.4450047,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 1: True Error X-0.0113mm Y-0.0116mm (within 0.015mm tolerance).",
+    "time": 1788696355.44785,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Reference Optical Origin set to X170.910 Y18.917",
+    "time": 1788696355.4478838,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T1 ---",
+    "time": 1788696355.4479082,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T0",
+    "time": 1788696355.4625993,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696359.367284,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder1",
+    "time": 1788696361.5588567,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T1",
+    "time": 1788696363.2395413,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 1 (tool T1)",
+    "time": 1788696371.1807451,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Entering Camera Station...",
+    "time": 1788696372.1868439,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.177mm Y-0.287mm (Damped Delta: X-0.098mm Y-0.158mm, UV: [632.15, 347.6], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)",
+    "time": 1788696380.9991426,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X-0.071mm Y-0.118mm (Damped Delta: X-0.039mm Y-0.065mm, UV: [636.85, 354.9], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696382.9083707,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X-0.028mm Y-0.050mm (Damped Delta: X-0.015mm Y-0.027mm, UV: [638.75, 357.85], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696384.8130937,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X-0.021mm Y-0.024mm (Damped Delta: X-0.012mm Y-0.013mm, UV: [639.05, 358.95], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696386.7222352,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X-0.004mm Y-0.018mm (Damped Delta: X-0.003mm Y-0.010mm, UV: [639.8, 359.2], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696388.6345713,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X-0.003mm Y-0.005mm (Damped Delta: X-0.002mm Y-0.003mm, UV: [639.85, 359.8], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)",
+    "time": 1788696390.548742,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X-0.0034mm Y-0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696390.549208,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Calculated XY Offsets: X-0.166mm Y-0.274mm",
+    "time": 1788696390.5496361,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T2 ---",
+    "time": 1788696390.5506475,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T1",
+    "time": 1788696390.5655951,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696394.3294673,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder2",
+    "time": 1788696396.5242624,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T2",
+    "time": 1788696398.205363,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 2 (tool T2)",
+    "time": 1788696406.1469786,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Entering Camera Station...",
+    "time": 1788696407.153862,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.871mm Y+0.238mm (Damped Delta: X+0.479mm Y+0.131mm, UV: [678.3, 370.3], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696415.2055566,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.400mm Y+0.131mm (Damped Delta: X+0.220mm Y+0.072mm, UV: [657.6, 365.65], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696417.1114125,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.181mm Y+0.068mm (Damped Delta: X+0.099mm Y+0.037mm, UV: [647.95, 362.95], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696419.0251465,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.083mm Y+0.031mm (Damped Delta: X+0.046mm Y+0.017mm, UV: [643.65, 361.35], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696420.8848593,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.034mm Y+0.013mm (Damped Delta: X+0.019mm Y+0.007mm, UV: [641.5, 360.55], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696422.7940292,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.016mm Y+0.009mm (Damped Delta: X+0.009mm Y+0.005mm, UV: [640.7, 360.4], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696424.6537938,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 7/8: True Error X+0.011mm Y+0.008mm (Damped Delta: X+0.006mm Y+0.004mm, UV: [640.5, 360.35], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696426.5628817,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 7: True Error X+0.0113mm Y+0.0081mm (within 0.015mm tolerance).",
+    "time": 1788696426.563383,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Calculated XY Offsets: X+0.872mm Y+0.270mm",
+    "time": 1788696426.563548,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T3 ---",
+    "time": 1788696426.5639682,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T2",
+    "time": 1788696426.5828495,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696430.2778556,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder3",
+    "time": 1788696432.4718347,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T3",
+    "time": 1788696434.1516094,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 3 (tool T3)",
+    "time": 1788696442.0834916,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Entering Camera Station...",
+    "time": 1788696443.0900495,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.352mm Y+0.519mm (Damped Delta: X+0.193mm Y+0.286mm, UV: [655.55, 382.45], Burst 3/3 (spread: 0.35px), Tier 0 Curvature)",
+    "time": 1788696452.147875,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.159mm Y+0.257mm (Damped Delta: X+0.088mm Y+0.141mm, UV: [647.05, 371.1], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696454.0531397,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.069mm Y+0.118mm (Damped Delta: X+0.038mm Y+0.065mm, UV: [643.05, 365.1], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696455.9629056,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.040mm Y+0.052mm (Damped Delta: X+0.022mm Y+0.029mm, UV: [641.75, 362.25], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696457.8715408,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.018mm Y+0.028mm (Damped Delta: X+0.010mm Y+0.015mm, UV: [640.8, 361.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696459.7842286,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.001mm Y+0.013mm (Damped Delta: X+0.001mm Y+0.007mm, UV: [640.05, 360.55], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696461.7498693,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X+0.0011mm Y+0.0127mm (within 0.015mm tolerance).",
+    "time": 1788696461.7503364,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Calculated XY Offsets: X+0.351mm Y+0.536mm",
+    "time": 1788696461.750829,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T4 ---",
+    "time": 1788696461.751449,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T3",
+    "time": 1788696461.7665775,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696465.5507605,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder4",
+    "time": 1788696467.7405932,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T4",
+    "time": 1788696469.4221432,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 4 (tool T4)",
+    "time": 1788696477.3475873,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Entering Camera Station...",
+    "time": 1788696478.3550148,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.154mm Y+0.205mm (Damped Delta: X+0.085mm Y+0.113mm, UV: [646.8, 368.85], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696489.3181977,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.070mm Y+0.110mm (Damped Delta: X+0.038mm Y+0.060mm, UV: [643.1, 364.75], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)",
+    "time": 1788696491.1772866,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.026mm Y+0.049mm (Damped Delta: X+0.014mm Y+0.027mm, UV: [641.15, 362.1], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696492.9804976,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.023mm Y+0.025mm (Damped Delta: X+0.013mm Y+0.014mm, UV: [641.0, 361.1], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696494.8423777,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.003mm Y+0.005mm (Damped Delta: X+0.002mm Y+0.003mm, UV: [640.15, 360.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696496.6508014,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 5: True Error X+0.0034mm Y+0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696496.6512716,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Calculated XY Offsets: X+0.150mm Y+0.214mm",
+    "time": 1788696496.6514287,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T4",
+    "time": 1788696496.665621,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696500.5682623,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder",
+    "time": 1788696502.7570868,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T0",
+    "time": 1788696504.4378006,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 0 (tool T0)",
+    "time": 1788696513.2880707,
+    "type": "response"
+  },
+  {
+    "message": "// ================ CALIBRATION SUMMARY ================",
+    "time": 1788696514.5961008,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T0: X=+0.000mm  Y=+0.000mm",
+    "time": 1788696514.5966597,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T1: X=-0.166mm  Y=-0.274mm",
+    "time": 1788696514.5971868,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T2: X=+0.872mm  Y=+0.270mm",
+    "time": 1788696514.597217,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T3: X=+0.351mm  Y=+0.536mm",
+    "time": 1788696514.5979984,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T4: X=+0.150mm  Y=+0.214mm",
+    "time": 1788696514.5980394,
+    "type": "response"
+  },
+  {
+    "message": "// =====================================================",
+    "time": 1788696514.5988042,
+    "type": "response"
+  },
+  {
+    "message": "TKC_TEST_XY",
+    "time": 1788696539.8576624,
+    "type": "command"
+  },
+  {
+    "message": "// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.18 (commit: b6c3328)",
+    "time": 1788696540.069754,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)",
+    "time": 1788696540.0704165,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T0 ---",
+    "time": 1788696540.0715802,
+    "type": "response"
+  },
+  {
+    "message": "// Tool tool T0 already selected",
+    "time": 1788696540.073859,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Entering Camera Station...",
+    "time": 1788696540.0756974,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.011mm Y-0.012mm (Damped Delta: X-0.006mm Y-0.006mm, UV: [639.5, 359.5], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696550.4963684,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 1: True Error X-0.0113mm Y-0.0116mm (within 0.015mm tolerance).",
+    "time": 1788696550.4968705,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Reference Optical Origin set to X170.910 Y18.917",
+    "time": 1788696550.4970188,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T1 ---",
+    "time": 1788696550.4974105,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T0",
+    "time": 1788696550.517658,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696554.42567,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder1",
+    "time": 1788696556.6190403,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T1",
+    "time": 1788696558.2997143,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 1 (tool T1)",
+    "time": 1788696566.2435281,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Entering Camera Station...",
+    "time": 1788696567.251756,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.167mm Y-0.292mm (Damped Delta: X-0.092mm Y-0.160mm, UV: [632.6, 347.4], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696576.099067,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X-0.072mm Y-0.134mm (Damped Delta: X-0.040mm Y-0.074mm, UV: [636.8, 354.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696577.9130158,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X-0.027mm Y-0.051mm (Damped Delta: X-0.015mm Y-0.028mm, UV: [638.8, 357.8], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)",
+    "time": 1788696579.8237476,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X-0.019mm Y-0.027mm (Damped Delta: X-0.011mm Y-0.015mm, UV: [639.15, 358.85], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696581.6352746,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X-0.003mm Y-0.018mm (Damped Delta: X-0.002mm Y-0.010mm, UV: [639.85, 359.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696583.5975573,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X-0.002mm Y-0.005mm (Damped Delta: X-0.001mm Y-0.003mm, UV: [639.9, 359.8], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696585.5079803,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X-0.0023mm Y-0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696585.5080152,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Calculated XY Offsets: X-0.159mm Y-0.287mm",
+    "time": 1788696585.5080395,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T2 ---",
+    "time": 1788696585.508061,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T1",
+    "time": 1788696585.522052,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696589.2868981,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder2",
+    "time": 1788696591.4813623,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T2",
+    "time": 1788696593.1622841,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 2 (tool T2)",
+    "time": 1788696601.101762,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Entering Camera Station...",
+    "time": 1788696602.109078,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.877mm Y+0.243mm (Damped Delta: X+0.482mm Y+0.134mm, UV: [678.55, 370.5], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)",
+    "time": 1788696610.1594527,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.417mm Y+0.124mm (Damped Delta: X+0.230mm Y+0.068mm, UV: [658.35, 365.35], Burst 3/3 (spread: 5.6px), Tier 0 Curvature)",
+    "time": 1788696612.0772102,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.182mm Y+0.066mm (Damped Delta: X+0.100mm Y+0.036mm, UV: [648.0, 362.85], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)",
+    "time": 1788696613.9876359,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.081mm Y+0.035mm (Damped Delta: X+0.044mm Y+0.019mm, UV: [643.55, 361.5], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696615.8501883,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.039mm Y+0.009mm (Damped Delta: X+0.021mm Y+0.005mm, UV: [641.7, 360.4], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)",
+    "time": 1788696617.753336,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.016mm Y+0.008mm (Damped Delta: X+0.009mm Y+0.004mm, UV: [640.7, 360.35], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696619.7651958,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 7/8: True Error X+0.011mm Y-0.002mm (Damped Delta: X+0.006mm Y-0.001mm, UV: [640.5, 359.9], Burst 3/3 (spread: 0.35px), Tier 0 Curvature)",
+    "time": 1788696621.67576,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 7: True Error X+0.0114mm Y-0.0023mm (within 0.015mm tolerance).",
+    "time": 1788696621.676338,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Calculated XY Offsets: X+0.886mm Y+0.266mm",
+    "time": 1788696621.6768823,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T3 ---",
+    "time": 1788696621.677378,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T2",
+    "time": 1788696621.6924372,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696625.388447,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder3",
+    "time": 1788696627.5838883,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T3",
+    "time": 1788696629.2601893,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 3 (tool T3)",
+    "time": 1788696637.189333,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Entering Camera Station...",
+    "time": 1788696638.1979616,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.365mm Y+0.511mm (Damped Delta: X+0.201mm Y+0.281mm, UV: [656.15, 382.1], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696647.2609768,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.176mm Y+0.257mm (Damped Delta: X+0.097mm Y+0.141mm, UV: [647.8, 371.1], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696649.177619,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.071mm Y+0.116mm (Damped Delta: X+0.039mm Y+0.064mm, UV: [643.15, 365.0], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696651.139369,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.041mm Y+0.052mm (Damped Delta: X+0.022mm Y+0.029mm, UV: [641.8, 362.25], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696653.0476105,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.018mm Y+0.022mm (Damped Delta: X+0.010mm Y+0.012mm, UV: [640.8, 360.95], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696655.0065417,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.001mm Y+0.013mm (Damped Delta: X+0.001mm Y+0.007mm, UV: [640.05, 360.55], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)",
+    "time": 1788696656.9665172,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X+0.0011mm Y+0.0127mm (within 0.015mm tolerance).",
+    "time": 1788696656.967502,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Calculated XY Offsets: X+0.369mm Y+0.527mm",
+    "time": 1788696656.9678078,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T4 ---",
+    "time": 1788696656.9684472,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T3",
+    "time": 1788696656.9840155,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696660.7700186,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder4",
+    "time": 1788696662.960482,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T4",
+    "time": 1788696664.6438317,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 4 (tool T4)",
+    "time": 1788696672.5635684,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Entering Camera Station...",
+    "time": 1788696673.5690246,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.174mm Y+0.185mm (Damped Delta: X+0.096mm Y+0.102mm, UV: [647.7, 368.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696684.5958514,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.076mm Y+0.116mm (Damped Delta: X+0.042mm Y+0.064mm, UV: [643.35, 365.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696686.5099738,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.043mm Y+0.052mm (Damped Delta: X+0.024mm Y+0.029mm, UV: [641.9, 362.25], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696688.320929,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.018mm Y+0.037mm (Damped Delta: X+0.010mm Y+0.020mm, UV: [640.8, 361.6], Burst 3/3 (spread: 0.5px), Tier 0 Curvature)",
+    "time": 1788696690.1292834,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.003mm Y+0.018mm (Damped Delta: X+0.002mm Y+0.010mm, UV: [640.15, 360.8], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696692.1370409,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.003mm Y+0.005mm (Damped Delta: X+0.002mm Y+0.003mm, UV: [640.15, 360.2], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696694.0979624,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X+0.0034mm Y+0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696694.0984159,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Calculated XY Offsets: X+0.173mm Y+0.225mm",
+    "time": 1788696694.0987737,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T4",
+    "time": 1788696694.1128511,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696698.018837,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder",
+    "time": 1788696700.2090628,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T0",
+    "time": 1788696701.8893235,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 0 (tool T0)",
+    "time": 1788696710.7696934,
+    "type": "response"
+  },
+  {
+    "message": "// ================ CALIBRATION SUMMARY ================",
+    "time": 1788696712.0784874,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T0: X=+0.000mm  Y=+0.000mm",
+    "time": 1788696712.07922,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T1: X=-0.159mm  Y=-0.287mm",
+    "time": 1788696712.0798244,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T2: X=+0.886mm  Y=+0.266mm",
+    "time": 1788696712.080546,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T3: X=+0.369mm  Y=+0.527mm",
+    "time": 1788696712.0806773,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T4: X=+0.173mm  Y=+0.225mm",
+    "time": 1788696712.0816343,
+    "type": "response"
+  },
+  {
+    "message": "// =====================================================",
+    "time": 1788696712.0822165,
+    "type": "response"
+  },
+  {
+    "message": "TKC_TEST_XY",
+    "time": 1788696733.3681967,
+    "type": "command"
+  },
+  {
+    "message": "// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.18 (commit: b6c3328)",
+    "time": 1788696733.578571,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)",
+    "time": 1788696733.5809507,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T0 ---",
+    "time": 1788696733.5815017,
+    "type": "response"
+  },
+  {
+    "message": "// Tool tool T0 already selected",
+    "time": 1788696733.5826979,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Entering Camera Station...",
+    "time": 1788696733.5835395,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.009mm Y-0.014mm (Damped Delta: X-0.005mm Y-0.008mm, UV: [639.6, 359.4], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696744.0635238,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 1: True Error X-0.0090mm Y-0.0139mm (within 0.015mm tolerance).",
+    "time": 1788696744.0653305,
+    "type": "response"
+  },
+  {
+    "message": "// [T0] Reference Optical Origin set to X170.910 Y18.917",
+    "time": 1788696744.0653622,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T1 ---",
+    "time": 1788696744.0668385,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T0",
+    "time": 1788696744.08147,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696747.9922717,
+    "type": "response"
+  },
+  {
+    "message": "CALIBRATION_ABORT",
+    "time": 1788696749.197052,
+    "type": "command"
+  },
+  {
+    "message": "// Activating extruder extruder1",
+    "time": 1788696750.172858,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T1",
+    "time": 1788696751.8539722,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 1 (tool T1)",
+    "time": 1788696759.7964988,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Entering Camera Station...",
+    "time": 1788696760.8035233,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.165mm Y-0.300mm (Damped Delta: X-0.091mm Y-0.165mm, UV: [632.7, 347.05], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696769.6051543,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X-0.069mm Y-0.123mm (Damped Delta: X-0.038mm Y-0.068mm, UV: [636.95, 354.7], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696771.4660566,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X-0.028mm Y-0.066mm (Damped Delta: X-0.015mm Y-0.036mm, UV: [638.75, 357.15], Burst 3/3 (spread: 0.45px), Tier 0 Curvature)",
+    "time": 1788696773.4346695,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X-0.019mm Y-0.030mm (Damped Delta: X-0.011mm Y-0.017mm, UV: [639.15, 358.7], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)",
+    "time": 1788696775.3412561,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X-0.004mm Y-0.020mm (Damped Delta: X-0.003mm Y-0.011mm, UV: [639.8, 359.15], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696777.2523658,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X-0.003mm Y-0.005mm (Damped Delta: X-0.002mm Y-0.003mm, UV: [639.85, 359.8], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696779.214613,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 6: True Error X-0.0034mm Y-0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696779.2152042,
+    "type": "response"
+  },
+  {
+    "message": "// [T1] Calculated XY Offsets: X-0.157mm Y-0.296mm",
+    "time": 1788696779.2152367,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T2 ---",
+    "time": 1788696779.2157972,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T1",
+    "time": 1788696779.2309535,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696782.993739,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder2",
+    "time": 1788696785.1898282,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T2",
+    "time": 1788696786.8707192,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 2 (tool T2)",
+    "time": 1788696794.811441,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Entering Camera Station...",
+    "time": 1788696795.8176718,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.892mm Y+0.221mm (Damped Delta: X+0.490mm Y+0.121mm, UV: [679.2, 369.55], Burst 3/3 (spread: 0.45px), Tier 0 Curvature)",
+    "time": 1788696804.0202675,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.409mm Y+0.138mm (Damped Delta: X+0.225mm Y+0.076mm, UV: [658.0, 365.95], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)",
+    "time": 1788696805.977034,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.190mm Y+0.056mm (Damped Delta: X+0.104mm Y+0.030mm, UV: [648.35, 362.4], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)",
+    "time": 1788696807.932908,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.077mm Y+0.031mm (Damped Delta: X+0.043mm Y+0.017mm, UV: [643.4, 361.35], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696809.787549,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.035mm Y+0.012mm (Damped Delta: X+0.019mm Y+0.006mm, UV: [641.55, 360.5], Burst 3/3 (spread: 4.9px), Tier 0 Curvature)",
+    "time": 1788696811.6963975,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.017mm Y+0.008mm (Damped Delta: X+0.009mm Y+0.004mm, UV: [640.75, 360.35], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696813.5993776,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 7/8: True Error X+0.011mm Y+0.002mm (Damped Delta: X+0.006mm Y+0.001mm, UV: [640.5, 360.1], Burst 3/3 (spread: 0.35px), Tier 0 Curvature)",
+    "time": 1788696815.4526627,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 7: True Error X+0.0114mm Y+0.0023mm (within 0.015mm tolerance).",
+    "time": 1788696815.4532344,
+    "type": "response"
+  },
+  {
+    "message": "// [T2] Calculated XY Offsets: X+0.891mm Y+0.256mm",
+    "time": 1788696815.4538426,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T3 ---",
+    "time": 1788696815.4542644,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T2",
+    "time": 1788696815.4693255,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696819.1635823,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder3",
+    "time": 1788696821.3569455,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T3",
+    "time": 1788696823.0379643,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 3 (tool T3)",
+    "time": 1788696830.9728084,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Entering Camera Station...",
+    "time": 1788696831.9785254,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.364mm Y+0.507mm (Damped Delta: X+0.200mm Y+0.279mm, UV: [656.1, 381.9], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696840.9345608,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.178mm Y+0.249mm (Damped Delta: X+0.098mm Y+0.137mm, UV: [647.85, 370.75], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696842.7915254,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.070mm Y+0.113mm (Damped Delta: X+0.038mm Y+0.062mm, UV: [643.1, 364.9], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696844.6985397,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.041mm Y+0.051mm (Damped Delta: X+0.022mm Y+0.028mm, UV: [641.8, 362.2], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696846.608074,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.017mm Y+0.022mm (Damped Delta: X+0.009mm Y+0.012mm, UV: [640.75, 360.95], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696848.4121208,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 6/8: True Error X+0.017mm Y+0.020mm (Damped Delta: X+0.009mm Y+0.011mm, UV: [640.75, 360.85], Burst 3/3 (spread: 0.6px), Tier 0 Curvature)",
+    "time": 1788696850.3169158,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 7/8: True Error X-0.003mm Y+0.005mm (Damped Delta: X-0.002mm Y+0.003mm, UV: [639.85, 360.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696852.123005,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 7: True Error X-0.0034mm Y+0.0046mm (within 0.015mm tolerance).",
+    "time": 1788696852.1235309,
+    "type": "response"
+  },
+  {
+    "message": "// [T3] Calculated XY Offsets: X+0.377mm Y+0.529mm",
+    "time": 1788696852.1236432,
+    "type": "response"
+  },
+  {
+    "message": "// --- Calibrating Toolhead T4 ---",
+    "time": 1788696852.1244493,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T3",
+    "time": 1788696852.1396327,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696855.9271421,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder4",
+    "time": 1788696858.117293,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T4",
+    "time": 1788696859.798487,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 4 (tool T4)",
+    "time": 1788696867.7148633,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Entering Camera Station...",
+    "time": 1788696868.7231398,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X+0.162mm Y+0.180mm (Damped Delta: X+0.089mm Y+0.099mm, UV: [647.15, 367.8], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696879.795877,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.085mm Y+0.096mm (Damped Delta: X+0.047mm Y+0.053mm, UV: [643.75, 364.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696881.6577957,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.027mm Y+0.050mm (Damped Delta: X+0.015mm Y+0.027mm, UV: [641.2, 362.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)",
+    "time": 1788696883.4676104,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 4/8: True Error X+0.023mm Y+0.023mm (Damped Delta: X+0.013mm Y+0.013mm, UV: [641.0, 361.0], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)",
+    "time": 1788696885.329372,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 5/8: True Error X+0.003mm Y+0.006mm (Damped Delta: X+0.002mm Y+0.003mm, UV: [640.15, 360.25], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)",
+    "time": 1788696887.1963007,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 5: True Error X+0.0034mm Y+0.0058mm (within 0.015mm tolerance).",
+    "time": 1788696887.1963358,
+    "type": "response"
+  },
+  {
+    "message": "// [T4] Calculated XY Offsets: X+0.163mm Y+0.192mm",
+    "time": 1788696887.196361,
+    "type": "response"
+  },
+  {
+    "message": "echo: Dropping off tool T4",
+    "time": 1788696887.2111979,
+    "type": "response"
+  },
+  {
+    "message": "// tool_crash: disabled",
+    "time": 1788696891.116262,
+    "type": "response"
+  },
+  {
+    "message": "// Activating extruder extruder",
+    "time": 1788696893.305571,
+    "type": "response"
+  },
+  {
+    "message": "echo: Picking up tool T0",
+    "time": 1788696894.9859328,
+    "type": "response"
+  },
+  {
+    "message": "// Selected tool 0 (tool T0)",
+    "time": 1788696903.831037,
+    "type": "response"
+  },
+  {
+    "message": "// ================ CALIBRATION SUMMARY ================",
+    "time": 1788696905.1427345,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T0: X=+0.000mm  Y=+0.000mm",
+    "time": 1788696905.1432126,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T1: X=-0.157mm  Y=-0.296mm",
+    "time": 1788696905.1435256,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T2: X=+0.891mm  Y=+0.256mm",
+    "time": 1788696905.1440284,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T3: X=+0.377mm  Y=+0.529mm",
+    "time": 1788696905.14406,
+    "type": "response"
+  },
+  {
+    "message": "// Tool T4: X=+0.163mm  Y=+0.192mm",
+    "time": 1788696905.1441896,
+    "type": "response"
+  },
+  {
+    "message": "// =====================================================",
+    "time": 1788696905.1442277,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] No calibration cycle is currently running.",
+    "time": 1788696905.1968532,
+    "type": "response"
+  },
+  {
+    "message": "_TKC_SAFE_TOOLCHANGE\nCALIBRATION_NAVIGATE STATION=CAMERA\nCENTER_NOZZLE SAMPLES=3 WIGGLE=0\nCALIBRATION_TEST_VISION SAMPLES=7\nGET_POSITION",
+    "time": 1788696928.4341278,
+    "type": "command"
+  },
+  {
+    "message": "// [tool_calibrator] Approaching Camera Station via safe 3-tier waypoints...",
+    "time": 1788696928.4363086,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ Reached Camera Station: X170.910 Y18.917 Z40.000",
+    "time": 1788696937.191308,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Centering active nozzle (T0) over camera...",
+    "time": 1788696937.1921194,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 1/8: True Error X-0.001mm Y-0.022mm (Damped Delta: X-0.001mm Y-0.012mm, UV: [639.95, 359.05], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696939.2649727,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 2/8: True Error X+0.001mm Y-0.020mm (Damped Delta: X+0.001mm Y-0.011mm, UV: [640.05, 359.15], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)",
+    "time": 1788696941.1242313,
+    "type": "response"
+  },
+  {
+    "message": "// -> Centering Step 3/8: True Error X+0.008mm Y-0.008mm (Damped Delta: X+0.004mm Y-0.004mm, UV: [640.35, 359.65], Burst 3/3 (spread: 0.35px), Tier 0 Curvature)",
+    "time": 1788696943.0357456,
+    "type": "response"
+  },
+  {
+    "message": "// -> Convergence achieved at Step 3: True Error X+0.0080mm Y-0.0081mm (within 0.015mm tolerance).",
+    "time": 1788696943.038173,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ Nozzle centered successfully at X170.910 Y18.894",
+    "time": 1788696943.038599,
+    "type": "response"
+  },
+  {
+    "message": "// [tool_calibrator] Sampling 7 vision frames at current position...",
+    "time": 1788696943.038626,
+    "type": "response"
+  },
+  {
+    "message": "// ✔ [Vision Inspection Report]\n// Found:       YES (7/7 frames)\n// Center UV:   U640.25 px, V359.65 px\n// Radius:      22.60 px\n// Confidence:  99.0%\n// Dispersion:  0.40 px\n// Algorithm:   Tier 0 Curvature (Symmetric)",
+    "time": 1788696946.9588475,
+    "type": "response"
+  },
+  {
+    "message": "// mcu: stepper_x:-47977 stepper_y:47020 stepper_z:-4932 stepper_z1:-4932 stepper_z2:-4932 stepper_z3:-4932\n// stepper: stepper_x:189.806250 stepper_y:152.018750 stepper_z:39.999195 stepper_z1:39.999195 stepper_z2:39.999195 stepper_z3:39.999195\n// kinematic: X:170.912500 Y:18.893750 Z:39.999195\n// toolhead: X:170.910100 Y:18.894100 Z:40.000000 E:0.000000\n// gcode: X:170.910100 Y:18.894100 Z:40.000000 E:0.000000\n// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000\n// gcode homing: X:0.000000 Y:0.000000 Z:0.000000",
+    "time": 1788696946.9605644,
+    "type": "response"
+  }
+]

@@ -234,3 +234,59 @@ Tăng tốc độ di chuyển trục Z khi chuyển đổi đầu in (tool chang
 
 ### Kết quả / vấn đề còn lại
 Tích hợp thử nghiệm hoạt động, đã có số liệu và lỗi thực tế tái hiện. **Chưa đủ ổn định để tự áp offset hoặc dùng không giám sát.** Giữ TKC như overlay thử nghiệm, source pin, Z guard và SAVE_CONFIG=0; tiếp tục sửa bootstrap, bộ lọc frame, số bước căn tâm và state machine ở dự án TKC trước khi đánh giá production.
+
+## 7. Cài TKC b6c3328 mới và đo lại ba vòng trên máy thật
+
+### Mục tiêu
+Theo yêu cầu người dùng, cài bản mới GitHub lên máy `192.168.1.43`, đo thực tế, kiểm tra nhu cầu gỡ kTAMV và chỉ ra lỗi/cải tiến TKC. Tiếp tục dùng xác nhận G28 thông thường và Z40 trước đổi tool; đã đọc lại các quy tắc `.agents/`.
+
+### Sao lưu
+- [pre-tkc-b6c3328-20260906-190133](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-tkc-b6c3328-20260906-190133/README.md>) — printer.cfg, ktamv.cfg, overlay, station, user services, trạng thái dịch vụ, source HEAD và lịch sử backup station từ máy thật; kèm KNOWN_ISSUES.md trước sửa.
+- Remote: `/home/voron/printer_data/config_backups/pre-tkc-b6c3328-20260906-190126/`.
+
+### File và triển khai
+- Nâng `~/Tool-Klipper-Calibration` từ `780a492` lên `b6c332862a87043238b068dd55b5f5ee433efdb6` (0.8.18).
+- Source gốc kiểm tra trong worktree riêng: thiếu import `Tuple`, `Optional`, server không import được; 91 tests chạy với 10 errors. Bổ sung đúng hai typing import, lưu `startup-imports.patch`; sau vá **91/91 tests đạt trong 6,938 s**. Chỉ vá lỗi khởi động, không sửa thuật toán để che lỗi đo.
+- Cập nhật mô tả revision trong overlay và user service; restart vision và **process Klipper**. Không dùng installer upstream hoặc thay dependency môi trường. Symlink extras và include thử nghiệm từ phiên trước giữ nguyên.
+- Sau sao lưu, bỏ MPP/ma trận cũ khỏi station thử nghiệm để kiểm tra bootstrap native; giữ waypoint đã đo. Backend Z vẫn chặn bằng macro báo lỗi.
+- kTAMV dùng cổng 8086, TKC dùng 8090 loopback. Tạm dừng ktamv-server khi đo, bật lại sau đó; không phát hiện xung đột cần gỡ source/config/include.
+- Thêm báo cáo, README, bản vá, cấu hình, ảnh, JSON, CSV, console, script tái hiện offline trong `extras/experiments/tkc-b6c3328-20260906/`. Production Git `config/` không thay đổi.
+
+### Kiểm tra máy và camera
+- Klipper process mới bắt đầu **19:03:02 giờ máy in**. G28 và Z40 thành công, T0 đúng active/detected, heater targets bằng 0.
+- Chưa có matrix: `/calculate_offset` từ chối HTTP 400 `ERR_CV_203`; không chạy correction fallback.
+- `CALIBRATE_CAMERA_SCALE DISTANCE=0.5`: đủ bốn hướng, X 21,90/22,00 px, Y 20,55/22,60 px; **MPP=0,023000 mm/px**, affine solved. Tự căn tâm sau fit, lưu target **X170,910 Y18,917 Z40**, approach X171,456 Y43,920.
+- Đo XY bằng `TKC_TEST_XY`: SAVE_CONFIG=0, CALIBRATE_Z=0, WIGGLE=0, SAMPLES=3, tolerance 0,015 mm không đổi; default mới 8 bước.
+
+### Kết quả đo thực tế
+
+| Tool | Vòng 1 X/Y (mm) | Vòng 2 X/Y (mm) | Vòng 3 X/Y (mm) |
+|---|---:|---:|---:|
+| T1 | -0,166 / -0,274 | -0,159 / -0,287 | -0,157 / -0,296 |
+| T2 | +0,872 / +0,270 | +0,886 / +0,266 | +0,891 / +0,256 |
+| T3 | +0,351 / +0,536 | +0,369 / +0,527 | +0,377 / +0,529 |
+| T4 | +0,150 / +0,214 | +0,173 / +0,225 | +0,163 / +0,192 |
+
+- **3/3 vòng hoàn chỉnh**, thời gian TKC 165,30 / 172,22 / 171,77 s. Biên độ lặp lớn nhất **0,026 mm X / 0,033 mm Y**; ba vòng chưa đủ chứng nhận độ chính xác tuyệt đối. T0 là gốc riêng mỗi vòng.
+- Trong vòng 3, gửi đúng một `CALIBRATION_ABORT` khi T1 active. Request bị giữ **156,027 s**, cả vòng vẫn chạy tới T4 và trả T0, sau đó báo `No calibration cycle is currently running.` API trả ok không có nghĩa đã hủy.
+- API RUNNING/valid=false hoạt động, nhưng `active_tool` vẫn là 4 sau khi tool thực đã về T0; duration trong lúc chạy vẫn 0.
+
+### Lỗi và cải tiến đã xác nhận
+1. **Khởi động:** thiếu typing imports; bản vá tối thiểu đã cài và lưu để upstream sửa.
+2. **Abort:** handler đi chung G-code mutex với chuỗi calibration đồng bộ. Cần webhook ngoài hàng đợi/state machine và test hai request đồng thời.
+3. **Dấu bù XY cho Z:** raw offset là carriage target trừ reference, nhưng code trạm Z lại trừ. Mô phỏng X68, offset +0,865: thực tế code ra X67,135, hình học đúng cần X68,865, lệch 1,730 mm. Không thử lỗi này bằng probe thật; giữ Z guard.
+4. **Session:** scale tiếp tục approach sau lỗi lấy lock; health lỗi sau khi đã lấy lock ở full cycle không nhả lock/finalize end_time. Đã tái hiện offline.
+5. **Trạng thái scale:** centering sau solve thất bại vẫn lưu và báo CAMERA CALIBRATION SUCCESS. Đã tái hiện offline.
+6. **Burst gate:** `max(6 px, 0,08/MPP)` thành 0,138 mm tại scale này, vẫn nhận cụm 5 px = 0,115 mm. Đã tái hiện offline; cần gate theo mm và frame freshness.
+7. **Runtime:** print_stall tăng tới 3, mỗi lần quan sát gần đoạn trả T4→T0. Có một `BlockingIOError: [Errno 11] Resource temporarily unavailable` trong `_respond_raw` khi ghi G-code response ở T3 vòng 3; đo vẫn hoàn tất. Có reactor busy 0,069 s gần chuyển T3/T4. Chưa xác định nguyên nhân buffering/scheduling, không quy lỗi cơ khí/CAN.
+
+### Log và xác minh cuối
+- Phân tích **811 Stats samples** từ process mới: bảy CAN node active, RX/TX error và retries bằng 0; không thấy Timer too close, mất liên lạc, short-to-supply hoặc shutdown trong cửa sổ này. Ngoại lệ phản hồi G-code nêu trên được ghi riêng.
+- Raw logs: [klippy.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-b6c3328-20260906/klippy.log>), [moonraker.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-b6c3328-20260906/moonraker.log>), [vision-service.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-b6c3328-20260906/vision-service.log>). Log lớn không commit; trích đoạn và kết quả phân tích được theo dõi.
+- Restart riêng vision sau đo: health mất MPP/matrix như dự kiến; CENTER_NOZZLE nạp lại từ file và hội tụ. Không restart/rehome Klipper lần nữa sau đo.
+- Cuối kiểm tra: **ready, XYZ homed, T0 active/detected, X170,9101 Y18,8941 Z40**, heater targets/power bằng 0. Vision 7/7 frame, dispersion 0,40 px, confidence score 99%; session lock đã nhả.
+- Hai user services TKC/kTAMV active/running, NRestarts=0. Printer.cfg/ktamv.cfg giống byte backup đầu phiên, năm tool cfg và calibration-probe.cfg khớp hash production đã xác minh, runtime offsets trước/sau giống nhau.
+- Đồng hồ PC nhanh hơn máy in khoảng 9 s; timeline/request dùng giờ PC, run record/log dùng giờ máy in. Thời lượng so sánh trong cùng đồng hồ.
+
+### Kết quả và giới hạn
+Đã cài và đo bản mới, bootstrap và ba vòng XY thành công sau vá import. **Chưa dùng TKC cho XYZ không giám sát hoặc tự áp offset.** Cần ưu tiên sửa abort ngoài hàng đợi, dấu bù Z, cleanup phiên và gate chất lượng. Không gia nhiệt, probe Z, áp offset hay thử in. Báo cáo chi tiết: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-b6c3328-20260906/REPORT.md>).

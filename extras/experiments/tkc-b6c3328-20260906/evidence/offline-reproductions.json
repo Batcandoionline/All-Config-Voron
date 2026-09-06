@@ -1,0 +1,55 @@
+{
+  "z_xy_sign": {
+    "actual_carriage_xy": [
+      67.135,
+      9.715
+    ],
+    "required_from_measured_carriage_delta": [
+      68.865,
+      10.285
+    ]
+  },
+  "preflight_cleanup": {
+    "calls": [
+      "acquire_lock",
+      "health"
+    ],
+    "session_token": "owned",
+    "record": {
+      "run_id": "run_1788696508",
+      "state": "FAILED",
+      "active_tool": null,
+      "start_time": 1788696508.7013867,
+      "end_time": null,
+      "duration_sec": 0.0,
+      "error": "injected health failure",
+      "completed_tools": [],
+      "offsets": {},
+      "valid": false
+    }
+  },
+  "scale_lock_failure": {
+    "approach_called_after_lock_error": true
+  },
+  "scale_success_after_center_failure": [
+    "  -> Centering note: injected ERR_CV_202",
+    "\n\u2714 ================= CAMERA CALIBRATION SUCCESS ================\n  Calculated Scale (MPP): 0.023000 mm/pixel\n  Affine Matrix Solved:   True\n  Saved to Configuration: /tmp/tkc-offline-8zddr55i/station.cfg\n================================================================"
+  ],
+  "burst_physical_spread": {
+    "burst": {
+      "found": true,
+      "center_uv": [
+        320.0,
+        240.0
+      ],
+      "radius_px": 0.0,
+      "confidence": 0.0,
+      "tier": 1,
+      "combo": 0,
+      "burst_count": 3,
+      "burst_total": 3,
+      "spread_px": 5.0
+    },
+    "spread_mm": 0.11499999999999999
+  }
+}

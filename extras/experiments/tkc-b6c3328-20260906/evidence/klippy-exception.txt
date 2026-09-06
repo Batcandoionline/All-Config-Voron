@@ -1,0 +1,18 @@
+  -> Centering Step 4/8: True Error X+0.041mm Y+0.051mm (Damped Delta: X+0.022mm Y+0.028mm, UV: [641.8, 362.2], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+Write g-code response
+Traceback (most recent call last):
+  File "/home/voron/klipper/klippy/gcode.py", line 485, in _respond_raw
+    os.write(self.fd, (msg+"\n").encode())
+BlockingIOError: [Errno 11] Resource temporarily unavailable
+  -> Centering Step 5/8: True Error X+0.017mm Y+0.022mm (Damped Delta: X+0.009mm Y+0.012mm, UV: [640.75, 360.95], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+  -> Centering Step 6/8: True Error X+0.017mm Y+0.020mm (Damped Delta: X+0.009mm Y+0.011mm, UV: [640.75, 360.85], Burst 3/3 (spread: 0.6px), Tier 0 Curvature)
+  -> Centering Step 7/8: True Error X-0.003mm Y+0.005mm (Damped Delta: X-0.002mm Y+0.003mm, UV: [639.85, 360.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+  -> Convergence achieved at Step 7: True Error X-0.0034mm Y+0.0046mm (within 0.015mm tolerance).
+[T3] Calculated XY Offsets: X+0.377mm Y+0.529mm
+
+--- Calibrating Toolhead T4 ---
+Reactor 9250.957 busy for 0.069 with:
+- 'ClientConnection.process_received.<locals>.<lambda> (webhooks.py:263)'
+tool_crash: disabled
+Activating extruder extruder4
+Selected tool 4 (tool T4)

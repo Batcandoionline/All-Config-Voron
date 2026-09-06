@@ -1,0 +1,30 @@
+{
+  "unchanged": true,
+  "offsets": {
+    "tool T0": {
+      "gcode_x_offset": 0.0,
+      "gcode_y_offset": 0.0,
+      "gcode_z_offset": 0.0
+    },
+    "tool T1": {
+      "gcode_x_offset": -0.159,
+      "gcode_y_offset": -0.195,
+      "gcode_z_offset": 0.236
+    },
+    "tool T2": {
+      "gcode_x_offset": 0.82,
+      "gcode_y_offset": 0.24,
+      "gcode_z_offset": -0.316
+    },
+    "tool T3": {
+      "gcode_x_offset": 0.326,
+      "gcode_y_offset": 0.524,
+      "gcode_z_offset": -0.1896
+    },
+    "tool T4": {
+      "gcode_x_offset": 0.168,
+      "gcode_y_offset": 0.268,
+      "gcode_z_offset": 0.12
+    }
+  }
+}

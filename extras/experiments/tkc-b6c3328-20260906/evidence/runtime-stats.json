@@ -1,0 +1,67 @@
+{
+  "start": "Start printer at Sun Sep  6 19:03:02 2026 (1788696182.4 8581.2)",
+  "stats_samples": 811,
+  "can": {
+    "mcu": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "EBB0": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "EBB1": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "EBB2": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "EBB3": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "EBB4": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    },
+    "cartographer": {
+      "bus_states": [
+        "active"
+      ],
+      "rx_error_max": 0,
+      "tx_error_max": 0,
+      "tx_retries_max": 0
+    }
+  },
+  "print_stall_max": 3,
+  "error_matches": [
+    "Traceback (most recent call last):"
+  ],
+  "last_stats": "Stats 9401.5: gcodein=0 canstat_mcu: bus_state=active rx_error=0 tx_error=0 tx_retries=0 mcu: mcu_awake=0.002 mcu_task_avg=0.000001 mcu_task_stddev=0.000001 bytes_write=417423 bytes_read=422456 bytes_retransmit=0 bytes_invalid=0 send_seq=16582 receive_seq=16582 retransmit_seq=0 srtt=0.001 rttvar=0.001 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=519984189 canstat_EBB0: bus_state=active rx_error=0 tx_error=0 tx_retries=0 EBB0: mcu_awake=0.001 mcu_task_avg=0.000010 mcu_task_stddev=0.000010 bytes_write=12263 bytes_read=75691 bytes_retransmit=0 bytes_invalid=0 send_seq=1871 receive_seq=1871 retransmit_seq=0 srtt=0.000 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=63999243 adj=64001158 canstat_EBB1: bus_state=active rx_error=0 tx_error=0 tx_retries=0 EBB1: mcu_awake=0.001 mcu_task_avg=0.000010 mcu_task_stddev=0.000010 bytes_write=12240 bytes_read=75626 bytes_retransmit=0 bytes_invalid=0 send_seq=1862 receive_seq=1862 retransmit_seq=0 srtt=0.000 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=63999257 adj=64001189 canstat_EBB2: bus_state=active rx_error=0 tx_error=0 tx_retries=0 EBB2: mcu_awake=0.001 mcu_task_avg=0.000010 mcu_task_stddev=0.000010 bytes_write=12247 bytes_read=75620 bytes_retransmit=0 bytes_invalid=0 send_seq=1868 receive_seq=1868 retransmit_seq=0 srtt=0.000 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=63999156 adj=64001176 canstat_EBB3: bus_state=active rx_error=0 tx_error=0 tx_retries=0 EBB3: mcu_awake=0.001 mcu_task_avg=0.000010 mcu_task_stddev=0.000010 bytes_write=12217 bytes_read=75523 bytes_retransmit=0 bytes_invalid=0 send_seq=1859 receive_seq=1859 retransmit_seq=0 srtt=0.000 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=63999204 adj=64001157 canstat_EBB4: bus_state=active rx_error=0 tx_error=0 tx_retries=0 EBB4: mcu_awake=0.001 mcu_task_avg=0.000010 mcu_task_stddev=0.000010 bytes_write=12263 bytes_read=75571 bytes_retransmit=0 bytes_invalid=0 send_seq=1873 receive_seq=1873 retransmit_seq=0 srtt=0.001 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=63999125 adj=64001003 canstat_cartographer: bus_state=active rx_error=0 tx_error=0 tx_retries=0 cartographer: mcu_awake=0.027 mcu_task_avg=0.000010 mcu_task_stddev=0.000024 bytes_write=26254 bytes_read=139599 bytes_retransmit=0 bytes_invalid=0 send_seq=3030 receive_seq=3030 retransmit_seq=0 srtt=0.000 rttvar=0.000 rto=0.025 ready_bytes=0 upcoming_bytes=0 freq=47999801 adj=48001203 cartographer_coil: temp=21.6 cartographer: temp=44.2 chamber: temp=30.9 heater_bed: target=0 temp=30.6 pwm=0.000 print_time=9353.181 buffer_time=0.000 print_stall=3 extruder: target=0 temp=30.3 pwm=0.000 extruder1: target=0 temp=34.8 pwm=0.000 extruder2: target=0 temp=30.4 pwm=0.000 extruder3: target=0 temp=30.1 pwm=0.000 extruder4: target=0 temp=30.3 pwm=0.000 sysload=0.85 cputime=47.706 memavail=3079868"
+}
