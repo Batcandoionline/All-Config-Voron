@@ -416,3 +416,66 @@ TKC 0.8.19 đã được cài thật, source sạch và hoạt động ở phạ
 
 ### Kết quả
 Đã hoàn tất gỡ/cài lại bản mới trên máy thật, giữ upstream nguyên trạng và tổ chức cấu hình máy trong `Printer-Setup`. Installer mới giải quyết đáng kể lỗi permission/preflight/user-service/placeholder, nhưng chưa thể coi là unattended clean install do restart bị che lỗi, ready-sync sai ngữ cảnh reactor, health chưa kiểm readiness và uninstall/rollback chưa sở hữu đủ trạng thái. Báo cáo và bằng chứng: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-6c721e5-clean-reinstall-20260906/REPORT.md>).
+
+## 11. Cài sạch TKC `ce4ca303`, thử camera cuối và điều tra lỗi Cartographer Z
+
+### Mục tiêu
+- Gỡ hoàn toàn bản TKC trước, xác minh trạng thái sạch rồi cài lại `main` mới nhất.
+- Giữ toàn bộ cấu hình riêng của máy dưới `Printer-Setup`.
+- Kiểm tra camera lần cuối tại Z=40 và thử đo Z bằng backend Cartographer mà không lưu hay áp offset.
+- Lập báo cáo về cài đặt, camera, Z, lỗi và đề xuất cải tiến; không sửa source TKC.
+
+### File đã sửa đổi
+- `extras/experiments/tkc-ce4ca30-camera-cartographer-z-20260906/REPORT.md` — báo cáo đầy đủ lần thử.
+- `extras/experiments/tkc-ce4ca30-camera-cartographer-z-20260906/*.txt|*.json` — bằng chứng cài/gỡ, camera, Z, trace lỗi và trạng thái cuối.
+- `extras/backups/pre-tkc-ce4ca30-camera-z-20260906-212025/` — bản sao cấu hình và trạng thái repo trước thử nghiệm.
+- `.agents/KNOWN_ISSUES.md` — ghi lỗi `NameError` làm Klippy shutdown và giới hạn Cartographer cố định trên shuttle.
+
+### Sao lưu
+- Local: `D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-tkc-ce4ca30-camera-z-20260906-212025/`.
+- Máy in: `/home/voron/printer_data/config_backups/tkc-ce4ca30-camera-z-20260906-212025/`.
+- Các file live đã lưu: `printer.cfg`, `moonraker.conf`, `Printer-Setup/tool-calibrator.cfg`, `Printer-Setup/tool_offsets.cfg`, macro links, service unit, source state và log daemon.
+
+### Triển khai và kiểm tra
+- Upstream `main` chốt tại `ce4ca3030e7d3c8d11c3aa1b54daf9242d997624`; source cuối sạch, current hash bằng remote hash.
+- Test tách biệt trên Pi: 107/107 đạt trong 8,43 giây.
+- Uninstaller mới chạy với `--config-subdir Printer-Setup`; checkpoint sạch xác nhận source/unit/process/port/symlink/object/command/ref active đều không còn.
+- Installer mới chạy bằng `./scripts/install.sh --user-service --config-subdir Printer-Setup`; user service active/enabled và bind loopback `127.0.0.1:8090`.
+- Một lần gọi đầu nhận ký tự CR do transport PowerShell và tạo thư mục `Printer-Setup\r`; cấu hình chưa active, đã gỡ sạch ngay. Lần cuối xác minh byte của `Printer-Setup` trước khi cài.
+- kTAMV không xung đột: tiếp tục chạy bằng `ktamv-server.service` trên cổng 8086.
+
+### Kết quả camera
+- G28 thành công, T0 active khớp detected, Z=40 trước khi di chuyển camera.
+- Ở approach X171,456 Y43,920 Z40: 0/5 frame, âm tính đúng, toolchanger vẫn ready.
+- Ở target X170,910 Y18,917 Z40: 5 lượt liên tiếp, tổng 25/25 frame.
+- Mỗi lượt: UV 639,95 / 355,95 px; radius 22,40 px; confidence 99,0%; dispersion 0,05–0,10 px.
+- Không chạy auto-centering và không lưu XY offset.
+
+### Thử nghiệm Cartographer Z và lỗi máy
+- Chỉ trong lúc thử, đổi hai hook `_TKC_Z_DISABLED` thành `CARTOGRAPHER_TOUCH_HOME` và `CARTOGRAPHER_TOUCH_PROBE`.
+- Lệnh dùng `CALIBRATE_XY=0 CALIBRATE_Z=1 SAVE_CONFIG=0`, máy lạnh, heater target=0, Z40 trước toolchange.
+- T0 hoàn thành touch-home tại X174 Y168; Cartographer điều chỉnh gốc Z 0,335 mm và TKC chuẩn hóa reference T0 thành 0.
+- T1 được gắn đúng và bắt đầu `CARTOGRAPHER_TOUCH_PROBE`, nhưng chưa trả số đo thì một object-status query kích hoạt lỗi TKC.
+- Trace xác nhận `klippy/extras/tool_calibrator.py:get_status()` gọi `time.time()` khi run đang RUNNING nhưng module không `import time`.
+- Klippy shutdown với `NameError: name 'time' is not defined` và `Unhandled exception during run`; không phải lỗi CAN, điện hoặc Cartographer.
+- `cmd_CALIBRATION_STATUS()` có cùng đường lỗi thiếu import. 107 test upstream không bao phủ trạng thái RUNNING này.
+- Dừng khẩn cấp, stop TKC daemon, phục hồi Z-disabled, `FIRMWARE_RESTART`, G28 nhận đúng T1, nâng Z40 rồi đổi an toàn về T0.
+- SHA-256 trước/sau của `tool_offsets.cfg` và `printer.cfg` trùng tuyệt đối; không offset nào được ghi hoặc áp.
+
+### Nguyên nhân và giới hạn phương pháp
+- Lỗi shutdown gốc là lỗi Python trong TKC `ce4ca303`, tái hiện khi UI/API đọc status trong lúc calibration hoạt động.
+- Cartographer máy này cố định trên shuttle và adapter Cartographer mô tả probe là contactless. Kết quả touch theo hình học shuttle–bed, không trực tiếp quan sát chiều dài từng nozzle.
+- Không dùng backend này để kết luận Z offset T1–T4. PF2 switch/Axiscope mới là cơ chế nozzle-reference phù hợp để đo tool Z thực.
+
+### Kết quả cuối
+- Máy `ready`, `standby`, XYZ homed, T0 active=detected, X175,8 Y168 Z40.
+- Toàn bộ hotend và bed target=0.
+- TKC `ce4ca303` active/enabled; camera ready, MPP 0,023, matrix loaded, session unlocked.
+- Hai hook Z đã trở lại `_TKC_Z_DISABLED`; không chạy lại Z cho tới khi upstream sửa status crash và xác nhận cơ chế đo nozzle.
+- Không sửa code upstream TKC.
+
+### Vấn đề còn lại
+- P0: sửa import/time và bảo đảm `get_status()` không thể làm Klippy shutdown; thêm integration test subscription khi run đang hoạt động.
+- P0: chặn fixed-shuttle Cartographer cho per-tool nozzle Z hoặc yêu cầu khai báo measurement reference.
+- P1: `CALIBRATE_TOOL_Z TOOL=n` phải tự đo T0 reference hoặc từ chối; hiện có thể dùng reference rỗng.
+- P1: sửa rollback journal, validate `--config-subdir`, bao phủ include `tool-calibrator.cfg`, và chỉ báo cài thành công khi camera/mpp/matrix đã ready.

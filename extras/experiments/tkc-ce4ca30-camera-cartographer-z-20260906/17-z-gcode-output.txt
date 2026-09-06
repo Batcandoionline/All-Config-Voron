@@ -1,0 +1,28 @@
+response 1788705355,4811056 echo: TKC_CARTOGRAPHER_Z_BEGIN
+response 1788705355,4851975 // [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)
+response 1788705355,48633 // --- Calibrating Toolhead T0 ---
+response 1788705355,487373 // Tool tool T0 already selected
+response 1788705355,4884233 // [T0] Entering Z Probe Station...
+response 1788705355,9955916 // [tool_calibrator] Running CARTOGRAPHER_TOUCH_HOME on Reference Tool T0
+response 1788705387,1014664 Touch home at (174.000, 168.000) adjusted z by 0.335 mm |
+response 1788705388,211048 // [T0] Reference Z baseline established (cartographer_touch_reference)
+response 1788705391,8352313 // --- Calibrating Toolhead T1 ---
+response 1788705391,852552 echo: Dropping off tool T0
+response 1788705395,5531974 // tool_crash: disabled
+response 1788705397,7476866 // Activating extruder extruder1
+response 1788705399,4296763 echo: Picking up tool T1
+response 1788705407,3684077 // Selected tool 1 (tool T1)
+response 1788705408,3758836 // [T1] Entering Z Probe Station...
+response 1788705411,3936794 // [tool_calibrator] Running CARTOGRAPHER_TOUCH_PROBE on Tool T1
+response 1788705426,3994312 // Klipper state: Shutdown
+response 1788705426,754836 // Unhandled exception during run | // Once the underlying issue is corrected, use the | // "FIRMWARE_RESTART" command to reset the firmware, reload the | // config, and restart the host software. | // Printer is shutdown
+response 1788705426,7561226 !! Unhandled exception during run
+response 1788705426,756442 // Unhandled exception during run | // Once the underlying issue is corrected, use the | // "FIRMWARE_RESTART" command to reset the firmware, reload the | // config, and restart the host software. | // Printer is shutdown
+response 1788705426,757422 !! Unhandled exception during run
+response 1788705426,7577188 // !! [tool_calibrator] Calibration Failed: Unhandled exception during run | // Once the underlying issue is corrected, use the | // "FIRMWARE_RESTART" command to reset the firmware, reload the | // config, and restart the host software. | // Printer is shutdown
+response 1788705426,7577596 // !! [tool_calibrator] Failure occurred while T1 was active. If using toolchanger, verify physical dock state before issuing further tool changes.
+response 1788705426,759359 // [tool_calibrator] Calibration Failed: Unhandled exception during run | // Once the underlying issue is corrected, use the | // "FIRMWARE_RESTART" command to reset the firmware, reload the | // config, and restart the host software. | // Printer is shutdown
+response 1788705426,7594378 !! [tool_calibrator] Calibration Failed: Unhandled exception during run
+command 1788705539,084942 TURN_OFF_HEATERS | M112
+response 1788705539,086255 // Unhandled exception during run | // Once the underlying issue is corrected, use the | // "FIRMWARE_RESTART" command to reset the firmware, reload the | // config, and restart the host software. | // Printer is shutdown
+response 1788705539,0885367 !! Unhandled exception during run

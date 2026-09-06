@@ -1,0 +1,9 @@
+Cloning into '/home/voron/tkc-preflight-ce4ca30-20260906-212025'...
+expected=ce4ca3030e7d3c8d11c3aa1b54daf9242d997624
+actual=ce4ca3030e7d3c8d11c3aa1b54daf9242d997624
+ERROR: usage: python -m pytest [options] [file_or_dir] [file_or_dir] [...]
+python -m pytest: error: argument -q/--quiet: ignored explicit argument '\r'
+
+........................................................................ [ 67%]
+...................................                                      [100%]
+107 passed in 8.43s

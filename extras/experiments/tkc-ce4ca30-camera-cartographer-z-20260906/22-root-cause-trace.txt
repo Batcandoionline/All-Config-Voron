@@ -1,0 +1,19 @@
+Unhandled exception during run
+Traceback (most recent call last):
+  File "/home/voron/klipper/klippy/klippy.py", line 177, in run
+    self.reactor.run()
+  File "/home/voron/klipper/klippy/reactor.py", line 371, in run
+    g_next.switch()
+  File "/home/voron/klipper/klippy/reactor.py", line 357, in _dispatch_loop
+    self._check_timers(eventtime)
+  File "/home/voron/klipper/klippy/reactor.py", line 166, in _check_timers
+    t.waketime = waketime = t.callback(eventtime)
+                            ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/voron/klipper/klippy/webhooks.py", line 510, in _do_query
+    res = query[obj_name] = po.get_status(eventtime)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/voron/klipper/klippy/extras/tool_calibrator.py", line 1765, in get_status
+    rec["elapsed_sec"] = round(time.time() - rec["start_time"], 1)
+                               ^^^^
+NameError: name 'time' is not defined
+Transition to shutdown state: Unhandled exception during run

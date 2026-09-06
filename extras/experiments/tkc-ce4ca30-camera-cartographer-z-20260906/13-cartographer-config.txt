@@ -1,0 +1,29 @@
+#*#
+#*# [heater_bed]
+#*# control = pid
+#*# pid_kp = 47.596
+#*# pid_ki = 1.244
+#*# pid_kd = 455.140
+#*#
+#*# [cartographer scan_model default]
+#*# coefficients = 1.4402620114130371,1.9073617353970658,0.849770053259462,0.4031935131386766,0.38460168689976926,0.49155031034707874,-0.1705409695024835,-0.4300181555404033,0.29756084161246565,0.3318321438302031
+#*# domain = 2.961312574088123e-07,3.0676239643896904e-07
+#*# z_offset = 0
+#*# reference_temperature = 42.44
+#*# software_version = 1.8.0
+#*# mcu_version = CARTOGRAPHER V3 6.1.0
+#*#
+#*# [cartographer touch_model default]
+#*# threshold = 1819
+#*# speed = 2
+#*# z_offset = -0.05
+#*# software_version = 1.8.0
+#*# mcu_version = CARTOGRAPHER V3 6.1.0
+#*#
+#*# [cartographer coil]
+#*# calibration = -3.0631913588505464e-05,32.154321835673606,0.0,2e-323
+#*#
+#*# [tool T1]
+#*# gcode_x_offset = -0.159
+#*# gcode_y_offset = -0.195
+#*# gcode_z_offset = 0.2360

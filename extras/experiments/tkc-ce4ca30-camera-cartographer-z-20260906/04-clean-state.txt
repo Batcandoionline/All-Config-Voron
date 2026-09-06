@@ -1,0 +1,20 @@
+--- source path ---
+ABSENT
+--- user service ---
+Failed to get unit file state for tool_calibrator.service: No such file or directory
+inactive
+UNIT_ABSENT
+--- process and port 8090 ---
+PORT_8090_CLOSED
+--- owned symlinks ---
+--- live config names ---
+--- active refs ---
+NO_ACTIVE_CONFIG_REFS
+--- Klipper object/command residues ---
+[]
+['CALIBRATION_STATUS']
+--- services kept ---
+inactive
+LISTEN 0      1024                       0.0.0.0:8086       0.0.0.0:*    users:(("python",pid=7141,fd=7))
+--- printer state ---
+curl: (3) URL using bad/illegal format or missing URL

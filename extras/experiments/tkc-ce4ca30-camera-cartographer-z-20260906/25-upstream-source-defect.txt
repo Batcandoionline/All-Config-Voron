@@ -1,0 +1,29 @@
+Upstream commit: ce4ca3030e7d3c8d11c3aa1b54daf9242d997624
+Imports lines 9-17 (no time import):
+   9: from typing import Dict, Any, List, Optional, Set, Tuple
+  10: import json
+  11: import logging
+  12: import math
+  13: import re
+  14: import threading
+  15: import urllib.request
+  16: import urllib.error
+  17: import statistics
+Active-run status path:
+1761:     def get_status(self, eventtime) -> Dict[str, Any]:
+1762:         """Provides state dictionaries to Mainsail and Fluidd frontend templates."""
+1763:         rec = dict(self.run_record)
+1764:         if rec.get("state") == "RUNNING" and rec.get("start_time"):
+1765:             rec["elapsed_sec"] = round(time.time() - rec["start_time"], 1)
+1766:         return {
+1767:             "status": self.run_record.get("state", "IDLE"),
+1768:             "phase": self.run_record.get("phase", "IDLE"),
+1769:             "last_run_status": self.last_run_status,
+Command status has same fault:
+1740:         if rec.get("run_id"):
+1741:             validity_str = "VALID" if rec.get("valid") else "INCOMPLETE/FAILED"
+1742:             dur = rec.get("duration_sec", 0.0)
+1743:             if rec.get("state") == "RUNNING" and rec.get("start_time"):
+1744:                 dur = round(time.time() - rec["start_time"], 1)
+1745:             gcmd.respond_info(
+1746:                 f"  Run ID: {rec.get('run_id')} | State: {rec.get('state')} ({validity_str}) | Phase: {rec.get('phase')} | Physical Tool: {rec.get('physical_tool')} | Calibrating: {rec.get('calibrating_tool')} | Duration: {dur:.1f}s"
