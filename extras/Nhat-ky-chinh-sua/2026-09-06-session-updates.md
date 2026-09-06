@@ -157,5 +157,25 @@ Tăng tốc độ di chuyển trục Z khi chuyển đổi đầu in (tool chang
 4. **Import tương đối trong Server Daemon:**
    - File `server/tool_calibrator_server.py` chứa các lệnh import dạng `from .stream_grabber ...`. Cần bắt buộc chạy dưới dạng package module (`python3 -m server.tool_calibrator_server`).
 
-### Vấn đề còn lại
-Hệ thống TKC đã được tích hợp ổn định ở chế độ thử nghiệm an toàn, daemon thị giác đang hoạt động bình thường trên cổng 8090, sẵn sàng cho các bước cân chỉnh tự động tiếp theo khi người vận hành yêu cầu.
+### Vấn đề ghi nhận thêm trong quá trình thử nghiệm
+- Lỗi `Unknown command: "AUTO_TEACH_CAMERA"`: Macro này nằm trong `macros/safe_staging_macros.cfg` nhưng chưa được tự động đăng ký trong Python hay include trong cấu hình mẫu.
+- Lỗi `Centering failed: [ERR_CAM_101] Cannot connect to Vision Service on http://127.0.0.1:8090/calculate_offset: HTTP Error 400: BAD REQUEST`: Khi chưa hoàn tất `CALIBRATE_CAMERA_SCALE`, biến `mpp` và `transform_matrix` là `None`. Khi gọi `/calculate_offset`, solver ném ngoại lệ khiến Flask trả về HTTP 400. Đây là lỗi phụ thuộc vòng (chicken-and-egg bug) cản trở việc căn tâm ban đầu.
+
+---
+
+## 5. Khôi phục trạng thái máy in về trước khi cài TKC theo yêu cầu
+
+- **Lý do:** Người dùng yêu cầu khôi phục hoàn toàn cấu hình máy in về trạng thái gốc trước khi cài đặt TKC để tập trung hoàn thiện mã nguồn repo TKC.
+- **Thư mục sao lưu:** `extras/backups/revert-tkc-20260906-174400/`
+- **Các bước thực hiện:**
+  1. Loại bỏ dòng `[include Printer-Setup/tool-calibrator.cfg]` trong `config/printer.cfg`.
+  2. Đổi lại macro `[gcode_macro KTAMV_CALIBRATION_STATUS]` về nguyên trạng `[gcode_macro CALIBRATION_STATUS]` trong `config/Printer-Setup/calibration-probe.cfg`.
+  3. Xóa file `config/Printer-Setup/tool-calibrator.cfg`.
+  4. Trên máy in (`192.168.1.43`):
+     - Dừng và xóa service `tool_calibrator.service` (`systemctl --user stop/disable`).
+     - Gỡ bỏ toàn bộ symlink Klipper extras liên quan (`tool_calibrator*`, `safe_navigator*`, `config_manager*`, `z_backends`).
+     - Xóa file `tool-calibrator.cfg` trên máy in.
+     - Đồng bộ file `printer.cfg` và `calibration-probe.cfg` đã khôi phục.
+     - Khởi động lại firmware Klipper qua Moonraker API (`POST /printer/restart`).
+  5. **Kiểm tra trạng thái:** Klipper đã khởi động lại thành công và đạt trạng thái `ready` ("Printer is ready"). Không còn daemon hay module phụ trợ nào của TKC chạy ngầm.
+
