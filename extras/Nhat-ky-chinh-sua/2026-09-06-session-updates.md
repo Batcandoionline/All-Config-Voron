@@ -290,3 +290,41 @@ Theo yêu cầu người dùng, cài bản mới GitHub lên máy `192.168.1.43`
 
 ### Kết quả và giới hạn
 Đã cài và đo bản mới, bootstrap và ba vòng XY thành công sau vá import. **Chưa dùng TKC cho XYZ không giám sát hoặc tự áp offset.** Cần ưu tiên sửa abort ngoài hàng đợi, dấu bù Z, cleanup phiên và gate chất lượng. Không gia nhiệt, probe Z, áp offset hay thử in. Báo cáo chi tiết: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-b6c3328-20260906/REPORT.md>).
+
+## 8. Xác minh TKC đã cài thật và đối chiếu hướng dẫn cài đặt
+
+### Yêu cầu và phạm vi
+Người dùng hỏi TKC đã cài lên máy hay chỉ chạy thử Python, cách cài có theo hướng dẫn không và yêu cầu xác minh báo cáo để sửa đổi. Kiểm tra chỉ đọc qua SSH, proc/systemd, Moonraker và source đúng revision b6c3328; không chạy đo mới, restart, đổi cấu hình, dependency hoặc offset.
+
+### Bằng chứng cài thật
+- Host `voron-local`, vision PID **7088**, chạy `~/tkc-env/bin/python -m server.tool_calibrator_server` tại 127.0.0.1:8090, 2 workers, camera snapshot thật. User service active/running, enabled; Linger=yes. Không reboot để thử trong phiên audit.
+- Process Klipper thật dùng `/home/voron/printer_data/config/printer.cfg`, có include overlay TKC; năm file extras và thư mục z_backends liên kết tới repo TKC thật.
+- `gcode/help` trả các lệnh core và `TKC_TEST_XY`; `configfile.settings` có macro wrapper thật, gọi CALIBRATE_TOOL_OFFSETS. Object runtime còn giữ run `run_1788696733` và đúng kết quả vòng 3 trong báo cáo.
+- Môi trường ảo Python là cách chạy daemon thật, không đồng nghĩa máy giả lập. Script ở PC gửi G-code tới Moonraker; Klipper và camera trên máy thật thực thi ba vòng XY.
+
+### Những điểm khác với hướng dẫn/installer
+- Không chạy `scripts/install.sh`; cài thủ công để thử nghiệm XY trên phần cứng.
+- Dùng **user service `tool-calibrator-experiment`**, không phải system service `tool_calibrator`; unit chuẩn báo not-found là đúng với cách cài này.
+- Venv `~/tkc-env` bật system-site-packages, dùng Debian OpenCV4.6.0 (`python3-opencv`), không có distribution pip `opencv-python-headless`. OpenCV đạt mốc phiên bản số tối thiểu nhưng chưa xác minh tương đương build/hiệu năng với bản pip. Flask3.0.3, Waitress3.0.2, NumPy1.24.2, requests2.28.1 và urllib3 1.26.12 đều nằm trong dải yêu cầu.
+- Chưa include hai bộ macro tiện ích upstream; các alias CALIBRATE_ALL_TOOLS, CALIBRATE_TOOLS_XY, CALIBRATE_TOOL_XY, CALIBRATE_CAMERA, GOTO_CAMERA_TARGET không có trên máy. Các lệnh core vẫn hoạt động.
+- Chưa tích hợp ASVC/Update Manager; file station tách riêng, chưa cấu hình áp/lưu offset tool. Chưa nghiệm thu full XYZ.
+
+### Lỗi hướng dẫn được xác minh
+1. Ví dụ install guide dùng `default_station`, `lift_z_safe`, `center_x/y`, `matrix_xx/...`, `z_switch_pin` không khớp option mà module hiện tại đọc. Klipper có kiểm tra unused option; không nạp block sai này vào máy thật.
+2. Tái hiện offline bằng **ConfigFileReader của Klipper đang cài**: `[include ~/Tool-Klipper-Calibration/macros/tool_calibrator_macros.cfg]` bị ghép thành `/home/voron/printer_data/config/~/Tool-Klipper-Calibration/macros/tool_calibrator_macros.cfg` và báo không tồn tại. Installer cũng in đường dẫn `macros/...` nhưng không copy macro tới config root.
+3. SOP gọi AUTO_TEACH_CAMERA với AUTO_CENTER=1 trước CALIBRATE_CAMERA, trong khi b6c3328 chặn centering chưa có matrix. Cần teach waypoint nhìn thấy nozzle với AUTO_CENTER=0, đo scale/matrix, rồi căn tâm. Lần thử mục 7 xóa matrix nhưng giữ waypoint đã đo từ trước; không phải nghiệm thu khởi tạo trống hoàn toàn.
+4. Guide ghi health `healthy`, actual là `ok`; installer chỉ dùng curl -s, không kiểm HTTP status/JSON identity, vẫn in hoàn tất khi kiểm tra health cảnh báo. Cần kiểm tra fail-closed và sửa import trước.
+5. Macro include/Khởi động Klipper là bước người dùng phải làm tiếp; không coi installer đã tự hoàn tất commissioning. Backup `.bak` cố định cũng không đáp ứng quy tắc không ghi đè backup của kho máy in.
+
+### Sửa báo cáo và phân loại bằng chứng
+- Bổ sung ngay đầu REPORT.md/README.md: **đã cài trên máy thật bằng triển khai thủ công có tùy chỉnh; chưa cài nguyên bộ theo hướng dẫn upstream**.
+- Thêm INSTALLATION_AUDIT.md: bảng đối chiếu từng thành phần, đường dẫn source đúng SHA và mức xác minh từng lỗi. XY, abort và log runtime là thực tế; Z-sign/session/false-SUCCESS/gate là mô phỏng offline; 91 tests là kiểm tra phần mềm. Không suy rộng lỗi scheduling/CV tới mọi môi trường cài đặt TKC.
+- Thêm script audit chỉ đọc và `evidence/installation-audit.json`. `.agents/KNOWN_ISSUES.md` được bổ sung, patch lưu cùng experiment vì thư mục agent nằm ngoài Git.
+
+### Sao lưu và kiểm tra
+- [pre-tkc-install-audit-20260906-193105](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-tkc-install-audit-20260906-193105/BACKUP-RECORD.md>) — REPORT.md, README.md, LIVE-README.md và KNOWN_ISSUES.md trước đính chính.
+- Dữ liệu đo, số liệu CSV và log mục 7 giữ nguyên. Không sửa `.cfg`, `.conf`, service hay source TKC trên máy.
+- Chi tiết: [INSTALLATION_AUDIT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-b6c3328-20260906/INSTALLATION_AUDIT.md>).
+
+### Kết quả
+Xác nhận cài thật và đo thật, đồng thời đính chính rõ cách cài chưa phải reference installer. Muốn chuẩn hóa cần sửa guide/import, kiểm tra môi trường đúng requirements, tích hợp service/macros/Moonraker, rồi mới nghiệm thu phạm vi tương ứng. Phiên này chỉ audit và cập nhật tài liệu, giữ nguyên bản TKC đang chạy.

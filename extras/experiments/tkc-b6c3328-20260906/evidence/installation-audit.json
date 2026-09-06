@@ -1,0 +1,422 @@
+{
+  "audit_time": 1788697952.9371302,
+  "host": "voron-local",
+  "source_head": "b6c332862a87043238b068dd55b5f5ee433efdb6",
+  "source_diff": "diff --git a/server/tool_calibrator_server.py b/server/tool_calibrator_server.py\nindex 6b8ef58..a4932a2 100644\n--- a/server/tool_calibrator_server.py\n+++ b/server/tool_calibrator_server.py\n@@ -12,7 +12,7 @@ import os\n import sys\n import threading\n import time\n-from typing import Dict, Any\n+from typing import Dict, Any, Tuple, Optional\n import numpy as np\n \n from flask import Flask, jsonify, request, Response, render_template",
+  "user_services": {
+    "exit": 0,
+    "stdout": "MainPID=7088\nExecStart={ path=/home/voron/tkc-env/bin/python ; argv[]=/home/voron/tkc-env/bin/python -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg ; ignore_errors=no ; start_time=[Sun 2026-09-06 19:15:23 +07] ; stop_time=[n/a] ; pid=7088 ; code=(null) ; status=0/0 }\nId=tool-calibrator-experiment.service\nActiveState=active\nSubState=running\nFragmentPath=/home/voron/.config/systemd/user/tool-calibrator-experiment.service\nUnitFileState=enabled\n\nMainPID=7141\nExecStart={ path=/home/voron/ktamv-env/bin/python ; argv[]=/home/voron/ktamv-env/bin/python /home/voron/kTAMV/server/ktamv_server.py --port 8086 ; ignore_errors=no ; start_time=[Sun 2026-09-06 19:16:13 +07] ; stop_time=[n/a] ; pid=7141 ; code=(null) ; status=0/0 }\nId=ktamv-server.service\nActiveState=active\nSubState=running\nFragmentPath=/home/voron/.config/systemd/user/ktamv-server.service\nUnitFileState=enabled",
+    "stderr": ""
+  },
+  "standard_system_service": {
+    "exit": 0,
+    "stdout": "LoadState=not-found\nActiveState=inactive\nFragmentPath=",
+    "stderr": ""
+  },
+  "linger": {
+    "exit": 0,
+    "stdout": "Linger=yes",
+    "stderr": ""
+  },
+  "daemon_process_cmdline": "/home/voron/tkc-env/bin/python -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg ",
+  "klipper_process_cmdline": "/home/voron/klippy-env/bin/python /home/voron/klipper/klippy/klippy.py /home/voron/printer_data/config/printer.cfg -l /home/voron/printer_data/logs/klippy.log -I /home/voron/printer_data/comms/klippy.serial -a /home/voron/printer_data/comms/klippy.sock ",
+  "symlinks": {
+    "tool_calibrator.py": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/tool_calibrator.py",
+      "exists": true
+    },
+    "tool_calibrator_station.py": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/tool_calibrator_station.py",
+      "exists": true
+    },
+    "tool_offsets.py": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/tool_offsets.py",
+      "exists": true
+    },
+    "safe_navigator.py": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/safe_navigator.py",
+      "exists": true
+    },
+    "config_manager.py": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/config_manager.py",
+      "exists": true
+    },
+    "z_backends": {
+      "symlink": true,
+      "resolved": "/home/voron/Tool-Klipper-Calibration/klippy/extras/z_backends",
+      "exists": true
+    }
+  },
+  "health": {
+    "calibrated_mpp": 0.023,
+    "camera_url": "http://127.0.0.1:8080/snapshot.jpg",
+    "commit": "b6c3328",
+    "has_matrix": true,
+    "matrix_solved": true,
+    "service": "tool_calibrator_server",
+    "session_locked": false,
+    "status": "ok",
+    "version": "0.8.18"
+  },
+  "printer_status": {
+    "tool_calibrator": {
+      "status": "SUCCESS",
+      "last_run_status": "SUCCESS",
+      "run_id": "run_1788696733",
+      "active_tool": 4,
+      "run_valid": true,
+      "run_record": {
+        "run_id": "run_1788696733",
+        "state": "SUCCESS",
+        "active_tool": 4,
+        "start_time": 1788696733.370455,
+        "end_time": 1788696905.1429768,
+        "duration_sec": 171.77,
+        "error": null,
+        "completed_tools": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "offsets": {
+          "0": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "1": {
+            "x": -0.157,
+            "y": -0.296
+          },
+          "2": {
+            "x": 0.891,
+            "y": 0.256
+          },
+          "3": {
+            "x": 0.377,
+            "y": 0.529
+          },
+          "4": {
+            "x": 0.163,
+            "y": 0.192
+          }
+        },
+        "valid": true
+      },
+      "reference_tool": 0,
+      "z_backend": "cartographer",
+      "safe_z": 40.0,
+      "cached_offsets": {
+        "0": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "1": {
+          "x": -0.157,
+          "y": -0.296
+        },
+        "2": {
+          "x": 0.891,
+          "y": 0.256
+        },
+        "3": {
+          "x": 0.377,
+          "y": 0.529
+        },
+        "4": {
+          "x": 0.163,
+          "y": 0.192
+        }
+      }
+    },
+    "toolchanger": {
+      "params_safe_y": 120,
+      "params_close_y": 30,
+      "params_fast_speed": 15000,
+      "params_path_speed": 900,
+      "params_dropoff_path": [
+        {
+          "y": 9.5,
+          "z": 3
+        },
+        {
+          "y": 9.5,
+          "z": 1.5
+        },
+        {
+          "y": 5.5,
+          "z": 0
+        },
+        {
+          "z": 0,
+          "y": 0,
+          "f": 0.5
+        },
+        {
+          "z": -12,
+          "y": 0
+        },
+        {
+          "z": -12,
+          "y": 16
+        }
+      ],
+      "params_pickup_path": [
+        {
+          "z": -12,
+          "y": 16
+        },
+        {
+          "z": -12,
+          "y": 0
+        },
+        {
+          "z": 0,
+          "y": 0,
+          "f": 0.5,
+          "verify": 1
+        },
+        {
+          "y": 5.5,
+          "z": 0
+        },
+        {
+          "y": 9.5,
+          "z": 1.5
+        },
+        {
+          "y": 9.5,
+          "z": 3
+        }
+      ],
+      "params_input_shaper_freq_x": 0,
+      "params_input_shaper_type_x": "mzv",
+      "params_input_shaper_damping_ratio_x": 0.1,
+      "params_input_shaper_freq_y": 0,
+      "params_input_shaper_type_y": "mzv",
+      "params_input_shaper_damping_ratio_y": 0.1,
+      "name": "toolchanger",
+      "status": "ready",
+      "tool": "tool T0",
+      "tool_number": 0,
+      "detected_tool": "tool T0",
+      "detected_tool_number": 0,
+      "tool_numbers": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "tool_names": [
+        "tool T0",
+        "tool T1",
+        "tool T2",
+        "tool T3",
+        "tool T4"
+      ],
+      "has_detection": true
+    },
+    "toolhead": {
+      "homed_axes": "xyz",
+      "axis_minimum": [
+        0.0,
+        -10.0,
+        -5.0,
+        0
+      ],
+      "axis_maximum": [
+        348.0,
+        336.0,
+        347.0,
+        0
+      ],
+      "print_time": 9353.181246009615,
+      "stalls": 3,
+      "estimated_print_time": 10360.059818419231,
+      "extruder": "extruder",
+      "position": [
+        170.9101,
+        18.8941,
+        40.0,
+        0.0
+      ],
+      "max_velocity": 350.0,
+      "max_accel": 7000.0,
+      "minimum_cruise_ratio": 0.5,
+      "square_corner_velocity": 5.0,
+      "extra_axes": {
+        "extruder": 3
+      }
+    },
+    "webhooks": {
+      "state": "ready",
+      "state_message": "Printer is ready"
+    }
+  },
+  "commands": {
+    "CALIBRATE_TOOL_OFFSETS": "Automated Full Tool Offset Calibration",
+    "CALIBRATE_CAMERA_SCALE": "Star-pattern Camera Scale and Affine Matrix Calibration",
+    "CALIBRATION_ABORT": "Aborts active calibration run at next safe boundary",
+    "TKC_TEST_XY": "Supervised XY measurement with no offset write or Z probing",
+    "TKC_STATUS": "Display Tool Calibration Status & Offsets (Short Alias)",
+    "CALIBRATE_ALL_TOOLS": null,
+    "CALIBRATE_TOOLS_XY": null,
+    "CALIBRATE_TOOL_XY": null,
+    "CALIBRATE_CAMERA": null,
+    "GOTO_CAMERA_TARGET": null
+  },
+  "runtime_tkc_config": {
+    "service_url": "http://127.0.0.1:8090",
+    "reference_tool": 0,
+    "tools": "0,1,2,3,4",
+    "z_backend": "cartographer",
+    "max_centering_iterations": 8,
+    "tolerance_mm": 0.015,
+    "centering_samples": 3,
+    "sample_delay": 0.08,
+    "wiggle_distance": 0.1,
+    "wiggle_on_failure": false,
+    "max_camera_temp": 100.0,
+    "travel_speed": 30.0,
+    "approach_speed": 10.0,
+    "z_speed": 10.0,
+    "safe_z": 40.0,
+    "camera_target_z": 40.0,
+    "offsets_config_path": "/home/voron/printer_data/tkc-experiment/station-data.cfg",
+    "touch_home_gcode": "_TKC_Z_DISABLED",
+    "touch_probe_gcode": "_TKC_Z_DISABLED",
+    "carto_max_touch_temp": 150.0,
+    "carto_retract_z": 5.0,
+    "touch_model_config_path": "~/printer_data/config/printer.cfg",
+    "camera_stream_url": "http://127.0.0.1:8080/snapshot.jpg",
+    "before_pickup_gcode": "\n_TKC_SAFE_TOOLCHANGE",
+    "camera_led_brightness": 1.0,
+    "camera_led_macro_on": "_CALIBRATION_CAMERA_LED_ON",
+    "camera_led_macro_off": "_CALIBRATION_CAMERA_LED_OFF",
+    "nozzle_led_macro_off": "_TKC_NOZZLE_LED_OFF",
+    "nozzle_led_macro_on": "_TKC_NOZZLE_LED_KEEP_OFF"
+  },
+  "runtime_tkc_wrapper": {
+    "gcode": "\n{% if printer.print_stats.state in ['printing', 'paused'] %}\n{action_raise_error(\"Finish or cancel the print before TKC experiments\")}\n{% endif %}\n{% for heater in printer.heaters.available_heaters %}\n{% if printer[heater].target|float != 0 %}\n{action_raise_error(\"Turn off heater targets before the cold TKC experiment\")}\n{% endif %}\n{% endfor %}\n_TKC_SAFE_TOOLCHANGE\nCALIBRATE_TOOL_OFFSETS TOOLS={params.TOOLS|default('0,1,2,3,4')} CALIBRATE_XY=1 CALIBRATE_Z=0 SAVE_CONFIG=0 DRY_RUN=0 CLEAN_NOZZLE=0 SAMPLES=3 WIGGLE=0",
+    "description": "Supervised XY measurement with no offset write or Z probing"
+  },
+  "runtime_optional_macros": {
+    "CALIBRATE_ALL_TOOLS": null,
+    "CALIBRATE_TOOLS_XY": null,
+    "CALIBRATE_TOOL_XY": null,
+    "CALIBRATE_CAMERA": null,
+    "GOTO_CAMERA_TARGET": null
+  },
+  "printer_includes": [
+    "[include Printer-Setup/calibration-probe.cfg]",
+    "[include Printer-Setup/ktamv.cfg]",
+    "[include /home/voron/printer_data/tkc-experiment/tool-calibrator.cfg]"
+  ],
+  "updater_present": false,
+  "asvc_tkc_entries": [],
+  "python_runtime": {
+    "python": "3.11.2 (main, May 12 2026, 05:17:27) [GCC 12.2.0]",
+    "executable": "/home/voron/tkc-env/bin/python",
+    "prefix": "/home/voron/tkc-env",
+    "base_prefix": "/usr",
+    "cv2_version": "4.6.0",
+    "cv2_file": "/usr/lib/python3/dist-packages/cv2.cpython-311-aarch64-linux-gnu.so",
+    "numpy_file": "/usr/lib/python3/dist-packages/numpy/__init__.py",
+    "packages": {
+      "flask": "3.0.3",
+      "waitress": "3.0.2",
+      "numpy": "1.24.2",
+      "requests": "2.28.1",
+      "urllib3": "1.26.12",
+      "opencv-python-headless": null,
+      "opencv-python": null
+    }
+  },
+  "venv_cfg": "home = /usr/bin\ninclude-system-site-packages = true\nversion = 3.11.2\nexecutable = /usr/bin/python3.11\ncommand = /usr/bin/python3 -m venv --system-site-packages /home/voron/tkc-env\n",
+  "dpkg_opencv": {
+    "exit": 0,
+    "stdout": "python3-opencv:arm64\t4.6.0+dfsg-12",
+    "stderr": ""
+  },
+  "guide_tilde_include_result": "Include file '/home/voron/printer_data/config/~/Tool-Klipper-Calibration/macros/tool_calibrator_macros.cfg' does not exist",
+  "module_option_reads": {
+    "tool_calibrator.py": [
+      "api_token",
+      "camera_led",
+      "camera_led_brightness",
+      "camera_led_macro_off",
+      "camera_led_macro_on",
+      "camera_pin",
+      "camera_stream_url",
+      "centering_samples",
+      "lift_speed",
+      "max_camera_temp",
+      "max_centering_iterations",
+      "nozzle_led_macro_off",
+      "nozzle_led_macro_on",
+      "offset_config_path",
+      "offsets_config_path",
+      "probing_speed",
+      "reference_tool",
+      "sample_delay",
+      "samples",
+      "samples_retract_dist",
+      "samples_tolerance",
+      "server_url",
+      "service_url",
+      "switch_approach_z",
+      "switch_pin",
+      "tolerance_mm",
+      "tools",
+      "wiggle_distance",
+      "wiggle_on_failure",
+      "z_backend"
+    ],
+    "safe_navigator.py": [
+      "approach_speed",
+      "camera_approach_x",
+      "camera_approach_y",
+      "camera_focal_z",
+      "camera_target_x",
+      "camera_target_y",
+      "camera_target_z",
+      "camera_x",
+      "camera_y",
+      "safe_z",
+      "switch_approach_x",
+      "switch_approach_y",
+      "switch_target_x",
+      "switch_target_y",
+      "switch_target_z",
+      "travel_speed",
+      "z_speed",
+      "zswitch_x_pos",
+      "zswitch_y_pos",
+      "zswitch_z_pos"
+    ],
+    "tool_calibrator_station.py": [
+      "approach_x",
+      "approach_y",
+      "approach_z",
+      "matrix_a",
+      "matrix_b",
+      "matrix_c",
+      "matrix_d",
+      "matrix_tx",
+      "matrix_ty",
+      "mpp",
+      "safe_z",
+      "target_x",
+      "target_y",
+      "target_z"
+    ]
+  },
+  "declared_requirements": "# Tool-Klipper-Calibration Vision Daemon Requirements\n# Optimized for Raspberry Pi OS (armhf / aarch64) & x86_64\nflask>=2.2.0,<3.1.0\nwaitress>=2.1.0,<3.1.0\nopencv-python-headless>=4.5.5\nnumpy>=1.21.0\nrequests>=2.28.0\nurllib3>=1.26.0,<3.0.0\n"
+}

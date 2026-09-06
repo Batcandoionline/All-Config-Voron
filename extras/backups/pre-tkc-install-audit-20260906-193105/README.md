@@ -2,8 +2,6 @@
 
 See [REPORT.md](REPORT.md) for measurements, confirmed defects, and development priorities. This directory is an experimental payload; it is not deployed by the production configuration installer.
 
-**This payload is installed on the physical printer:** the real Klipper process loads its include and executes native TKC commands. "Experimental" describes its supervised XY-only commissioning status. Installation was manual, with a custom user service and dependency environment; `scripts/install.sh`, the upstream convenience macro bundle and Moonraker Update Manager were not installed as a complete reference workflow. See [INSTALLATION_AUDIT.md](INSTALLATION_AUDIT.md) for the verified differences and corrections to the upstream guide.
-
 ## Installed revision
 
 - Upstream: `b6c332862a87043238b068dd55b5f5ee433efdb6` (reported version 0.8.18).

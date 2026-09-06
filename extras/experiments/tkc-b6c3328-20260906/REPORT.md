@@ -4,6 +4,10 @@ The updated revision bootstrapped its own camera transform and completed **3/3 f
 
 Source: [b6c332862a87043238b068dd55b5f5ee433efdb6](https://github.com/IDcrazy123/Tool-Klipper-Calibration/tree/b6c332862a87043238b068dd55b5f5ee433efdb6). The installed source differs only by [startup-imports.patch](startup-imports.patch). [Deployment and recovery](README.md) document the exact environment and backups.
 
+**Installation clarification, verified 2026-09-06:** TKC is installed on the real printer host and loaded by real Klipper. This was a manual installation for supervised hardware XY testing, not a run of the upstream installer or a complete installation of its macro/Update Manager workflow. The vision service uses a custom user unit, two workers, and a system-site-packages venv with Debian OpenCV4.6.0; the `opencv-python-headless` pip distribution is absent. Other recorded dependency versions meet the published ranges. These distinctions were not prominent enough in the original report. See the [installation audit and evidence-level table](INSTALLATION_AUDIT.md) before using this report to change upstream code or deployment instructions.
+
+The three XY cycles and abort probe were physical tests. The Z-sign, session fault and false-success reproductions were offline dummy-printer tests, not faults deliberately executed on the machine. Runtime buffering observations are not a demonstrated TKC root cause. The 91 passing tests are software tests in the recorded environment, not validation of the official installer.
+
 ## Scope and operation
 
 Real printer `192.168.1.43`: Voron 2.4, five StealthChanger tools, KTC-Easy, MF-500 camera at native 1280x720. The operator authorized ordinary G28 and Z40 before tool changes. The session used cold tools, all heater targets zero, camera illumination and nozzle LEDs off. Existing dock paths and production motion/current/heater settings were retained.
