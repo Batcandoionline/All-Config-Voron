@@ -70,3 +70,38 @@ Khắc phục sự cố không thể cập nhật cấu hình qua Moonraker Upda
 ### Kết quả
 Đã giải quyết triệt để lỗi phân quyền thực thi trên Git repo, sẵn sàng để đồng bộ trơn tru lên máy in qua Update Manager.
 
+---
+
+## 3. Cập nhật giới hạn trục Z và đồng bộ PID Extruder T0 từ máy in
+
+### Mục tiêu
+- Nâng giới hạn vận tốc trục Z (`max_z_velocity`) từ 70 mm/s lên 80 mm/s và gia tốc trục Z (`max_z_accel`) từ 900 mm/s² lên 1000 mm/s² theo yêu cầu của người vận hành.
+- Kéo và đồng bộ các tham số hiệu chuẩn PID mới nhất của đầu phun T0 (`[extruder]`) từ máy in thực tế (`192.168.1.43`) về kho cấu hình Git để tránh bị ghi đè dữ liệu cũ khi cập nhật.
+
+### File đã sửa đổi
+- `config/printer.cfg` — Thay đổi `max_z_velocity: 80`, `max_z_accel: 1000` và cập nhật các tham số PID `[extruder]`:
+  - `pid_kp = 23.911` (cũ: 39.664)
+  - `pid_ki = 7.971` (cũ: 12.592)
+  - `pid_kd = 17.933` (cũ: 31.235)
+
+### Sao lưu
+- [printer.cfg (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-z-limits-and-t0-pid-20260906-101100/printer.cfg)
+- [README.md (Backup)](file:///d:/Desktop/All-Config-Voron-main/Voron%205%20Tool/extras/backups/pre-update-z-limits-and-t0-pid-20260906-101100/README.md)
+
+### Chi tiết thay đổi
+- Kết nối tới Moonraker API trên máy in (`192.168.1.43:7125`) để tải cấu hình runtime `printer.cfg` mới nhất.
+- So sánh `git diff` khối `#*# <SAVE_CONFIG>`: Xác nhận các đầu in T1–T4, Cartographer scan/touch model, Bed Mesh 55x55 và Axis Twist Compensation hoàn toàn trùng khớp 100%; chỉ có PID của T0 vừa được người dùng hiệu chuẩn lại trên máy in.
+- Cập nhật thông số PID T0 mới vào `config/printer.cfg`.
+- Điều chỉnh `max_z_velocity: 80` và `max_z_accel: 1000` trong section `[printer]`.
+
+### Lý do
+Tăng tốc độ di chuyển trục Z khi chuyển đổi đầu in (tool change) và bảo toàn chính xác dữ liệu hiệu chuẩn PID nhiệt độ thực tế của hotend T0 trên máy in.
+
+### Kiểm tra
+- Đối chiếu cú pháp file `printer.cfg`: Hợp lệ, giữ nguyên toàn bộ comment và khối SAVE_CONFIG.
+- Kiểm tra `git diff`: Khớp đúng các thay đổi mong muốn.
+
+### Kết quả
+Đã cập nhật thành công giới hạn Z và đồng bộ chính xác dữ liệu PID T0 vào Git repo.
+
+
