@@ -57,6 +57,7 @@ Production dock coordinates and mechanical XYZ offsets (stored in `config/printe
 | | `STOP_DRYER` / `DRYER_STATUS` | Stops bed drying timer and cools bed; displays remaining drying duration. |
 | **Diagnostics** | `CHECK_OFFSETS` | Prints current XYZ offsets for all 5 tools without motion. |
 | | `CALIBRATION_STATUS` | Displays active calibration backend status (kTAMV XY supervised comparison). |
+| | `MEASURE_TOOL_HEATUP [TOOL=..] [START=150] [TARGET=220]` | Measures hotend heating rate and elapsed time from Temp A to B per tool; computes °C/s. |
 
 ---
 

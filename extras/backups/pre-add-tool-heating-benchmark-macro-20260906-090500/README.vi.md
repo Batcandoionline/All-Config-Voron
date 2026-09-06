@@ -23,7 +23,6 @@ File gốc `printer.cfg` đóng vai trò điều phối trung tâm và nạp cá
 [include Printer-Setup/print-macros.cfg]                        # Macro bắt đầu/kết thúc bản in
 [include Printer-Setup/filament-dryer.cfg]                      # Sấy cuộn nhựa trên bàn nhiệt
 [include Printer-Setup/test-speed.cfg]                          # Macro TEST_SPEED & TEST_Z_SPEED
-[include Printer-Setup/tool-temp-bench.cfg]                      # Macro đo thời gian gia nhiệt tool (MEASURE_TOOL_HEATUP)
 [include Printer-Setup/tool-crash.cfg]                          # Cảm biến phát hiện rơi/kẹt tool
 ```
 

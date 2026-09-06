@@ -57,6 +57,7 @@ Tọa độ dock và offset cơ khí XYZ (được lưu tại khối `#*# <SAVE_
 | | `STOP_DRYER` / `DRYER_STATUS` | Dừng sấy và làm nguội bàn in; hiển thị thời gian sấy còn lại. |
 | **Chẩn đoán** | `CHECK_OFFSETS` | Hiển thị bảng offset XYZ của toàn bộ 5 tool mà không gây chuyển động máy. |
 | | `CALIBRATION_STATUS` | Báo cáo trạng thái backend hiệu chuẩn đang hoạt động (kTAMV đối chiếu camera XY). |
+| | `MEASURE_TOOL_HEATUP [TOOL=..] [START=150] [TARGET=220]` | Đo thời gian gia nhiệt toolhead từ nhiệt độ A sang B cho từng tool riêng lẻ; tính tốc độ °C/s. |
 
 ---
 

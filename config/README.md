@@ -23,6 +23,7 @@ The root `printer.cfg` acts as the master coordinator and loads modules in the f
 [include Printer-Setup/print-macros.cfg]                        # Core print start/end macros
 [include Printer-Setup/filament-dryer.cfg]                      # Bed-based filament drying
 [include Printer-Setup/test-speed.cfg]                          # TEST_SPEED & TEST_Z_SPEED
+[include Printer-Setup/tool-temp-bench.cfg]                      # MEASURE_TOOL_HEATUP hotend heating rate
 [include Printer-Setup/tool-crash.cfg]                          # Tool drop/crash detection
 ```
 
