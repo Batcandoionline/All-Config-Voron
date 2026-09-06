@@ -1,0 +1,8 @@
+100644 47a30e7d4487c0d281cbc58baaa5d462890a3294 0	scripts/install.sh
+100644 fcde8ce4ec6110d0f33b8f992b9eb928849c4966 0	scripts/uninstall.sh
+-rw-r--r-- 1 voron voron 9670 Sep  6 20:10 /tmp/tkc-mode-audit/scripts/install.sh
+-rw-r--r-- 1 voron voron 5457 Sep  6 20:10 /tmp/tkc-mode-audit/scripts/uninstall.sh
+ M scripts/install.sh
+ M scripts/uninstall.sh
+ mode change 100644 => 100755 scripts/install.sh
+ mode change 100644 => 100755 scripts/uninstall.sh

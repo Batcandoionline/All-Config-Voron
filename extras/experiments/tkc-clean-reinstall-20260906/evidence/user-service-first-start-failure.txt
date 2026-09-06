@@ -1,0 +1,82 @@
+Sep 06 20:02:47 voron-local (python3)[9095]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:02:47 voron-local (python3)[9095]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:02:47 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:47 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:02:47 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:02:50 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 1.
+Sep 06 20:02:50 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:50 voron-local (python3)[9106]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:02:50 voron-local (python3)[9106]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:02:50 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:50 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:02:50 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:02:54 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 2.
+Sep 06 20:02:54 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:54 voron-local (python3)[9121]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:02:54 voron-local (python3)[9121]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:02:54 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:54 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:02:54 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:02:57 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 3.
+Sep 06 20:02:57 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:57 voron-local (python3)[9132]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:02:57 voron-local (python3)[9132]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:02:57 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:02:57 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:02:57 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:00 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 4.
+Sep 06 20:03:00 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:00 voron-local (python3)[9158]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:00 voron-local (python3)[9158]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:00 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:00 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:00 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:03 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 5.
+Sep 06 20:03:03 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:03 voron-local (python3)[9169]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:03 voron-local (python3)[9169]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:03 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:03 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:03 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:07 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 6.
+Sep 06 20:03:07 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:07 voron-local (python3)[9170]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:07 voron-local (python3)[9170]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:07 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:07 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:07 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:10 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 7.
+Sep 06 20:03:10 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:10 voron-local (python3)[9183]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:10 voron-local (python3)[9183]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:10 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:10 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:10 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:13 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 8.
+Sep 06 20:03:13 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:13 voron-local (python3)[9186]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:13 voron-local (python3)[9186]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:13 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:13 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:13 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:16 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 9.
+Sep 06 20:03:16 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:16 voron-local (python3)[9187]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:16 voron-local (python3)[9187]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:16 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:16 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:16 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 10.
+Sep 06 20:03:20 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:20 voron-local (python3)[9188]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:20 voron-local (python3)[9188]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:20 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 11.
+Sep 06 20:03:23 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:23 voron-local (python3)[9191]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:23 voron-local (python3)[9191]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:23 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.

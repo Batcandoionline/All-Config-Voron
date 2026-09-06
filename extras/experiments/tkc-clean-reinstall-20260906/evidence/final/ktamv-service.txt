@@ -1,0 +1,10 @@
+● ktamv-server.service - kTAMV machine-vision server for supervised XY comparison
+     Loaded: loaded (/home/voron/.config/systemd/user/ktamv-server.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2026-09-06 19:16:13 +07; 55min ago
+   Main PID: 7141 (python)
+      Tasks: 8 (limit: 3708)
+        CPU: 4.148s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/ktamv-server.service
+             └─7141 /home/voron/ktamv-env/bin/python /home/voron/kTAMV/server/ktamv_server.py --port 8086
+
+Sep 06 19:16:13 voron-local systemd[669]: Started ktamv-server.service - kTAMV machine-vision server for supervised XY comparison.

@@ -1,0 +1,2 @@
+LISTEN 0      1024                     127.0.0.1:8090       0.0.0.0:*    users:(("python3",pid=9705,fd=6))
+LISTEN 0      1024                       0.0.0.0:8086       0.0.0.0:*    users:(("python",pid=7141,fd=7))

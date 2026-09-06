@@ -1,0 +1,14 @@
+[Unit]
+Description=TKC supervised camera experiment (b6c3328 plus startup import fix)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/voron/Tool-Klipper-Calibration
+ExecStart=/home/voron/tkc-env/bin/python -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

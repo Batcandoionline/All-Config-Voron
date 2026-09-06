@@ -328,3 +328,50 @@ Người dùng hỏi TKC đã cài lên máy hay chỉ chạy thử Python, các
 
 ### Kết quả
 Xác nhận cài thật và đo thật, đồng thời đính chính rõ cách cài chưa phải reference installer. Muốn chuẩn hóa cần sửa guide/import, kiểm tra môi trường đúng requirements, tích hợp service/macros/Moonraker, rồi mới nghiệm thu phạm vi tương ứng. Phiên này chỉ audit và cập nhật tài liệu, giữ nguyên bản TKC đang chạy.
+
+## 9. Gỡ sạch TKC cũ và cài lại bản upstream 0.8.19
+
+### Mục tiêu
+Gỡ toàn bộ bản TKC thử nghiệm khỏi các đường dẫn đang hoạt động trên máy `192.168.1.43`, xác minh trạng thái sạch, cài lại bản `main` mới nhất, kiểm tra quy trình cài/cập nhật và lập báo cáo mà không vá mã nguồn TKC.
+
+### Sao lưu
+- [pre-clean-reinstall-tkc-20260906-195259](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-clean-reinstall-tkc-20260906-195259/README.md>) — `printer.cfg`, `moonraker.conf`, `moonraker.asvc`, cấu hình repo, user service cũ, station data, source patch và trạng thái runtime trước khi gỡ.
+- Remote: `/home/voron/printer_data/config_backups/tkc-clean-reinstall-20260906-195259/` — có thêm bằng chứng gỡ sạch, hai lần thử installer chính thức, test venv mới, unit trung gian và trạng thái cuối.
+
+### Gỡ và xác minh sạch
+- Dừng/disable/xóa `tool-calibrator-experiment.service`, gỡ đúng include thử nghiệm và các symlink extras đã xác nhận thuộc TKC.
+- Chuyển `~/printer_data/tkc-experiment` vào backup; xóa source cũ, `~/tkc-env` và worktree preflight sau khi lưu SHA/patch.
+- Restart process Klipper qua Moonraker. Xác minh source/venv/service/config/macro/extras cũ đều vắng mặt, port 8090 đóng, không có process TKC, không còn config reference hay lệnh/object TKC chính xác. Klipper ready; kTAMV vẫn active ở port 8086.
+
+### Bản cài mới và khác biệt với installer
+- Chốt upstream `04431dfe575a717833c6966685ecdfac90c6568b`, version 0.8.19. Preflight và venv sạch đều đạt **100/100 tests**; source cuối ở branch main, clean, đúng remote SHA.
+- Installer trực tiếp lỗi `Permission denied` vì `install.sh` có mode 100644. Chạy qua `bash` dừng vì coi package hệ thống `python3-pip` là bắt buộc rồi yêu cầu sudo; tài khoản SSH không có sudo không mật khẩu. `python3 -m venv` thực tế hoạt động mà không cần package đó.
+- Cài theo layout mới: `~/Tool-Klipper-Calibration/env`, symlink extras và hai macro bundle, cấu hình `[tool_calibrator]`, station-only `tool_offsets.cfg`, Update Manager và service `tool_calibrator.service`.
+- Vì thiếu quyền hệ thống, service chạy ở user scope. Bỏ `User=voron`, dùng `default.target`, bind 127.0.0.1:8090 và truyền camera URL/MPP khi khởi động. Upstream source không bị sửa.
+- Update Manager dùng `is_system_service: False`, quản lý restart Klipper nhưng không thể tự restart user daemon. No-op update trả ok, SHA không đổi. Sau cập nhật thật phải chạy `systemctl --user restart tool_calibrator.service`.
+
+### Cấu hình và an toàn
+- `config/printer.cfg` — thêm include hai macro TKC, `Printer-Setup/tool-calibrator.cfg` và `tool_offsets.cfg`.
+- `config/Printer-Setup/tool-calibrator.cfg` — safe Z 40; tốc độ 1800/600/600 mm/min; wiggle tắt; kiểm tra homing/tool active-detected; giữ LED tool tắt khi chụp; chặn cả hai hook Z Cartographer.
+- `config/tool_offsets.cfg` — chỉ di chuyển camera station/matrix đã đo từ phiên b6c3328; không có `[tool_offsets]`, không áp offset production.
+- `config/moonraker.conf` — thêm updater TKC phù hợp user-service limitation.
+- kTAMV giữ nguyên và tiếp tục chạy riêng ở port 8086; TKC chỉ nghe loopback 8090.
+
+### Kiểm tra thực tế
+- Klipper và Moonraker nạp cấu hình không lỗi; TKC core commands và macro bundle có mặt.
+- Health đúng service/version/commit; pip check không có dependency hỏng; updater current=remote, clean, không detached, behind=0, không warning/anomaly.
+- Lần đầu `CALIBRATION_TEST_VISION` sau daemon sạch thất bại vì code không gọi đồng bộ camera, daemon dùng `/webcam2` và nhận HTTP 502. Sau khi đưa camera URL/MPP vào unit, phép thử đứng yên đạt 5/5 frame, UV 639,95/360,05 px, radius 22,30 px, confidence 99,0%, dispersion 0,00 px. Vị trí trước/sau không đổi.
+- Sau restart, chạy G28 thông thường theo xác nhận người dùng, đưa Z lên 40. Trạng thái cuối: standby, XYZ homed, T0 active/detected, X175,8 Y168,0 Z40, heater targets bằng 0, TKC IDLE; TKC và kTAMV đều active.
+
+### Lỗi cài/gỡ/cập nhật cần sửa upstream
+1. Hai script mode 100644; chmod theo guide làm repo dirty và ảnh hưởng Update Manager.
+2. Preflight `python3-pip` thừa tạo yêu cầu sudo không cần thiết; installer không transactional và không rollback khi lỗi muộn.
+3. `ln -sf` với legacy `z_backends` symlink có thể tác động ngược vào source; uninstaller xóa cả thư mục/regular files thay vì chỉ tài sản TKC.
+4. Health báo ok dù camera mặc định hỏng; `CALIBRATION_TEST_VISION` thiếu `_ensure_vision_sync()` và thất bại sau restart sạch.
+5. Guide include `tool_offsets.cfg` nhưng installer không tạo file; comment sample vẫn dùng đường dẫn `~` trái với guide mới.
+6. Chỉ hỗ trợ system service; user-service fallback không có đường restart tự động sau update.
+7. OpenCV/NumPy không có upper bound; cài mới nhận OpenCV 5.0.0.93 và NumPy 2.4.6, test hiện đạt nhưng khó tái lập lâu dài.
+8. Uninstaller vẫn để repo, printer.cfg block/include và offsets file cho người dùng tự xử lý nhưng luôn in thông báo gỡ sạch.
+
+### Kết quả
+TKC 0.8.19 đã được cài thật, source sạch và hoạt động ở phạm vi đọc camera/command registration; không chỉ là môi trường test Python. Cài đặt hiện dùng user-service adaptation có giới hạn update đã ghi rõ. Chưa chạy hiệu chuẩn XY mới, chưa chạy Z, chưa áp offset và chưa thử in. Báo cáo đầy đủ: [REPORT.md](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/experiments/tkc-clean-reinstall-20260906/REPORT.md>).

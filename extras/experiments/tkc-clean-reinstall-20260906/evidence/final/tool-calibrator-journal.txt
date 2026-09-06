@@ -1,0 +1,33 @@
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 10.
+Sep 06 20:03:20 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:20 voron-local (python3)[9188]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:20 voron-local (python3)[9188]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:20 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:20 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Scheduled restart job, restart counter is at 11.
+Sep 06 20:03:23 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:23 voron-local (python3)[9191]: tool_calibrator.service: Failed to determine supplementary groups: Operation not permitted
+Sep 06 20:03:23 voron-local (python3)[9191]: tool_calibrator.service: Failed at step GROUP spawning /home/voron/Tool-Klipper-Calibration/env/bin/python3: Operation not permitted
+Sep 06 20:03:23 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Main process exited, code=exited, status=216/GROUP
+Sep 06 20:03:23 voron-local systemd[669]: tool_calibrator.service: Failed with result 'exit-code'.
+Sep 06 20:03:25 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:26 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:03:27 voron-local python3[9220]: [2026-09-06 20:03:27] [INFO] [tool_calibrator.server]: Starting Tool-Klipper-Calibration Vision Daemon on 127.0.0.1:8090
+Sep 06 20:03:27 voron-local python3[9220]: [2026-09-06 20:03:27] [INFO] [waitress]: Serving on http://127.0.0.1:8090
+Sep 06 20:06:33 voron-local python3[9220]: [2026-09-06 20:06:33] [WARNING] [tool_calibrator.stream_grabber]: HTTP 502 while fetching snapshot from http://localhost/webcam2/?action=snapshot
+Sep 06 20:06:33 voron-local python3[9220]: [2026-09-06 20:06:33] [WARNING] [tool_calibrator.stream_grabber]: HTTP 502 while fetching snapshot from http://localhost/webcam2/?action=snapshot
+Sep 06 20:06:34 voron-local python3[9220]: [2026-09-06 20:06:34] [WARNING] [tool_calibrator.stream_grabber]: HTTP 502 while fetching snapshot from http://localhost/webcam2/?action=snapshot
+Sep 06 20:06:34 voron-local python3[9220]: [2026-09-06 20:06:34] [WARNING] [tool_calibrator.stream_grabber]: HTTP 502 while fetching snapshot from http://localhost/webcam2/?action=snapshot
+Sep 06 20:06:34 voron-local python3[9220]: [2026-09-06 20:06:34] [WARNING] [tool_calibrator.stream_grabber]: HTTP 502 while fetching snapshot from http://localhost/webcam2/?action=snapshot
+Sep 06 20:07:17 voron-local systemd[669]: Stopping tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service...
+Sep 06 20:07:17 voron-local systemd[669]: Stopped tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:07:17 voron-local systemd[669]: tool_calibrator.service: Consumed 1.714s CPU time.
+Sep 06 20:07:17 voron-local systemd[669]: Started tool_calibrator.service - Tool-Klipper-Calibration Machine Vision Background Service.
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Initialized Camera URL: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.affine_transform]: Updated MPP scale to: 0.023000 mm/pixel
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Initialized Scale MPP: 0.02300 mm/px
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [tool_calibrator.server]: Starting Tool-Klipper-Calibration Vision Daemon on 127.0.0.1:8090
+Sep 06 20:07:18 voron-local python3[9705]: [2026-09-06 20:07:18] [INFO] [waitress]: Serving on http://127.0.0.1:8090

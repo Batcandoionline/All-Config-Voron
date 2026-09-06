@@ -1,0 +1,17 @@
+● tool-calibrator-experiment.service - TKC supervised camera experiment (b6c3328 plus startup import fix)
+     Loaded: loaded (/home/voron/.config/systemd/user/tool-calibrator-experiment.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2026-09-06 19:15:23 +07; 40min ago
+   Main PID: 7088 (python)
+      Tasks: 9 (limit: 3708)
+        CPU: 9.450s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/tool-calibrator-experiment.service
+             └─7088 /home/voron/tkc-env/bin/python -m server.tool_calibrator_server --host 127.0.0.1 --port 8090 --threads 2 --camera-url http://127.0.0.1:8080/snapshot.jpg
+
+Sep 06 19:15:23 voron-local systemd[669]: Started tool-calibrator-experiment.service - TKC supervised camera experiment (b6c3328 plus startup import fix).
+Sep 06 19:15:27 voron-local python[7088]: [2026-09-06 19:15:27] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 19:15:27 voron-local python[7088]: [2026-09-06 19:15:27] [INFO] [tool_calibrator.server]: Initialized Camera URL: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 19:15:27 voron-local python[7088]: [2026-09-06 19:15:27] [INFO] [tool_calibrator.server]: Starting Tool-Klipper-Calibration Vision Daemon on 127.0.0.1:8090
+Sep 06 19:15:27 voron-local python[7088]: [2026-09-06 19:15:27] [INFO] [waitress]: Serving on http://127.0.0.1:8090
+Sep 06 19:15:37 voron-local python[7088]: [2026-09-06 19:15:37] [INFO] [tool_calibrator.stream_grabber]: StreamGrabber camera URL updated to: http://127.0.0.1:8080/snapshot.jpg
+Sep 06 19:15:37 voron-local python[7088]: [2026-09-06 19:15:37] [INFO] [tool_calibrator.affine_transform]: Updated MPP scale to: 0.023000 mm/pixel
+Sep 06 19:15:37 voron-local python[7088]: [2026-09-06 19:15:37] [INFO] [tool_calibrator.affine_transform]: Loaded transform matrix with shape: (2, 3)

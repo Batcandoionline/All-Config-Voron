@@ -1,0 +1,21 @@
+ABSENT /home/voron/Tool-Klipper-Calibration
+ABSENT /home/voron/tkc-env
+ABSENT /home/voron/tkc-preflight-04431df
+ABSENT /home/voron/.config/systemd/user/tool-calibrator-experiment.service
+ABSENT /home/voron/.config/systemd/user/default.target.wants/tool-calibrator-experiment.service
+ABSENT /home/voron/printer_data/tkc-experiment
+ABSENT /home/voron/printer_data/config/tool_calibrator
+ABSENT /home/voron/klipper/klippy/extras/tool_calibrator.py
+ABSENT /home/voron/klipper/klippy/extras/tool_calibrator_station.py
+ABSENT /home/voron/klipper/klippy/extras/tool_offsets.py
+ABSENT /home/voron/klipper/klippy/extras/safe_navigator.py
+ABSENT /home/voron/klipper/klippy/extras/config_manager.py
+ABSENT /home/voron/klipper/klippy/extras/z_backends
+USER_UNIT_NOT_FOUND
+SYSTEM_UNIT_NOT_FOUND
+PORT_8090_CLOSED
+TKC_PROCESS_ABSENT
+ACTIVE_CONFIG_REFERENCE_ABSENT
+KLIPPER_TKC_RUNTIME_PRESENT
+  ktamv-server.service       loaded    active   running kTAMV machine-vision server for supervised XY comparison
+LISTEN 0      1024                       0.0.0.0:8086       0.0.0.0:*    users:(("python",pid=7141,fd=7))

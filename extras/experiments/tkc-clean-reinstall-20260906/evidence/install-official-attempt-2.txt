@@ -1,0 +1,12 @@
+[0;34m====================================================[0m
+[0;34m    Tool-Klipper-Calibration Automated Installer    [0m
+[0;34m====================================================[0m
+[0;32m[+] Repo directory:       /home/voron/Tool-Klipper-Calibration[0m
+[0;32m[+] Klipper directory:    /home/voron/klipper[0m
+[0;32m[+] Config directory:     /home/voron/printer_data/config[0m
+[0;32m[+] Python virtualenv:    /home/voron/Tool-Klipper-Calibration/env[0m
+
+[0;34m[1/6] Kiểm tra các gói hệ thống (apt dependencies)...[0m
+[1;33m[+] Đang cài đặt các gói hệ thống còn thiếu: python3-pip[0m
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required

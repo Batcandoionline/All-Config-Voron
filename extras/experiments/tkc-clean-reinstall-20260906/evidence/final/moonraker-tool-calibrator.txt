@@ -1,0 +1,14 @@
+2026-09-06 18:20:07,438 [application.py:log_request()] - 503 GET /printer/objects/query?toolhead&gcode_move&toolchanger&print_stats&webhooks&extruder&extruder1&extruder2&extruder3&extruder4&heater_bed&tool_calibrator (192.168.1.52) [_TRUSTED_USER_] 5.34ms
+[update_manager tool_calibrator]
+2026-09-06 20:05:50,369 [base_deploy.py:log_info()] - Git Repo tool_calibrator: Detected virtualenv: /home/voron/Tool-Klipper-Calibration/env
+2026-09-06 20:05:53,396 [git_deploy.py:_set_versions()] - Git repo tool_calibrator: Failed to detect current version, got '04431dfe'. Falling back to inferred version: v0.0.0-45-g04431dfe-inferred
+2026-09-06 20:05:53,419 [git_deploy.py:_set_versions()] - Git repo tool_calibrator: Failed to detect upstream version, got '04431dfe'. Falling back to inferred version: v0.0.0-45-inferred
+2026-09-06 20:05:53,419 [git_deploy.py:log_repo_info()] - Git Repo tool_calibrator Detected:
+2026-09-06 20:05:53,419 [base_deploy.py:log_info()] - Git Repo tool_calibrator: Channel: dev
+2026-09-06 20:05:53,419 [base_deploy.py:log_info()] - Git Repo tool_calibrator: Validity check for git repo passed
+  Repo has untracked source files: ['klippy/extras/axiscope.py', 'klippy/extras/bed_thermal_adjust.py', 'klippy/extras/config_manager.py', 'klippy/extras/ktamv.py', 'klippy/extras/ktamv_utl.py', 'klippy/extras/manual_rail.py', 'klippy/extras/multi_fan.py', 'klippy/extras/rounded_path.py', 'klippy/extras/safe_navigator.py', 'klippy/extras/tool.py', 'klippy/extras/tool_calibrator.py', 'klippy/extras/tool_calibrator_station.py', 'klippy/extras/tool_crash.py', 'klippy/extras/tool_offsets.py', 'klippy/extras/tool_probe.py', 'klippy/extras/tool_probe_endstop.py', 'klippy/extras/toolchanger.py', 'klippy/extras/tools_calibrate.py']
+2026-09-06 20:12:20,312 [git_deploy.py:_set_versions()] - Git repo tool_calibrator: Failed to detect current version, got '04431dfe'. Falling back to inferred version: v0.0.0-45-g04431dfe-inferred
+2026-09-06 20:12:20,332 [git_deploy.py:_set_versions()] - Git repo tool_calibrator: Failed to detect upstream version, got '04431dfe'. Falling back to inferred version: v0.0.0-45-inferred
+2026-09-06 20:12:20,332 [git_deploy.py:log_repo_info()] - Git Repo tool_calibrator Detected:
+2026-09-06 20:12:20,332 [base_deploy.py:log_info()] - Git Repo tool_calibrator: Channel: dev
+2026-09-06 20:12:20,332 [base_deploy.py:log_info()] - Git Repo tool_calibrator: Validity check for git repo passed
