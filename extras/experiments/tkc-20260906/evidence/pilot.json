@@ -1,0 +1,320 @@
+[
+  {
+    "name": "base",
+    "xy": [
+      170,
+      20
+    ],
+    "uv": [
+      680.95,
+      310.95
+    ],
+    "spread_px": 0.0,
+    "detections": [
+      {
+        "center_uv": [
+          680.95,
+          310.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.338,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          680.95,
+          310.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.348,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          680.95,
+          310.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.4,
+        "runtime": 0.328,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "name": "xp",
+    "xy": [
+      170.5,
+      20
+    ],
+    "uv": [
+      659.05,
+      311.0
+    ],
+    "spread_px": 0.05000000000001137,
+    "detections": [
+      {
+        "center_uv": [
+          659.05,
+          311.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.317,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          659.05,
+          310.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.375,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          659.05,
+          311.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.304,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "name": "xm",
+    "xy": [
+      169.5,
+      20
+    ],
+    "uv": [
+      703.05,
+      311.0
+    ],
+    "spread_px": 0.05000000000001137,
+    "detections": [
+      {
+        "center_uv": [
+          703.05,
+          310.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.348,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          703.05,
+          311.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.362,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          703.05,
+          311.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.353,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "name": "yp",
+    "xy": [
+      170,
+      20.5
+    ],
+    "uv": [
+      680.95,
+      291.0
+    ],
+    "spread_px": 0.0,
+    "detections": [
+      {
+        "center_uv": [
+          680.95,
+          291.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.305,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          680.95,
+          291.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.342,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          680.95,
+          291.0
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.292,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "name": "ym",
+    "xy": [
+      170,
+      19.5
+    ],
+    "uv": [
+      681.3,
+      333.95
+    ],
+    "spread_px": 0.10000000000002274,
+    "detections": [
+      {
+        "center_uv": [
+          681.3,
+          333.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.301,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          681.4,
+          333.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.4,
+        "runtime": 0.295,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          681.3,
+          333.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.362,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  },
+  {
+    "name": "return",
+    "xy": [
+      170,
+      20
+    ],
+    "uv": [
+      681.05,
+      312.95
+    ],
+    "spread_px": 0.0,
+    "detections": [
+      {
+        "center_uv": [
+          681.05,
+          312.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.4,
+        "runtime": 0.276,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          681.05,
+          312.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.304,
+        "success": true,
+        "tier": 1
+      },
+      {
+        "center_uv": [
+          681.05,
+          312.95
+        ],
+        "combo": 10,
+        "confidence": 0.98,
+        "found": true,
+        "radius": 22.3,
+        "runtime": 0.376,
+        "success": true,
+        "tier": 1
+      }
+    ]
+  }
+]

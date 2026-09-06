@@ -1,0 +1,138 @@
+{
+  "revision": "780a492bad45399698491a355ab62db6954da9d7",
+  "attempted_cycles": 3,
+  "complete_cycles": 2,
+  "failed_cycle": 3,
+  "failed_tool": "T2",
+  "statistics_complete_cycles_only": {
+    "T0": {
+      "x": {
+        "mean": 0.0,
+        "range": 0.0
+      },
+      "y": {
+        "mean": 0.0,
+        "range": 0.0
+      }
+    },
+    "T1": {
+      "x": {
+        "mean": -0.163,
+        "range": 0.022
+      },
+      "y": {
+        "mean": -0.275,
+        "range": 0.03
+      }
+    },
+    "T2": {
+      "x": {
+        "mean": 0.87,
+        "range": 0.01
+      },
+      "y": {
+        "mean": 0.269,
+        "range": 0.032
+      }
+    },
+    "T3": {
+      "x": {
+        "mean": 0.356,
+        "range": 0.002
+      },
+      "y": {
+        "mean": 0.533,
+        "range": 0.024
+      }
+    },
+    "T4": {
+      "x": {
+        "mean": 0.149,
+        "range": 0.012
+      },
+      "y": {
+        "mean": 0.2075,
+        "range": 0.021
+      }
+    }
+  },
+  "rows": [
+    {
+      "cycle": 1,
+      "complete": true,
+      "tool": "T0",
+      "x_mm": 0.0,
+      "y_mm": 0.0
+    },
+    {
+      "cycle": 1,
+      "complete": true,
+      "tool": "T1",
+      "x_mm": -0.174,
+      "y_mm": -0.26
+    },
+    {
+      "cycle": 1,
+      "complete": true,
+      "tool": "T2",
+      "x_mm": 0.865,
+      "y_mm": 0.285
+    },
+    {
+      "cycle": 1,
+      "complete": true,
+      "tool": "T3",
+      "x_mm": 0.355,
+      "y_mm": 0.545
+    },
+    {
+      "cycle": 1,
+      "complete": true,
+      "tool": "T4",
+      "x_mm": 0.155,
+      "y_mm": 0.218
+    },
+    {
+      "cycle": 2,
+      "complete": true,
+      "tool": "T0",
+      "x_mm": 0.0,
+      "y_mm": 0.0
+    },
+    {
+      "cycle": 2,
+      "complete": true,
+      "tool": "T1",
+      "x_mm": -0.152,
+      "y_mm": -0.29
+    },
+    {
+      "cycle": 2,
+      "complete": true,
+      "tool": "T2",
+      "x_mm": 0.875,
+      "y_mm": 0.253
+    },
+    {
+      "cycle": 2,
+      "complete": true,
+      "tool": "T3",
+      "x_mm": 0.357,
+      "y_mm": 0.521
+    },
+    {
+      "cycle": 2,
+      "complete": true,
+      "tool": "T4",
+      "x_mm": 0.143,
+      "y_mm": 0.197
+    },
+    {
+      "cycle": 3,
+      "complete": false,
+      "tool": "T1",
+      "x_mm": -0.152,
+      "y_mm": -0.306
+    }
+  ]
+}

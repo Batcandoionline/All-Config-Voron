@@ -1,0 +1,82 @@
+{
+  "window_start_local": "2026-09-06 18:05:52 +07:00",
+  "fatal_runtime_errors": [],
+  "stats_samples": 918,
+  "can_counters": {
+    "mcu": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "EBB0": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "EBB1": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "EBB2": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "EBB3": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "EBB4": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    },
+    "cartographer": {
+      "states": [
+        "active"
+      ],
+      "max_rx_error": 0,
+      "max_tx_error": 0,
+      "max_tx_retries": 0
+    }
+  },
+  "max_print_stall": 2,
+  "stall_counter_transitions": [
+    {
+      "eventtime": "Stats 5161.1",
+      "stall": 0
+    },
+    {
+      "eventtime": "Stats 5554.4",
+      "stall": 1
+    },
+    {
+      "eventtime": "Stats 5753.5",
+      "stall": 2
+    },
+    {
+      "eventtime": "Stats 6013.7",
+      "stall": 0
+    }
+  ]
+}

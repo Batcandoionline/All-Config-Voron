@@ -1,0 +1,30 @@
+{
+  "printer.cfg": {
+    "only_experiment_include_added": true,
+    "save_config_unchanged": true
+  },
+  "Printer-Setup/calibration-probe.cfg": {
+    "byte_identical": true,
+    "sha256": "3188cc4deb75305621f55a776ca3edaf189ee6c2e433a53035af24cfe50f06db"
+  },
+  "toolchanger/tools/T0.cfg": {
+    "byte_identical": true,
+    "sha256": "c9a39e20fa6a704644b734c0e83fd64e6e90d121bf94072f950919493221c639"
+  },
+  "toolchanger/tools/T1.cfg": {
+    "byte_identical": true,
+    "sha256": "6f6f46cf7ef60799ea6e787d219c9440b361c051cbc89b3dc90ef7fb8a8656ea"
+  },
+  "toolchanger/tools/T2.cfg": {
+    "byte_identical": true,
+    "sha256": "c7e741d4a846c6f285c9e53c124a50a35c49203105b70e4438e315e8a5e07034"
+  },
+  "toolchanger/tools/T3.cfg": {
+    "byte_identical": true,
+    "sha256": "8f7524c0f882223a13a4e16dd847b9fcc99cf676dca12cb738e114932dc1f690"
+  },
+  "toolchanger/tools/T4.cfg": {
+    "byte_identical": true,
+    "sha256": "dfce29ba7ac3a5c2625d2e5f4e6949688e0559aeebcaf241a2aed6ab77302ca6"
+  }
+}

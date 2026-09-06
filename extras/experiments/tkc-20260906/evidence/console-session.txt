@@ -1,0 +1,1142 @@
+2026-09-06T18:04:30.396186 [command]
+RESTART
+
+2026-09-06T18:04:31.203976 [response]
+// Klipper state: Disconnect
+
+2026-09-06T18:06:09.927982 [command]
+TKC_STATUS
+DUMP_TMC STEPPER=stepper_x
+CALIBRATION_TEST_VISION SAMPLES=7
+
+2026-09-06T18:06:09.930757 [response]
+// Tool-Calibrator Status: UNINITIALIZED
+
+2026-09-06T18:06:09.933649 [response]
+// Safe_Z: 40.00mm | Backend: cartographer
+
+2026-09-06T18:06:09.934519 [response]
+// ========== Write-only registers ==========
+
+2026-09-06T18:06:09.934550 [response]
+// SLAVECONF:  00000200 senddelay=2
+
+2026-09-06T18:06:09.935693 [response]
+// IHOLD_IRUN: 00081919 ihold=25 irun=25 iholddelay=8
+
+2026-09-06T18:06:09.936625 [response]
+// TPWMTHRS:   000fffff tpwmthrs=1048575
+
+2026-09-06T18:06:09.937768 [response]
+// TCOOLTHRS:  00000000
+
+2026-09-06T18:06:09.938939 [response]
+// COOLCONF:   00000000
+
+2026-09-06T18:06:09.939938 [response]
+// TPOWERDOWN: 00000014 tpowerdown=20
+
+2026-09-06T18:06:09.939978 [response]
+// SGTHRS:     00000000
+
+2026-09-06T18:06:09.940901 [response]
+// ========== Queried registers ==========
+
+2026-09-06T18:06:09.945690 [response]
+// GCONF:      000001c0 pdn_disable=1 mstep_reg_select=1 multistep_filt=1
+
+2026-09-06T18:06:09.951210 [response]
+// GSTAT:      00000000
+
+2026-09-06T18:06:09.956536 [response]
+// IFCNT:      0000003d ifcnt=61
+
+2026-09-06T18:06:09.961658 [response]
+// OTP_READ:   00000011 otp_fclktrim=17
+
+2026-09-06T18:06:09.968988 [response]
+// IOIN:       210000c1 enn=1 pdn_uart=1 step=1 version=0x21
+
+2026-09-06T18:06:09.974605 [response]
+// FACTORY_CONF: 00000011 fclktrim=17
+
+2026-09-06T18:06:09.979784 [response]
+// TSTEP:      000fffff tstep=1048575
+
+2026-09-06T18:06:09.985062 [response]
+// MSCNT:      00000138 mscnt=312
+
+2026-09-06T18:06:09.990255 [response]
+// MSCURACT:   01ac00e8 cur_a=232 cur_b=-84
+
+2026-09-06T18:06:09.995645 [response]
+// CHOPCONF:   34030053 toff=3 hstrt=5 tbl=2 vsense=1 mres=4(16usteps) intpol=1 dedge=1
+
+2026-09-06T18:06:10.000930 [response]
+// DRV_STATUS: 80190000 cs_actual=25 stst=1
+
+2026-09-06T18:06:10.006280 [response]
+// PWMCONF:    c80d0e24 pwm_ofs=36 pwm_grad=14 pwm_freq=1 pwm_autoscale=1 pwm_autograd=1 pwm_reg=8 pwm_lim=12
+
+2026-09-06T18:06:10.011573 [response]
+// PWM_SCALE:  0000001d pwm_scale_sum=29
+
+2026-09-06T18:06:10.016708 [response]
+// PWM_AUTO:   000e0024 pwm_ofs_auto=36 pwm_grad_auto=14
+
+2026-09-06T18:06:10.022178 [response]
+// SG_RESULT:  00000000
+
+2026-09-06T18:06:10.023028 [response]
+// [tool_calibrator] Sampling 7 vision frames at current position...
+
+2026-09-06T18:06:13.583489 [response]
+// ✔ [Vision Inspection Report]
+// Found:       YES (7/7 frames)
+// Center UV:   U680.15 px, V310.50 px
+// Radius:      22.50 px
+// Confidence:  98.0%
+// Dispersion:  0.20 px
+// Algorithm:   Tier 0 Curvature (Symmetric)
+
+2026-09-06T18:06:19.210372 [command]
+G28
+G90
+G0 Z40 F600
+M400
+GET_POSITION
+
+2026-09-06T18:06:19.247315 [response]
+// shaper_type_x:mzv shaper_freq_x:43.600 damping_ratio_x:0.100000
+
+2026-09-06T18:06:19.248643 [response]
+// shaper_type_y:mzv shaper_freq_y:33.400 damping_ratio_y:0.100000
+
+2026-09-06T18:06:19.251874 [response]
+// toolchanger initialized, active tool T0
+
+2026-09-06T18:06:39.173685 [response]
+probe at 175.500,168.400 is z=471.577225
+
+
+2026-09-06T18:06:43.307735 [response]
+// mcu: stepper_x:-23328 stepper_y:23834 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:343.900000 stepper_y:7.100000 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:175.500000 Y:168.400000 Z:40.000775
+// toolhead: X:175.500000 Y:168.400000 Z:40.000000 E:0.000000
+// gcode: X:175.500000 Y:168.400000 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:06:59.586367 [command]
+CALIBRATION_NAVIGATE STATION=CAMERA
+CALIBRATION_TEST_VISION SAMPLES=7
+GET_POSITION
+
+2026-09-06T18:06:59.589235 [response]
+// [tool_calibrator] Approaching Camera Station via safe 3-tier waypoints...
+
+2026-09-06T18:07:07.139901 [response]
+// ✔ Reached Camera Station: X170.000 Y20.000 Z40.000
+
+2026-09-06T18:07:07.139963 [response]
+// [tool_calibrator] Sampling 7 vision frames at current position...
+
+2026-09-06T18:07:10.855905 [response]
+// ✔ [Vision Inspection Report]
+// Found:       YES (7/7 frames)
+// Center UV:   U680.95 px, V310.95 px
+// Radius:      22.40 px
+// Confidence:  98.0%
+// Dispersion:  0.00 px
+// Algorithm:   Tier 0 Curvature (Symmetric)
+
+2026-09-06T18:07:10.857059 [response]
+// mcu: stepper_x:-47952 stepper_y:46698 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:190.000000 stepper_y:150.000000 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:170.000000 Y:20.000000 Z:40.000775
+// toolhead: X:170.000000 Y:20.000000 Z:40.000000 E:0.000000
+// gcode: X:170.000000 Y:20.000000 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:07:43.396044 [command]
+G90
+G0 X170 Y20 F600
+M400
+
+2026-09-06T18:07:45.399871 [command]
+G90
+G0 X170.5 Y20 F600
+M400
+
+2026-09-06T18:07:47.906168 [command]
+G90
+G0 X169.5 Y20 F600
+M400
+
+2026-09-06T18:07:50.412963 [command]
+G90
+G0 X170 Y20.5 F600
+M400
+
+2026-09-06T18:07:52.685074 [command]
+G90
+G0 X170 Y19.5 F600
+M400
+
+2026-09-06T18:07:55.193667 [command]
+G90
+G0 X170 Y20 F600
+M400
+
+2026-09-06T18:08:06.216747 [command]
+CENTER_NOZZLE SAMPLES=3 WIGGLE=0
+GET_POSITION
+
+2026-09-06T18:08:06.218810 [response]
+// [tool_calibrator] Centering active nozzle over camera...
+
+2026-09-06T18:08:08.088671 [response]
+// -> Centering Step 1: True Error X+0.942mm Y-1.095mm (Damped Delta: X+0.518mm Y-0.603mm, UV: [681.05, 312.95], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:08:09.999022 [response]
+// -> Centering Step 2: True Error X+0.432mm Y-0.501mm (Damped Delta: X+0.238mm Y-0.275mm, UV: [658.85, 338.5], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:08:11.812744 [response]
+// -> Centering Step 3: True Error X+0.185mm Y-0.211mm (Damped Delta: X+0.102mm Y-0.116mm, UV: [648.05, 350.95], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:08:13.671723 [response]
+// -> Centering Step 4: True Error X+0.078mm Y-0.092mm (Damped Delta: X+0.043mm Y-0.051mm, UV: [643.4, 356.05], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:08:15.475943 [response]
+// -> Centering Step 5: True Error X+0.034mm Y-0.036mm (Damped Delta: X+0.019mm Y-0.020mm, UV: [641.5, 358.45], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)
+
+2026-09-06T18:08:17.283642 [response]
+!! Centering failed: [ERR_CV_202] Centering failed to converge within 0.015mm after 5 iterations (last delta: X+0.019mm Y-0.020mm).
+
+2026-09-06T18:08:40.040107 [command]
+AUTO_TEACH_CAMERA
+GET_POSITION
+
+2026-09-06T18:08:40.042488 [response]
+// === Auto-Teaching Camera Station ===
+
+2026-09-06T18:08:40.043307 [response]
+// [tool_calibrator] Auto-centering nozzle over camera via visual servoing...
+
+2026-09-06T18:08:41.803256 [response]
+// -> Centering Step 1: True Error X+0.005mm Y-0.019mm (Damped Delta: X+0.003mm Y-0.010mm, UV: [640.2, 359.2], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:08:43.661974 [response]
+// -> Centering Step 2: True Error X+0.001mm Y-0.007mm (Damped Delta: X+0.001mm Y-0.004mm, UV: [640.05, 359.7], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:08:43.662594 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:08:43.670140 [response]
+// ✔ [CAMERA Station Configured & Saved Automatically]
+// Target:   X170.922 Y18.926 Z40.000
+// Approach: X171.456 Y43.920 (Vector towards bed center)
+// Safe Z:   40.0 mm
+// Saved to: /home/voron/printer_data/tkc-experiment/station-data.cfg
+
+2026-09-06T18:08:43.671246 [response]
+// mcu: stepper_x:-47976 stepper_y:47017 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:189.850000 stepper_y:151.993750 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:170.921875 Y:18.928125 Z:40.000775
+// toolhead: X:170.921600 Y:18.925700 Z:40.000000 E:0.000000
+// gcode: X:170.921600 Y:18.925700 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:08:59.393518 [command]
+CALIBRATE_CAMERA_SCALE DISTANCE=0.5
+TKC_STATUS
+GET_POSITION
+
+2026-09-06T18:08:59.549895 [response]
+// [tool_calibrator] Starting Star-Pattern Camera Calibration (Displacement: ±0.50mm)...
+
+2026-09-06T18:09:03.781888 [response]
+// -> Performing initial nozzle optical centering...
+
+2026-09-06T18:09:05.047027 [response]
+// -> Centering Step 1: True Error X+0.001mm Y-0.022mm (Damped Delta: X+0.001mm Y-0.012mm, UV: [640.05, 359.05], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:09:06.451593 [response]
+// -> Centering Step 2: True Error X+0.001mm Y-0.016mm (Damped Delta: X+0.001mm Y-0.009mm, UV: [640.05, 359.3], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:09:07.912353 [response]
+// -> Centering Step 3: True Error X+0.000mm Y-0.001mm (Damped Delta: X+0.000mm Y-0.001mm, UV: [640.0, 359.95], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)
+
+2026-09-06T18:09:07.912998 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:09:09.213213 [response]
+// -> Baseline established: Pos (170.923, 18.905), UV (640.00, 359.95)
+
+2026-09-06T18:09:10.716346 [response]
+// -> +X displacement: Shift 21.95px (UV: 618.05, 360.05)
+
+2026-09-06T18:09:12.217916 [response]
+// -> -X displacement: Shift 22.05px (UV: 662.05, 360.00)
+
+2026-09-06T18:09:13.676134 [response]
+// -> +Y displacement: Shift 21.00px (UV: 640.05, 338.95)
+
+2026-09-06T18:09:15.180692 [response]
+// -> -Y displacement: Shift 23.00px (UV: 640.05, 382.95)
+
+2026-09-06T18:09:15.594693 [response]
+// ✔ ================= CAMERA CALIBRATION SUCCESS ================
+// Calculated Scale (MPP): 0.022750 mm/pixel
+// Affine Matrix Solved:   True
+// Saved to Configuration: /home/voron/printer_data/tkc-experiment/station-data.cfg
+// ================================================================
+
+2026-09-06T18:09:15.647989 [response]
+// Tool-Calibrator Status: UNINITIALIZED
+
+2026-09-06T18:09:15.649948 [response]
+// Safe_Z: 40.00mm | Backend: cartographer
+
+2026-09-06T18:09:15.649985 [response]
+// mcu: stepper_x:-47979 stepper_y:47021 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:189.831250 stepper_y:152.018750 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:170.925000 Y:18.906250 Z:40.000775
+// toolhead: X:170.923400 Y:18.904800 Z:40.000000 E:0.000000
+// gcode: X:170.923400 Y:18.904800 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:09:39.732008 [command]
+TKC_TEST_XY TOOLS=0,1,2,3,4
+TKC_STATUS
+GET_POSITION
+
+2026-09-06T18:09:39.746167 [response]
+!! Error evaluating 'gcode_macro _TKC_SAFE_TOOLCHANGE:gcode': gcode.CommandError: Active and detected tool must match
+
+2026-09-06T18:09:39.747867 [response]
+!! Error evaluating 'gcode_macro _TKC_SAFE_TOOLCHANGE:gcode': gcode.CommandError: Active and detected tool must match
+
+2026-09-06T18:10:03.515094 [command]
+INITIALIZE_TOOLCHANGER
+TKC_TEST_XY TOOLS=0,1,2,3,4
+TKC_STATUS
+GET_POSITION
+
+2026-09-06T18:10:03.545396 [response]
+// toolchanger initialized, active tool T0
+
+2026-09-06T18:10:04.156358 [response]
+// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.8
+
+2026-09-06T18:10:04.160852 [response]
+// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)
+
+2026-09-06T18:10:04.161479 [response]
+// --- Calibrating Toolhead T0 ---
+
+2026-09-06T18:10:04.164058 [response]
+// Tool tool T0 already selected
+
+2026-09-06T18:10:04.164649 [response]
+// [T0] Entering Camera Station...
+
+2026-09-06T18:10:09.999838 [response]
+// -> Centering Step 1: True Error X-0.001mm Y-0.015mm (Damped Delta: X-0.001mm Y-0.009mm, UV: [640.0, 359.7], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:10:11.857581 [response]
+// -> Centering Step 2: True Error X+0.000mm Y-0.010mm (Damped Delta: X+0.000mm Y-0.005mm, UV: [640.05, 359.95], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:10:11.857624 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:10:11.857653 [response]
+// [T0] Reference Optical Origin set to X170.922 Y18.917
+
+2026-09-06T18:10:11.858775 [response]
+// --- Calibrating Toolhead T1 ---
+
+2026-09-06T18:10:11.875474 [response]
+echo: Dropping off tool T0
+
+2026-09-06T18:10:15.770636 [response]
+// tool_crash: disabled
+
+2026-09-06T18:10:17.965187 [response]
+// Activating extruder extruder1
+
+2026-09-06T18:10:19.647784 [response]
+echo: Picking up tool T1
+
+2026-09-06T18:10:27.590213 [response]
+// Selected tool 1 (tool T1)
+
+2026-09-06T18:10:28.595891 [response]
+// [T1] Entering Camera Station...
+
+2026-09-06T18:10:37.002969 [response]
+// -> Centering Step 1: True Error X-0.182mm Y-0.274mm (Damped Delta: X-0.100mm Y-0.151mm, UV: [632.05, 348.3], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:10:38.413473 [response]
+// -> Centering Step 2: True Error X-0.072mm Y-0.119mm (Damped Delta: X-0.040mm Y-0.065mm, UV: [636.85, 355.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:10:39.927753 [response]
+// -> Centering Step 3: True Error X-0.028mm Y-0.051mm (Damped Delta: X-0.015mm Y-0.028mm, UV: [638.8, 358.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:10:41.483641 [response]
+// -> Centering Step 4: True Error X-0.022mm Y-0.025mm (Damped Delta: X-0.012mm Y-0.013mm, UV: [639.05, 359.3], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)
+
+2026-09-06T18:10:42.886472 [response]
+// -> Centering Step 5: True Error X-0.012mm Y-0.020mm (Damped Delta: X-0.007mm Y-0.011mm, UV: [639.5, 359.5], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:10:44.593188 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X+0.000mm Y-0.007mm).
+
+2026-09-06T18:10:44.595430 [response]
+// [T1] Calculated XY Offsets: X-0.174mm Y-0.260mm
+
+2026-09-06T18:10:44.596838 [response]
+// --- Calibrating Toolhead T2 ---
+
+2026-09-06T18:10:44.611288 [response]
+echo: Dropping off tool T1
+
+2026-09-06T18:10:48.376176 [response]
+// tool_crash: disabled
+
+2026-09-06T18:10:50.569957 [response]
+// Activating extruder extruder2
+
+2026-09-06T18:10:52.252456 [response]
+echo: Picking up tool T2
+
+2026-09-06T18:11:00.188309 [response]
+// Selected tool 2 (tool T2)
+
+2026-09-06T18:11:01.193558 [response]
+// [T2] Entering Camera Station...
+
+2026-09-06T18:11:09.097072 [response]
+// -> Centering Step 1: True Error X+0.873mm Y+0.240mm (Damped Delta: X+0.480mm Y+0.132mm, UV: [678.45, 370.9], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:11:10.697528 [response]
+// -> Centering Step 2: True Error X+0.400mm Y+0.137mm (Damped Delta: X+0.220mm Y+0.075mm, UV: [657.65, 366.4], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:11:12.552477 [response]
+// -> Centering Step 3: True Error X+0.180mm Y+0.074mm (Damped Delta: X+0.099mm Y+0.041mm, UV: [647.95, 363.65], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)
+
+2026-09-06T18:11:14.358477 [response]
+// -> Centering Step 4: True Error X+0.083mm Y+0.030mm (Damped Delta: X+0.046mm Y+0.017mm, UV: [643.7, 361.7], Burst 3/3 (spread: 0.45px), Tier 0 Curvature)
+
+2026-09-06T18:11:16.115005 [response]
+// -> Centering Step 5: True Error X+0.035mm Y+0.021mm (Damped Delta: X+0.019mm Y+0.011mm, UV: [641.6, 361.3], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:11:17.718828 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X+0.015mm Y+0.006mm).
+
+2026-09-06T18:11:17.719570 [response]
+// [T2] Calculated XY Offsets: X+0.865mm Y+0.285mm
+
+2026-09-06T18:11:17.720398 [response]
+// --- Calibrating Toolhead T3 ---
+
+2026-09-06T18:11:17.735420 [response]
+echo: Dropping off tool T2
+
+2026-09-06T18:11:21.430986 [response]
+// tool_crash: disabled
+
+2026-09-06T18:11:23.624003 [response]
+// Activating extruder extruder3
+
+2026-09-06T18:11:25.310269 [response]
+echo: Picking up tool T3
+
+2026-09-06T18:11:33.241324 [response]
+// Selected tool 3 (tool T3)
+
+2026-09-06T18:11:34.249680 [response]
+// [T3] Entering Camera Station...
+
+2026-09-06T18:11:43.258990 [response]
+// -> Centering Step 1: True Error X+0.359mm Y+0.514mm (Damped Delta: X+0.198mm Y+0.283mm, UV: [655.85, 383.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:11:45.065851 [response]
+// -> Centering Step 2: True Error X+0.158mm Y+0.254mm (Damped Delta: X+0.087mm Y+0.140mm, UV: [647.0, 371.55], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)
+
+2026-09-06T18:11:46.878710 [response]
+// -> Centering Step 3: True Error X+0.071mm Y+0.117mm (Damped Delta: X+0.039mm Y+0.065mm, UV: [643.15, 365.55], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)
+
+2026-09-06T18:11:48.737232 [response]
+// -> Centering Step 4: True Error X+0.040mm Y+0.057mm (Damped Delta: X+0.022mm Y+0.032mm, UV: [641.8, 362.9], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:11:50.496194 [response]
+// -> Centering Step 5: True Error X+0.017mm Y+0.032mm (Damped Delta: X+0.009mm Y+0.018mm, UV: [640.8, 361.8], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:11:52.360362 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X+0.000mm Y+0.012mm).
+
+2026-09-06T18:11:52.361182 [response]
+// [T3] Calculated XY Offsets: X+0.355mm Y+0.545mm
+
+2026-09-06T18:11:52.362041 [response]
+// --- Calibrating Toolhead T4 ---
+
+2026-09-06T18:11:52.382437 [response]
+echo: Dropping off tool T3
+
+2026-09-06T18:11:56.171882 [response]
+// tool_crash: disabled
+
+2026-09-06T18:11:58.363834 [response]
+// Activating extruder extruder4
+
+2026-09-06T18:12:00.043792 [response]
+echo: Picking up tool T4
+
+2026-09-06T18:12:07.963064 [response]
+// Selected tool 4 (tool T4)
+
+2026-09-06T18:12:08.969910 [response]
+// [T4] Entering Camera Station...
+
+2026-09-06T18:12:19.992178 [response]
+// -> Centering Step 1: True Error X+0.158mm Y+0.194mm (Damped Delta: X+0.087mm Y+0.106mm, UV: [647.0, 368.9], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:12:21.798183 [response]
+// -> Centering Step 2: True Error X+0.071mm Y+0.110mm (Damped Delta: X+0.039mm Y+0.060mm, UV: [643.15, 365.2], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:12:23.656002 [response]
+// -> Centering Step 3: True Error X+0.029mm Y+0.058mm (Damped Delta: X+0.016mm Y+0.032mm, UV: [641.3, 362.95], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:12:25.465790 [response]
+// -> Centering Step 4: True Error X+0.024mm Y+0.019mm (Damped Delta: X+0.013mm Y+0.010mm, UV: [641.1, 361.2], Burst 3/3 (spread: 0.15px), Tier 0 Curvature)
+
+2026-09-06T18:12:27.276864 [response]
+// -> Centering Step 5: True Error X+0.003mm Y+0.014mm (Damped Delta: X+0.001mm Y+0.008mm, UV: [640.15, 361.0], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:12:27.277505 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:12:27.277613 [response]
+// [T4] Calculated XY Offsets: X+0.155mm Y+0.218mm
+
+2026-09-06T18:12:27.297487 [response]
+echo: Dropping off tool T4
+
+2026-09-06T18:12:31.207810 [response]
+// tool_crash: disabled
+
+2026-09-06T18:12:33.391871 [response]
+// Activating extruder extruder
+
+2026-09-06T18:12:35.071372 [response]
+echo: Picking up tool T0
+
+2026-09-06T18:12:43.916007 [response]
+// Selected tool 0 (tool T0)
+
+2026-09-06T18:12:45.226871 [response]
+// ================ CALIBRATION SUMMARY ================
+
+2026-09-06T18:12:45.226908 [response]
+// Tool T0: X=+0.000mm  Y=+0.000mm
+
+2026-09-06T18:12:45.228565 [response]
+// Tool T1: X=-0.174mm  Y=-0.260mm
+
+2026-09-06T18:12:45.229328 [response]
+// Tool T2: X=+0.865mm  Y=+0.285mm
+
+2026-09-06T18:12:45.230370 [response]
+// Tool T3: X=+0.355mm  Y=+0.545mm
+
+2026-09-06T18:12:45.231248 [response]
+// Tool T4: X=+0.155mm  Y=+0.218mm
+
+2026-09-06T18:12:45.231283 [response]
+// =====================================================
+
+2026-09-06T18:12:45.283141 [response]
+// Tool-Calibrator Status: SUCCESS
+
+2026-09-06T18:12:45.284196 [response]
+// Safe_Z: 40.00mm | Backend: cartographer
+
+2026-09-06T18:12:45.284894 [response]
+// T0: X=+0.000 Y=+0.000
+
+2026-09-06T18:12:45.284933 [response]
+// T1: X=-0.174 Y=-0.260
+
+2026-09-06T18:12:45.285811 [response]
+// T2: X=+0.865 Y=+0.285
+
+2026-09-06T18:12:45.285990 [response]
+// T3: X=+0.355 Y=+0.545
+
+2026-09-06T18:12:45.286015 [response]
+// T4: X=+0.155 Y=+0.218
+
+2026-09-06T18:12:45.286494 [response]
+// mcu: stepper_x:-54320 stepper_y:8330 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:150.200000 stepper_y:-89.800000 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:30.200000 Y:120.000000 Z:40.000775
+// toolhead: X:30.200000 Y:120.000000 Z:40.000000 E:0.000000
+// gcode: X:30.200000 Y:120.000000 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:13:11.049769 [command]
+TKC_TEST_XY TOOLS=0,1,2,3,4
+TKC_STATUS
+GET_POSITION
+
+2026-09-06T18:13:11.312049 [response]
+// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.8
+
+2026-09-06T18:13:11.316417 [response]
+// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)
+
+2026-09-06T18:13:11.317480 [response]
+// --- Calibrating Toolhead T0 ---
+
+2026-09-06T18:13:11.318507 [response]
+// Tool tool T0 already selected
+
+2026-09-06T18:13:11.319915 [response]
+// [T0] Entering Camera Station...
+
+2026-09-06T18:13:21.646189 [response]
+// -> Centering Step 1: True Error X-0.012mm Y+0.018mm (Damped Delta: X-0.007mm Y+0.010mm, UV: [639.5, 361.15], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:13:23.456815 [response]
+// -> Centering Step 2: True Error X-0.012mm Y+0.018mm (Damped Delta: X-0.007mm Y+0.010mm, UV: [639.5, 361.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:13:25.314661 [response]
+// -> Centering Step 3: True Error X-0.002mm Y+0.015mm (Damped Delta: X-0.001mm Y+0.008mm, UV: [639.95, 361.05], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:13:27.121156 [response]
+// -> Centering Step 4: True Error X-0.002mm Y+0.015mm (Damped Delta: X-0.001mm Y+0.008mm, UV: [639.95, 361.05], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:13:28.941766 [response]
+// -> Centering Step 5: True Error X+0.000mm Y+0.014mm (Damped Delta: X+0.000mm Y+0.008mm, UV: [640.05, 361.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:13:28.942432 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:13:28.943262 [response]
+// [T0] Reference Optical Origin set to X170.906 Y18.962
+
+2026-09-06T18:13:28.943444 [response]
+// --- Calibrating Toolhead T1 ---
+
+2026-09-06T18:13:28.959326 [response]
+echo: Dropping off tool T0
+
+2026-09-06T18:13:32.857338 [response]
+// tool_crash: disabled
+
+2026-09-06T18:13:35.046479 [response]
+// Activating extruder extruder1
+
+2026-09-06T18:13:36.727444 [response]
+echo: Picking up tool T1
+
+2026-09-06T18:13:44.672336 [response]
+// Selected tool 1 (tool T1)
+
+2026-09-06T18:13:45.682503 [response]
+// [T1] Entering Camera Station...
+
+2026-09-06T18:13:54.435382 [response]
+// -> Centering Step 1: True Error X-0.182mm Y-0.257mm (Damped Delta: X-0.100mm Y-0.142mm, UV: [632.05, 349.05], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:13:56.243094 [response]
+// -> Centering Step 2: True Error X-0.070mm Y-0.114mm (Damped Delta: X-0.039mm Y-0.063mm, UV: [636.95, 355.35], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:13:58.051632 [response]
+// -> Centering Step 3: True Error X-0.028mm Y-0.051mm (Damped Delta: X-0.015mm Y-0.028mm, UV: [638.8, 358.15], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:13:59.863081 [response]
+// -> Centering Step 4: True Error X-0.013mm Y-0.020mm (Damped Delta: X-0.007mm Y-0.011mm, UV: [639.45, 359.5], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:14:01.620461 [response]
+// -> Centering Step 5: True Error X-0.012mm Y-0.020mm (Damped Delta: X-0.007mm Y-0.011mm, UV: [639.5, 359.5], Burst 3/3 (spread: 0.35px), Tier 0 Curvature)
+
+2026-09-06T18:14:03.432408 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X-0.002mm Y-0.007mm).
+
+2026-09-06T18:14:03.433236 [response]
+// [T1] Calculated XY Offsets: X-0.152mm Y-0.290mm
+
+2026-09-06T18:14:03.434095 [response]
+// --- Calibrating Toolhead T2 ---
+
+2026-09-06T18:14:03.451873 [response]
+echo: Dropping off tool T1
+
+2026-09-06T18:14:07.215848 [response]
+// tool_crash: disabled
+
+2026-09-06T18:14:09.409787 [response]
+// Activating extruder extruder2
+
+2026-09-06T18:14:11.091066 [response]
+echo: Picking up tool T2
+
+2026-09-06T18:14:19.035972 [response]
+// Selected tool 2 (tool T2)
+
+2026-09-06T18:14:20.040715 [response]
+// [T2] Entering Camera Station...
+
+2026-09-06T18:14:27.995828 [response]
+// -> Centering Step 1: True Error X+0.863mm Y+0.268mm (Damped Delta: X+0.474mm Y+0.147mm, UV: [678.0, 372.15], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)
+
+2026-09-06T18:14:29.907506 [response]
+// -> Centering Step 2: True Error X+0.395mm Y+0.143mm (Damped Delta: X+0.217mm Y+0.079mm, UV: [657.4, 366.65], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:14:31.814885 [response]
+// -> Centering Step 3: True Error X+0.177mm Y+0.071mm (Damped Delta: X+0.098mm Y+0.039mm, UV: [647.85, 363.5], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:14:33.726825 [response]
+// -> Centering Step 4: True Error X+0.084mm Y+0.029mm (Damped Delta: X+0.046mm Y+0.016mm, UV: [643.75, 361.65], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:14:35.586159 [response]
+// -> Centering Step 5: True Error X+0.043mm Y+0.014mm (Damped Delta: X+0.024mm Y+0.008mm, UV: [641.95, 361.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:14:37.393618 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X+0.014mm Y+0.007mm).
+
+2026-09-06T18:14:37.394600 [response]
+// [T2] Calculated XY Offsets: X+0.875mm Y+0.253mm
+
+2026-09-06T18:14:37.395121 [response]
+// --- Calibrating Toolhead T3 ---
+
+2026-09-06T18:14:37.410735 [response]
+echo: Dropping off tool T2
+
+2026-09-06T18:14:41.109442 [response]
+// tool_crash: disabled
+
+2026-09-06T18:14:43.303189 [response]
+// Activating extruder extruder3
+
+2026-09-06T18:14:44.979161 [response]
+echo: Picking up tool T3
+
+2026-09-06T18:14:52.909625 [response]
+// Selected tool 3 (tool T3)
+
+2026-09-06T18:14:53.916400 [response]
+// [T3] Entering Camera Station...
+
+2026-09-06T18:15:02.881659 [response]
+// -> Centering Step 1: True Error X+0.340mm Y+0.522mm (Damped Delta: X+0.187mm Y+0.287mm, UV: [655.0, 383.35], Burst 3/3 (spread: 0.4px), Tier 0 Curvature)
+
+2026-09-06T18:15:04.693060 [response]
+// -> Centering Step 2: True Error X+0.157mm Y+0.264mm (Damped Delta: X+0.086mm Y+0.145mm, UV: [646.95, 372.0], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:15:06.501127 [response]
+// -> Centering Step 3: True Error X+0.067mm Y+0.128mm (Damped Delta: X+0.037mm Y+0.070mm, UV: [643.0, 366.0], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:15:08.362998 [response]
+// -> Centering Step 4: True Error X+0.039mm Y+0.065mm (Damped Delta: X+0.021mm Y+0.036mm, UV: [641.75, 363.25], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:15:10.175982 [response]
+// -> Centering Step 5: True Error X+0.017mm Y+0.035mm (Damped Delta: X+0.009mm Y+0.019mm, UV: [640.8, 361.9], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:15:11.936258 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X-0.001mm Y+0.013mm).
+
+2026-09-06T18:15:11.937696 [response]
+// [T3] Calculated XY Offsets: X+0.357mm Y+0.521mm
+
+2026-09-06T18:15:11.938497 [response]
+// --- Calibrating Toolhead T4 ---
+
+2026-09-06T18:15:11.954381 [response]
+echo: Dropping off tool T3
+
+2026-09-06T18:15:15.737170 [response]
+// tool_crash: disabled
+
+2026-09-06T18:15:17.928649 [response]
+// Activating extruder extruder4
+
+2026-09-06T18:15:19.611763 [response]
+echo: Picking up tool T4
+
+2026-09-06T18:15:27.529029 [response]
+// Selected tool 4 (tool T4)
+
+2026-09-06T18:15:28.536953 [response]
+// [T4] Entering Camera Station...
+
+2026-09-06T18:15:39.518658 [response]
+// -> Centering Step 1: True Error X+0.140mm Y+0.202mm (Damped Delta: X+0.077mm Y+0.111mm, UV: [646.2, 369.25], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:15:41.325634 [response]
+// -> Centering Step 2: True Error X+0.048mm Y+0.124mm (Damped Delta: X+0.026mm Y+0.068mm, UV: [642.15, 365.85], Burst 3/3 (spread: 0.8px), Tier 0 Curvature)
+
+2026-09-06T18:15:43.130393 [response]
+// -> Centering Step 3: True Error X+0.025mm Y+0.056mm (Damped Delta: X+0.014mm Y+0.031mm, UV: [641.15, 362.85], Burst 3/3 (spread: 3.3px), Tier 0 Curvature)
+
+2026-09-06T18:15:44.941297 [response]
+// -> Centering Step 4: True Error X+0.018mm Y+0.041mm (Damped Delta: X+0.010mm Y+0.023mm, UV: [640.85, 362.2], Burst 3/3 (spread: 0.9px), Tier 0 Curvature)
+
+2026-09-06T18:15:46.748142 [response]
+// -> Centering Step 5: True Error X-0.013mm Y+0.011mm (Damped Delta: X-0.007mm Y+0.006mm, UV: [639.45, 360.85], Burst 3/3 (spread: 2.2px), Tier 0 Curvature)
+
+2026-09-06T18:15:46.748922 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:15:46.749060 [response]
+// [T4] Calculated XY Offsets: X+0.143mm Y+0.197mm
+
+2026-09-06T18:15:46.764375 [response]
+echo: Dropping off tool T4
+
+2026-09-06T18:15:50.667472 [response]
+// tool_crash: disabled
+
+2026-09-06T18:15:52.857045 [response]
+// Activating extruder extruder
+
+2026-09-06T18:15:54.537951 [response]
+echo: Picking up tool T0
+
+2026-09-06T18:16:03.384461 [response]
+// Selected tool 0 (tool T0)
+
+2026-09-06T18:16:04.695384 [response]
+// ================ CALIBRATION SUMMARY ================
+
+2026-09-06T18:16:04.696915 [response]
+// Tool T0: X=+0.000mm  Y=+0.000mm
+
+2026-09-06T18:16:04.697518 [response]
+// Tool T1: X=-0.152mm  Y=-0.290mm
+
+2026-09-06T18:16:04.697552 [response]
+// Tool T2: X=+0.875mm  Y=+0.253mm
+
+2026-09-06T18:16:04.699618 [response]
+// Tool T3: X=+0.357mm  Y=+0.521mm
+
+2026-09-06T18:16:04.701581 [response]
+// Tool T4: X=+0.143mm  Y=+0.197mm
+
+2026-09-06T18:16:04.702850 [response]
+// =====================================================
+
+2026-09-06T18:16:04.752447 [response]
+// Tool-Calibrator Status: SUCCESS
+
+2026-09-06T18:16:04.752481 [response]
+// Safe_Z: 40.00mm | Backend: cartographer
+
+2026-09-06T18:16:04.752507 [response]
+// T0: X=+0.000 Y=+0.000
+
+2026-09-06T18:16:04.756959 [response]
+// T1: X=-0.152 Y=-0.290
+
+2026-09-06T18:16:04.756989 [response]
+// T2: X=+0.875 Y=+0.253
+
+2026-09-06T18:16:04.757013 [response]
+// T3: X=+0.357 Y=+0.521
+
+2026-09-06T18:16:04.757048 [response]
+// T4: X=+0.143 Y=+0.197
+
+2026-09-06T18:16:04.758222 [response]
+// mcu: stepper_x:-54320 stepper_y:8330 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:150.200000 stepper_y:-89.800000 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:30.200000 Y:120.000000 Z:40.000775
+// toolhead: X:30.200000 Y:120.000000 Z:40.000000 E:0.000000
+// gcode: X:30.200000 Y:120.000000 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:16:05.254382 [command]
+TKC_TEST_XY TOOLS=0,1,2,3,4
+TKC_STATUS
+GET_POSITION
+
+2026-09-06T18:16:05.516322 [response]
+// [tool_calibrator] Vision Service connected: tool_calibrator_server v0.8.8
+
+2026-09-06T18:16:05.519206 [response]
+// [tool_calibrator] Starting Calibration Sequence across tools: [0, 1, 2, 3, 4] (Order: XY_FIRST, Dry Run: False)
+
+2026-09-06T18:16:05.520192 [response]
+// --- Calibrating Toolhead T0 ---
+
+2026-09-06T18:16:05.521782 [response]
+// Tool tool T0 already selected
+
+2026-09-06T18:16:05.521820 [response]
+// [T0] Entering Camera Station...
+
+2026-09-06T18:16:15.934405 [response]
+// -> Centering Step 1: True Error X-0.025mm Y+0.023mm (Damped Delta: X-0.014mm Y+0.013mm, UV: [638.95, 361.4], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:16:17.747970 [response]
+// -> Centering Step 2: True Error X-0.020mm Y+0.025mm (Damped Delta: X-0.011mm Y+0.014mm, UV: [639.15, 361.5], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)
+
+2026-09-06T18:16:19.603200 [response]
+// -> Centering Step 3: True Error X-0.002mm Y+0.015mm (Damped Delta: X-0.001mm Y+0.008mm, UV: [639.95, 361.05], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:16:21.308924 [response]
+// -> Centering Step 4: True Error X-0.002mm Y+0.013mm (Damped Delta: X-0.001mm Y+0.007mm, UV: [639.95, 360.95], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:16:21.311491 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:16:21.311531 [response]
+// [T0] Reference Optical Origin set to X170.896 Y18.961
+
+2026-09-06T18:16:21.311559 [response]
+// --- Calibrating Toolhead T1 ---
+
+2026-09-06T18:16:21.325989 [response]
+echo: Dropping off tool T0
+
+2026-09-06T18:16:25.224803 [response]
+// tool_crash: disabled
+
+2026-09-06T18:16:27.420178 [response]
+// Activating extruder extruder1
+
+2026-09-06T18:16:29.100802 [response]
+echo: Picking up tool T1
+
+2026-09-06T18:16:37.037594 [response]
+// Selected tool 1 (tool T1)
+
+2026-09-06T18:16:38.044298 [response]
+// [T1] Entering Camera Station...
+
+2026-09-06T18:16:46.850414 [response]
+// -> Centering Step 1: True Error X-0.184mm Y-0.280mm (Damped Delta: X-0.101mm Y-0.154mm, UV: [631.95, 348.05], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:16:48.708791 [response]
+// -> Centering Step 2: True Error X-0.074mm Y-0.118mm (Damped Delta: X-0.041mm Y-0.065mm, UV: [636.8, 355.2], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:16:50.464426 [response]
+// -> Centering Step 3: True Error X-0.032mm Y-0.053mm (Damped Delta: X-0.017mm Y-0.029mm, UV: [638.65, 358.05], Burst 3/3 (spread: 0.4px), Tier 0 Curvature)
+
+2026-09-06T18:16:52.319740 [response]
+// -> Centering Step 4: True Error X-0.022mm Y-0.022mm (Damped Delta: X-0.012mm Y-0.012mm, UV: [639.05, 359.4], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:16:54.130698 [response]
+// -> Centering Step 5: True Error X-0.012mm Y-0.019mm (Damped Delta: X-0.007mm Y-0.010mm, UV: [639.5, 359.55], Burst 3/3 (spread: 0.4px), Tier 0 Curvature)
+
+2026-09-06T18:16:55.944780 [response]
+// -> Final verification confirmed convergence within 0.015mm (True Error: X+0.000mm Y-0.007mm).
+
+2026-09-06T18:16:55.947180 [response]
+// [T1] Calculated XY Offsets: X-0.152mm Y-0.306mm
+
+2026-09-06T18:16:55.951859 [response]
+// --- Calibrating Toolhead T2 ---
+
+2026-09-06T18:16:55.967795 [response]
+echo: Dropping off tool T1
+
+2026-09-06T18:16:59.736980 [response]
+// tool_crash: disabled
+
+2026-09-06T18:17:01.924913 [response]
+// Activating extruder extruder2
+
+2026-09-06T18:17:03.604678 [response]
+echo: Picking up tool T2
+
+2026-09-06T18:17:11.544671 [response]
+// Selected tool 2 (tool T2)
+
+2026-09-06T18:17:12.552058 [response]
+// [T2] Entering Camera Station...
+
+2026-09-06T18:17:20.716338 [response]
+// -> Centering Step 1: True Error X+0.863mm Y+0.261mm (Damped Delta: X+0.474mm Y+0.144mm, UV: [678.0, 371.85], Burst 3/3 (spread: 0.1px), Tier 0 Curvature)
+
+2026-09-06T18:17:22.476334 [response]
+// -> Centering Step 2: True Error X+0.404mm Y+0.138mm (Damped Delta: X+0.222mm Y+0.076mm, UV: [657.8, 366.45], Burst 3/3 (spread: 0.2px), Tier 0 Curvature)
+
+2026-09-06T18:17:24.289093 [response]
+// -> Centering Step 3: True Error X+0.183mm Y+0.071mm (Damped Delta: X+0.101mm Y+0.039mm, UV: [648.1, 363.5], Burst 3/3 (spread: 0.3px), Tier 0 Curvature)
+
+2026-09-06T18:17:26.141407 [response]
+// -> Centering Step 4: True Error X+0.086mm Y+0.028mm (Damped Delta: X+0.047mm Y+0.015mm, UV: [643.8, 361.6], Burst 3/3 (spread: 0.25px), Tier 0 Curvature)
+
+2026-09-06T18:17:28.056728 [response]
+// -> Centering Step 5: True Error X+0.033mm Y+0.014mm (Damped Delta: X+0.018mm Y+0.008mm, UV: [641.5, 361.0], Burst 3/3 (spread: 5.0px), Tier 0 Curvature)
+
+2026-09-06T18:17:29.917185 [response]
+// !! [tool_calibrator] Calibration Aborted: [ERR_CV_202] Centering failed to converge within 0.015mm after 5 iterations (last delta: X+0.018mm Y+0.008mm).
+
+2026-09-06T18:17:29.969914 [response]
+!! [tool_calibrator] Calibration Aborted: [ERR_CV_202] Centering failed to converge within 0.015mm after 5 iterations (last delta: X+0.018mm Y+0.008mm).
+
+2026-09-06T18:17:29.970861 [response]
+!! [tool_calibrator] Calibration Aborted: [ERR_CV_202] Centering failed to converge within 0.015mm after 5 iterations (last delta: X+0.018mm Y+0.008mm).
+
+2026-09-06T18:18:50.190741 [command]
+INITIALIZE_TOOLCHANGER
+_TKC_SAFE_TOOLCHANGE
+T0
+CALIBRATION_NAVIGATE STATION=CAMERA
+CENTER_NOZZLE SAMPLES=3 WIGGLE=0
+CALIBRATION_TEST_VISION SAMPLES=7
+GET_POSITION
+
+2026-09-06T18:18:50.217877 [response]
+// toolchanger initialized, active tool T2
+
+2026-09-06T18:18:50.539782 [response]
+echo: Dropping off tool T2
+
+2026-09-06T18:18:54.230237 [response]
+// tool_crash: disabled
+
+2026-09-06T18:18:56.423578 [response]
+// Activating extruder extruder
+
+2026-09-06T18:18:58.103827 [response]
+echo: Picking up tool T0
+
+2026-09-06T18:19:06.336383 [response]
+// Selected tool 0 (tool T0)
+
+2026-09-06T18:19:06.337431 [response]
+// [tool_calibrator] Approaching Camera Station via safe 3-tier waypoints...
+
+2026-09-06T18:19:15.796655 [response]
+// ✔ Reached Camera Station: X170.922 Y18.926 Z40.000
+
+2026-09-06T18:19:15.797627 [response]
+// [tool_calibrator] Centering active nozzle over camera...
+
+2026-09-06T18:19:17.511599 [response]
+// -> Centering Step 1: True Error X-0.025mm Y+0.013mm (Damped Delta: X-0.014mm Y+0.007mm, UV: [638.95, 360.95], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:19:19.330716 [response]
+// -> Centering Step 2: True Error X-0.022mm Y+0.013mm (Damped Delta: X-0.012mm Y+0.007mm, UV: [639.05, 360.95], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:19:21.139145 [response]
+// -> Centering Step 3: True Error X-0.010mm Y+0.013mm (Damped Delta: X-0.005mm Y+0.007mm, UV: [639.6, 360.95], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:19:21.139872 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:19:21.139914 [response]
+// ✔ Nozzle centered successfully at X170.896 Y18.940
+
+2026-09-06T18:19:21.139945 [response]
+// [tool_calibrator] Sampling 7 vision frames at current position...
+
+2026-09-06T18:19:24.751527 [response]
+// ✔ [Vision Inspection Report]
+// Found:       YES (7/7 frames)
+// Center UV:   U639.60 px, V360.95 px
+// Radius:      22.40 px
+// Confidence:  98.0%
+// Dispersion:  0.00 px
+// Algorithm:   Tier 0 Curvature (Symmetric)
+
+2026-09-06T18:19:24.754928 [response]
+// mcu: stepper_x:-47978 stepper_y:47011 stepper_z:-4930 stepper_z1:-4930 stepper_z2:-4930 stepper_z3:-4930
+// stepper: stepper_x:189.837500 stepper_y:151.956250 stepper_z:40.000775 stepper_z1:40.000775 stepper_z2:40.000775 stepper_z3:40.000775
+// kinematic: X:170.896875 Y:18.940625 Z:40.000775
+// toolhead: X:170.896000 Y:18.940200 Z:40.000000 E:0.000000
+// gcode: X:170.896000 Y:18.940200 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+
+2026-09-06T18:20:05.289108 [command]
+RESTART
+
+2026-09-06T18:20:06.301108 [response]
+// Klipper state: Disconnect
+
+2026-09-06T18:20:24.024711 [command]
+G28
+G90
+G0 Z40 F600
+M400
+INITIALIZE_TOOLCHANGER
+CALIBRATION_NAVIGATE STATION=CAMERA
+CENTER_NOZZLE SAMPLES=3 WIGGLE=0
+CALIBRATION_TEST_VISION SAMPLES=7
+GET_POSITION
+
+2026-09-06T18:20:24.062614 [response]
+// shaper_type_x:mzv shaper_freq_x:43.600 damping_ratio_x:0.100000
+
+2026-09-06T18:20:24.063612 [response]
+// shaper_type_y:mzv shaper_freq_y:33.400 damping_ratio_y:0.100000
+
+2026-09-06T18:20:24.065450 [response]
+// toolchanger initialized, active tool T0
+
+2026-09-06T18:20:43.987428 [response]
+probe at 178.800,165.800 is z=471.415456
+
+
+2026-09-06T18:20:48.144079 [response]
+// toolchanger initialized, active tool T0
+
+2026-09-06T18:20:48.144138 [response]
+// [tool_calibrator] Approaching Camera Station via safe 3-tier waypoints...
+
+2026-09-06T18:20:55.592931 [response]
+// ✔ Reached Camera Station: X170.923 Y18.905 Z40.000
+
+2026-09-06T18:20:55.594351 [response]
+// [tool_calibrator] Centering active nozzle over camera...
+
+2026-09-06T18:20:57.404761 [response]
+// -> Centering Step 1: True Error X-0.045mm Y-0.030mm (Damped Delta: X-0.025mm Y-0.017mm, UV: [638.05, 359.05], Burst 3/3 (spread: 0.05px), Tier 0 Curvature)
+
+2026-09-06T18:20:59.210051 [response]
+// -> Centering Step 2: True Error X-0.018mm Y-0.015mm (Damped Delta: X-0.010mm Y-0.009mm, UV: [639.25, 359.7], Burst 3/3 (spread: 0.4px), Tier 0 Curvature)
+
+2026-09-06T18:21:01.069561 [response]
+// -> Centering Step 3: True Error X-0.015mm Y-0.010mm (Damped Delta: X-0.008mm Y-0.005mm, UV: [639.4, 359.95], Burst 3/3 (spread: 0.0px), Tier 0 Curvature)
+
+2026-09-06T18:21:01.070221 [response]
+// -> Convergence achieved within 0.015mm tolerance.
+
+2026-09-06T18:21:01.070256 [response]
+// ✔ Nozzle centered successfully at X170.888 Y18.880
+
+2026-09-06T18:21:01.070803 [response]
+// [tool_calibrator] Sampling 7 vision frames at current position...
+
+2026-09-06T18:21:04.684565 [response]
+// ✔ [Vision Inspection Report]
+// Found:       YES (7/7 frames)
+// Center UV:   U639.40 px, V359.95 px
+// Radius:      22.40 px
+// Confidence:  98.0%
+// Dispersion:  0.35 px
+// Algorithm:   Tier 0 Curvature (Symmetric)
+
+2026-09-06T18:21:04.684599 [response]
+// mcu: stepper_x:-47978 stepper_y:47017 stepper_z:-4972 stepper_z1:-4972 stepper_z2:-4972 stepper_z3:-4972
+// stepper: stepper_x:189.768750 stepper_y:152.006250 stepper_z:40.000544 stepper_z1:40.000544 stepper_z2:40.000544 stepper_z3:40.000544
+// kinematic: X:170.887500 Y:18.881250 Z:40.000544
+// toolhead: X:170.888200 Y:18.879900 Z:40.000000 E:0.000000
+// gcode: X:170.888200 Y:18.879900 Z:40.000000 E:0.000000
+// gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+// gcode homing: X:0.000000 Y:0.000000 Z:0.000000

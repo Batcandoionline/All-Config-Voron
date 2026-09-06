@@ -179,3 +179,58 @@ Tăng tốc độ di chuyển trục Z khi chuyển đổi đầu in (tool chang
      - Khởi động lại firmware Klipper qua Moonraker API (`POST /printer/restart`).
   5. **Kiểm tra trạng thái:** Klipper đã khởi động lại thành công và đạt trạng thái `ready` ("Printer is ready"). Không còn daemon hay module phụ trợ nào của TKC chạy ngầm.
 
+
+
+## 6. Tái tích hợp TKC 780a492 và chạy thử XY trên máy thật
+
+### Mục tiêu
+Đọc toàn bộ quy tắc `.agents/`, cấu hình production và source TKC mới; tích hợp có thể hoàn tác, chạy máy thật `192.168.1.43` và thu bằng chứng hoạt động. Người dùng xác nhận dùng `G28` thông thường, nâng Z lên 40 trước khi đổi tool.
+
+### File đã sửa đổi / bổ sung
+- `extras/experiments/tkc-20260906/` — cấu hình thử nghiệm, user service, tọa độ/ma trận camera đã đo, README, REPORT, CSV và bằng chứng.
+- **Live only:** `printer.cfg` thêm một include `/home/voron/printer_data/tkc-experiment/tool-calibrator.cfg` trước SAVE_CONFIG. Payload production `config/` trong Git giữ nguyên.
+- `.agents/KNOWN_ISSUES.md` tại workspace — cập nhật lỗi X đã được xử lý theo nhật ký 26/08 mục 11 và bổ sung các vấn đề TKC. Thư mục này nằm ngoài git repo; patch được lưu cùng bộ thử nghiệm.
+
+### Sao lưu
+- [pre-tkc-hil-20260906-180201](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/backups/pre-tkc-hil-20260906-180201/README.md>) — bản gốc local/live printer.cfg, calibration-probe.cfg và năm file tool; các trạng thái cấu hình thử nghiệm trước khi sửa.
+- Remote: `/home/voron/printer_data/config_backups/pre-tkc-hil-20260906-180420/`.
+- Tọa độ trạm được sao lưu trước phép đo scale; TKC cũng tạo backup riêng cho station-data.cfg.
+
+### Triển khai và kiểm tra
+- Pin source tại `780a492bad45399698491a355ab62db6954da9d7`, không patch source.
+- Venv riêng `~/tkc-env` dùng OpenCV hệ thống 4.6.0, NumPy 1.24.2; Flask 3.0.3 và Waitress 3.0.2. Không chạy installer upstream, không đổi apt hoặc venv kTAMV.
+- User service `tool-calibrator-experiment.service`, bind loopback `127.0.0.1:8090`; liên kết các extras vào Klipper. Không thêm updater tự động.
+- 78/78 unit tests upstream đạt trên host (5,640 giây).
+- Soft RESTART lần đầu giữ module Python từ lần cài trước nên báo trùng `CALIBRATION_STATUS`; restart **dịch vụ Klipper** nạp bản mới thành công. Không cần đổi tên macro production.
+- `DUMP_TMC STEPPER=stepper_x`: `DRV_STATUS: 80190000 cs_actual=25 stst=1`; G28 thành công.
+- Chỉ thử XY lạnh, `SAVE_CONFIG=0`, `CALIBRATE_Z=0`, `WIGGLE=0`, giữ ngưỡng 0,015 mm và 5 bước. Backend Z có hook báo lỗi để chưa thể probe bằng TKC.
+
+### Số đo camera và kết quả vòng lặp
+- Kiểm tra ảnh đầu: 7/7 frame, UV 680,15 / 310,50 px, radius 22,50 px, dispersion 0,20 px.
+- Dịch độc lập ±0,5 mm xác nhận cả X/Y ảnh đảo chiều so với fallback của TKC: du/dX=-44,0; dv/dY=-42,95 px/mm. Chỉ dùng ma trận đo thật để điều khiển; không cho fallback điều khiển máy.
+- Camera scale native đạt đủ bốn hướng: **0,022750 mm/px**, affine solved. Trạm đã lưu **X170,923 Y18,905 Z40**, approach X171,456 Y43,920.
+- **Vòng 1 và vòng 2:** hoàn thành đủ T0–T4 và trở về T0.
+- **Vòng 3:** dừng ở T2 lúc 18:17:38 với `ERR_CV_202`; burst cuối dispersion 5 px, không hội tụ ngưỡng 0,015 mm sau 5 bước. Không tăng tolerance hoặc ép chạy lại để lấy đủ vòng đạt.
+- T2 sau lỗi đứng yên nhận 20/20 frame, V chỉ dao động 0,10 px; chưa đủ bằng chứng quy lỗi cho nhiễu quang học liên tục. Cần phân biệt lag/settling sau chuyển động và số bước hội tụ.
+- Hai vòng hoàn chỉnh cho biên độ lặp lớn nhất **0,022 mm X / 0,032 mm Y**. Chỉ hai vòng đạt, không xem đây là chứng nhận độ chính xác.
+- Bảng từng tool, số đo vòng 3 chưa hoàn chỉnh và phân tích chi tiết ở `REPORT.md`, `xy-measurements.csv`, `summary.json`. Cache sau vòng lỗi vẫn là số liệu vòng 2; không gộp thành vòng 3.
+
+### Điểm cần lưu ý cho TKC
+1. Fallback MPP 0,040 và hướng trục giả định có thể ra lệnh sai chiều; cần bootstrap Jacobian từ chuyển động nhỏ có kiểm soát.
+2. Confidence 98% là hằng số theo thuật toán. Burst gate 15 px quá rộng so với tolerance 0,015 mm; cần kiểm tra số frame hợp lệ, cluster và độ phân tán theo mm.
+3. Trạng thái API không đặt RUNNING, vẫn có thể hiện SUCCESS cũ trong khi chạy. Sau lỗi KTC chuyển về uninitialized nên phải kiểm tra tool thực/detected rồi INITIALIZE_TOOLCHANGER.
+4. Request qua nginx port 80 bị HTTP 504 sau 60,020 giây nhưng chuỗi tiếp tục. Không gửi lại lệnh; dùng Moonraker 7125 trực tiếp hoặc WebSocket. Vòng 2 qua 7125 chạy 173,714 giây và trả ok.
+5. `DRY_RUN=1` vẫn đổi tool/căn XY. `[tool_offsets]` mới chỉ lưu/đọc số, chưa áp offset vào KTC.
+6. Ghi chú mục 4 trước đó về mọi section trùng đều gây lỗi là quá rộng: parser Klipper trên máy dùng `strict=False`, có thể ghi đè option. Không dùng section trùng để tạo quyền sở hữu offset không rõ ràng.
+7. Cần phân biệt hardware Cartographer V3 và API plugin 1.9.0. Chưa chạy/đánh giá backend Z của TKC trong phiên này.
+
+### Xác minh cuối và tình trạng máy
+- Sau restart cả daemon và Klipper, daemon bắt đầu với matrix_solved=false; CENTER_NOZZLE khôi phục đúng MPP/ma trận từ file và hội tụ. Bỏ manual camera X/Y khỏi overlay để trạm đã học không bị giá trị cũ ghi đè sau restart.
+- Máy **ready**, XYZ homed, T0 active/detected, pose **X170,8882 Y18,8799 Z40**; heater targets/power bằng 0, tool LEDs tắt.
+- Ảnh cuối: 7/7 frame, dispersion 0,35 px. Matrix solved, MPP 0,022750, session lock đã nhả.
+- Năm file tool và calibration-probe.cfg giống byte bản gốc; SAVE_CONFIG giữ nguyên. Không ghi offset production, không hiệu chuẩn Z, không gia nhiệt, không thử in.
+- Phân tích 918 dòng Stats trong toàn cửa sổ thử: bảy node CAN active, RX/TX error và TX retries bằng 0; không có lỗi scheduling/shutdown. **print_stall đã tăng tới 2 trước restart**, sau restart về 0; chưa xác định nguyên nhân, không kết luận runtime không gây stall.
+- Raw log: [klippy.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-20260906/klippy.log>), [moonraker.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-20260906/moonraker.log>), [vision-service.log](<D:/Desktop/All-Config-Voron-main/Voron 5 Tool/extras/logs/tkc-20260906/vision-service.log>). Log lớn không đưa lên Git; console, ảnh và JSON rút gọn được theo dõi.
+
+### Kết quả / vấn đề còn lại
+Tích hợp thử nghiệm hoạt động, đã có số liệu và lỗi thực tế tái hiện. **Chưa đủ ổn định để tự áp offset hoặc dùng không giám sát.** Giữ TKC như overlay thử nghiệm, source pin, Z guard và SAVE_CONFIG=0; tiếp tục sửa bootstrap, bộ lọc frame, số bước căn tâm và state machine ở dự án TKC trước khi đánh giá production.

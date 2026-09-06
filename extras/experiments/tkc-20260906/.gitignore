@@ -1,0 +1,4 @@
+# Full acquisition traces and duplicate rolling-console snapshots stay local.
+/evidence/requests.jsonl
+/evidence/preflight.json
+/evidence/*-console.json

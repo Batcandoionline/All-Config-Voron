@@ -1,0 +1,23 @@
+--- a/.agents/KNOWN_ISSUES.md
++++ b/.agents/KNOWN_ISSUES.md
+@@ -128 +128 @@
+-**Trạng thái:** Đang chờ kiểm tra phần cứng
++**Trạng thái:** Đã xử lý theo xác nhận người vận hành 2026-08-26; xác minh lại 2026-09-06
+@@ -136,2 +136,15 @@
+-**Sửa vĩnh viễn:** Đang chờ điều tra.
+-**Nhật ký liên quan:** `Voron 5 Tool/extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md`, mục 10.
++**Sửa vĩnh viễn:** Nhật ký 2026-08-26 mục 11 ghi người vận hành đã xử lý phần cứng. Phiên 2026-09-06 có DUMP_TMC không còn cờ lỗi và G28 thành công; nguyên nhân điện cụ thể trước đó chưa được xác định.
++**Nhật ký liên quan:** `Voron 5 Tool/extras/Nhat-ky-chinh-sua/2026-08-26-session-updates.md`, mục 10–11; `2026-09-06-session-updates.md`, mục 6.
++
++
++---
++
++## TKC 780a492 — Fallback sai hướng camera và XY chưa ổn định
++
++**Trạng thái:** Thử nghiệm có giám sát; chưa được áp offset production
++**Phát hiện lần đầu:** 2026-09-06
++**Triệu chứng:** Fallback MPP giả định trả correction sai chiều trên MF-500; hai vòng XY hoàn chỉnh, vòng thứ ba lỗi ERR_CV_202 tại T2 với burst spread 5 px. API vẫn có thể báo SUCCESS cũ khi đang chạy; KTC mất active tool khi G-code báo lỗi.
++**Nguyên nhân:** Hướng trục giả định sai đã xác nhận bằng ±0,5 mm đo thật. Lỗi hội tụ còn cần phân biệt thời gian ổn định sau chuyển động, detector và giới hạn 5 bước; không kết luận lỗi cơ khí từ dữ liệu hiện có.
++**Giải pháp tạm:** Dùng ma trận đã đo, TKC_TEST_XY (SAVE_CONFIG=0, CALIBRATE_Z=0, WIGGLE=0), Z40 trước đổi tool. Không dùng fallback để chuyển động hoặc DRY_RUN như phép thử đứng yên. Khi HTTP 504, kiểm tra chuỗi đang chạy trước khi gửi thêm lệnh.
++**Sửa vĩnh viễn:** Đang chờ cải thiện bootstrap, frame-quality gates và run-state trong TKC.
++**Nhật ký liên quan:** `Voron 5 Tool/extras/Nhat-ky-chinh-sua/2026-09-06-session-updates.md`, mục 6; báo cáo `extras/experiments/tkc-20260906/REPORT.md`.

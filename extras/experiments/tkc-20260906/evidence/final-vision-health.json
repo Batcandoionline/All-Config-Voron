@@ -1,0 +1,9 @@
+{
+  "calibrated_mpp": 0.02275,
+  "camera_url": "http://127.0.0.1:8080/snapshot.jpg",
+  "matrix_solved": true,
+  "service": "tool_calibrator_server",
+  "session_locked": false,
+  "status": "ok",
+  "version": "0.8.8"
+}
